@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import '../constants/app_colors.dart';
 
 /// Application ThemeData configuration.
 class AppTheme {
@@ -8,8 +8,8 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
+        seedColor: AppColors.mainPrimary,
+        primary: AppColors.mainPrimary,
         surface: AppColors.surface,
       ),
       appBarTheme: const AppBarTheme(
