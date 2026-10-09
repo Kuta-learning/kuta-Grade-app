@@ -34,6 +34,11 @@ class AppColors {
   static const Color orange50 = Color(0xFFFFF7ED);
   static const Color accentLight = orange50;
 
+  /// Second Accent (Deep Terracotta / Orange 900) - Used for Brand Logo Marks (#9D4300)
+  static const Color orange900 = Color(0xFF9D4300);
+  static const Color secondAccent = orange900;
+  static const Color accentDark = orange900;
+
   // ==========================================
   // 2. SYSTEM FUNCTIONAL & FEEDBACK STATES
   // ==========================================

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
@@ -44,12 +45,12 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    _controller.addStatusListener((status) {
+    /*_controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         // Navigate to the next screen (e.g. login) using GoRouter
         context.go(RouteNames.login);
       }
-    });
+    });*/
   }
 
   @override
@@ -139,20 +140,28 @@ class _SplashScreenState extends State<SplashScreen>
                         decoration: BoxDecoration(
                           color: AppColors.surfaceWhite,
                           borderRadius: AppRadius.roundedXl,
-                          border: Border.all(color: AppColors.borderVariant),
+                          border: Border.all(
+                            color: AppColors.borderVariant,
+                            width: 1,
+                          ),
                           boxShadow: AppElevation.elevation2,
                         ),
-                        child: Center(
-                          child: Container(
-                            padding: AppSpacing.p2,
-                            decoration: BoxDecoration(
-                              color: AppColors.orange50,
-                              borderRadius: AppRadius.roundedLg,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.secondAccent.withValues(
+                              alpha: 0.1,
                             ),
-                            child: Icon(
-                              AppIcons.school,
-                              size: AppIcons.sizeKpi,
-                              color: AppColors.orange600,
+                            borderRadius: AppRadius.roundedXl,
+                          ),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              AppIcons.menuBookSvg,
+                              width: 44,
+                              height: 32,
+                              colorFilter: const ColorFilter.mode(
+                                AppColors.secondAccent,
+                                BlendMode.srcIn,
+                              ),
                             ),
                           ),
                         ),
@@ -278,7 +287,7 @@ class _SplashScreenState extends State<SplashScreen>
           Positioned(
             left: AppSpacing.space4,
             right: AppSpacing.space4,
-            bottom: AppSpacing.space2, // 8px
+            bottom: AppSpacing.space2 + 4, // 12px
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
