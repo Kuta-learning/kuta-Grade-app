@@ -143,6 +143,24 @@ class AppElevation {
   ];
   static const List<BoxShadow> floating = elevation2;
 
+  /// Elevation Large - Used for Logo card mark, floating panels
+  /// CSS spec: shadow-lg (0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -4px rgba(0, 0, 0, 0.1))
+  static const List<BoxShadow> elevationLg = <BoxShadow>[
+    BoxShadow(
+      color: Color.fromRGBO(0, 0, 0, 0.1),
+      offset: Offset(0, 10),
+      blurRadius: 15,
+      spreadRadius: -3,
+    ),
+    BoxShadow(
+      color: Color.fromRGBO(0, 0, 0, 0.1),
+      offset: Offset(0, 4),
+      blurRadius: 6,
+      spreadRadius: -4,
+    ),
+  ];
+  static const List<BoxShadow> logoCard = elevationLg;
+
   /// Elevation 3 / Modal Dialog - Confirmation modals, bottom sheets
   /// CSS spec: shadow-xl (0 20px 25px -5px rgba(0, 0, 0, 0.1))
   static const List<BoxShadow> elevation3 = <BoxShadow>[
