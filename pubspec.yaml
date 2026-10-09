@@ -36,6 +36,18 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^9.0.0
 
+  # ── Navigation ─────────────────────────────────────
+  go_router: ^14.6.3
+
+  # ── State Management ───────────────────────────────
+  flutter_riverpod: ^2.6.1
+
+  # ── Networking ─────────────────────────────────────
+  dio: ^5.7.0
+
+  # ── Local Storage ──────────────────────────────────
+  shared_preferences: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
