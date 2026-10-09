@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Design system color tokens extracted from the design specifications.
-/// Follows semantic and brand-specific color definitions.
 class AppColors {
   // Prevent instantiation
   AppColors._();
@@ -16,7 +15,6 @@ class AppColors {
 
   static const Color navy700 = Color(0xFF0F4C97);
   static const Color mainPrimary = navy700;
-  static const Color primary = navy700;
   static const Color brandPrimary = navy700;
 
   /// Primary Container (Navy Light 100) - Used for Active tabs

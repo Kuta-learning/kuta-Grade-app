@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Design system typography tokens extracted from the typography scale specifications.
-/// Uses the `google_fonts` package for automatic downloading, bundling, and caching.
-///
 /// Supported Font Families:
 /// - Inter (Primary System Font - Adult / Admin)
 /// - Quicksand (Kids & Youth Modules - Ages 6-10)
