@@ -30,11 +30,27 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  /// headline-md (Mobile: 22px / 28px line height, Medium 500) - Auth/Modal Headings
+  static final TextStyle headlineMd = GoogleFonts.inter(
+    fontSize: 20,
+    height: 28 / 22,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+
   /// headline-lg (Mobile: 20px / 28px line height, Bold 700)
   static final TextStyle headlineLg = GoogleFonts.inter(
-    fontSize: 20,
+    fontSize: 22,
     height: 28 / 20,
     fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
+
+  /// body-xl (Mobile: 16px / 24px line height, Regular 400) - Subtitles & form inputs
+  static final TextStyle bodyXl = GoogleFonts.inter(
+    fontSize: 16,
+    height: 24 / 16,
+    fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
@@ -54,6 +70,15 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  /// label-md (Mobile: 14px / 20px line height, SemiBold 600) - Form labels & buttons
+  static final TextStyle labelMd = GoogleFonts.inter(
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.1,
+    color: AppColors.textPrimary,
+  );
+
   /// body-md (Mobile: 14px / 20px line height, Regular 400)
   static final TextStyle bodyMd = GoogleFonts.inter(
     fontSize: 14,
@@ -70,11 +95,44 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  /// label-md medium (Mobile: 12px / 16px line height, Medium 500) - Auth hints & dividers
+  static final TextStyle labelMdMedium = GoogleFonts.inter(
+    fontSize: 12,
+    height: 16 / 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+  );
+
+  /// label-md semibold (Mobile: 12px / 16px line height, SemiBold 600) - Link buttons
+  static final TextStyle labelMdSemiBold = GoogleFonts.inter(
+    fontSize: 12,
+    height: 16 / 12,
+    fontWeight: FontWeight.w600,
+    color: AppColors.brandBlue,
+  );
+
   /// label-sm (Mobile: 11px / 14px line height, SemiBold 600)
   static final TextStyle labelSm = GoogleFonts.inter(
     fontSize: 11,
     height: 14 / 11,
     fontWeight: FontWeight.w600,
+    color: AppColors.textSecondary,
+  );
+
+  /// caption-sm (Mobile: 10px / 15px line height, Regular 400) - Helper text
+  static final TextStyle captionSm = GoogleFonts.inter(
+    fontSize: 10,
+    height: 15 / 10,
+    fontWeight: FontWeight.w400,
+    color: AppColors.authBrown,
+  );
+
+  /// caption-bold (Mobile: 10px / 15px line height, Bold 700) - Badges & security marks
+  static final TextStyle captionBold = GoogleFonts.inter(
+    fontSize: 10,
+    height: 15 / 10,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
     color: AppColors.textSecondary,
   );
 

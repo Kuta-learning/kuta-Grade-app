@@ -2,6 +2,7 @@
 class RouteNames {
   static const String splash = '/';
   static const String login = '/login';
+  static const String register = '/register';
 
   // Kindergarten route
   static const String kgHome = '/kg-home';
