@@ -39,6 +39,30 @@ class AppColors {
   static const Color secondAccent = orange900;
   static const Color accentDark = orange900;
 
+  /// Brand Blue (Heading & Links) - Used for Auth titles and link text (#2A5DA9)
+  static const Color brandBlue = Color(0xFF2A5DA9);
+
+  /// Atmospheric Glow Blue - Used for background atmospheric blur (#81AEFF)
+  static const Color glowBlue = Color(0xFF81AEFF);
+
+  /// Auth Warm Brown - Used for form labels, subtitles, helper text (#584237)
+  static const Color authBrown = Color(0xFF584237);
+
+  /// Auth Icon Brown - Used for input prefix icons (#8C7164)
+  static const Color authIconBrown = Color(0xFF8C7164);
+
+  /// Button Text Dark Brown - Used for CTA text on orange buttons (#582200)
+  static const Color buttonTextBrown = Color(0xFF582200);
+
+  /// Input Container Fill (#F2F4F6)
+  static const Color inputFill = Color(0xFFF2F4F6);
+
+  /// Input Placeholder Gray (#6B7280)
+  static const Color inputPlaceholder = Color(0xFF6B7280);
+
+  /// Headline Dark (#191C1E) - Used for primary auth headings
+  static const Color headlineDark = Color(0xFF191C1E);
+
   // ==========================================
   // 2. SYSTEM FUNCTIONAL & FEEDBACK STATES
   // ==========================================
