@@ -1,6 +1,7 @@
 /// Centralized named route identifiers.
 class RouteNames {
   static const String splash = '/';
+  static const String onboarding = '/onboarding';
   static const String login = '/login';
 
   // Kindergarten route

@@ -45,12 +45,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    /*_controller.addStatusListener((status) {
+    _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        // Navigate to the next screen (e.g. login) using GoRouter
-        context.go(RouteNames.login);
+        context.go(RouteNames.onboarding);
       }
-    });*/
+    });
   }
 
   @override
