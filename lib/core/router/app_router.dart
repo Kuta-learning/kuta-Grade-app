@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/authentication/screens/login_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
+import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
 import 'route_names.dart';
 
@@ -25,6 +26,11 @@ class AppRouter {
         path: RouteNames.login,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.register,
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: RouteNames.kgHome,

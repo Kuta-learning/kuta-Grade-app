@@ -69,6 +69,7 @@ class AppIcons {
   static const String searchSvg = '$_basePath/search.svg';
   static const String notificationsSvg = '$_basePath/notifications.svg';
   static const String fileDownloadSvg = '$_basePath/file_download.svg';
+  static const String googleSvg = '$_basePath/google.svg';
 
   // ==========================================
   // MATERIAL SYMBOLS OUTLINED (FLUTTER ICONS)
@@ -105,4 +106,13 @@ class AppIcons {
   static const IconData search = Icons.search_outlined;
   static const IconData notifications = Icons.notifications_outlined;
   static const IconData fileDownload = Icons.file_download_outlined;
+
+  // Authentication & Forms
+  static const IconData person = Icons.person_outline_rounded;
+  static const IconData email = Icons.mail_outline_rounded;
+  static const IconData lock = Icons.lock_outline_rounded;
+  static const IconData visibility = Icons.visibility_outlined;
+  static const IconData visibilityOff = Icons.visibility_off_outlined;
+  static const IconData arrowForward = Icons.arrow_forward_rounded;
+  static const IconData chevronDown = Icons.keyboard_arrow_down_rounded;
 }
