@@ -55,6 +55,11 @@ class AppIcons {
   static const String assignmentSvg = '$_basePath/assignment.svg';
   static const String analyticsSvg = '$_basePath/analytics.svg';
   static const String editDocumentSvg = '$_basePath/edit_document.svg';
+  static const String mathOperationsSvg = '$_basePath/calculation.svg';
+  static const String calculatorSvg = '$_basePath/calculation.svg';
+  static const String calculationSvg = '$_basePath/calculation.svg';
+  static const String bookOpenSvg = '$_basePath/menu_book.svg';
+  static const String greenMenuSvg = '$_basePath/green_menu.svg';
 
   // --- 4. Kids Gamification & Common ---
   static const String starFillSvg = '$_basePath/star_fill.svg';
