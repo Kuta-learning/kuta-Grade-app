@@ -138,12 +138,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOutCubic,
       );
     } else {
-      _navigateToLogin();
+      _navigateToRegister();
     }
   }
 
-  void _navigateToLogin() {
-    context.go(RouteNames.login);
+  void _navigateToRegister() {
+    context.go(RouteNames.register);
   }
 
   @override
