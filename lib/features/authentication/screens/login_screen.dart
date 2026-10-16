@@ -45,17 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleForgotPassword() {
-    final email = _emailController.text.trim();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          email.isNotEmpty
-              ? 'Password reset instructions sent to $email'
-              : 'Please enter your email address to reset your password.',
-        ),
-        backgroundColor: AppColors.info,
-      ),
-    );
+    context.push(RouteNames.forgotPassword);
   }
 
   @override

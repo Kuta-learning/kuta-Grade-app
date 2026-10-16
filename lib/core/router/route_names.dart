@@ -4,6 +4,7 @@ class RouteNames {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
 
   // Kindergarten route
   static const String kgHome = '/kg-home';
