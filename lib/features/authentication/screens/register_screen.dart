@@ -66,14 +66,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          // TODO: Navigate to onboarding or home once those screens exist
-          // context.go(RouteNames.home);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Welcome, ${state.user.name}!'),
+              content: Text('Account created for ${state.user.name}! Please login.'),
               backgroundColor: AppColors.success,
             ),
           );
+          context.go(RouteNames.login);
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
