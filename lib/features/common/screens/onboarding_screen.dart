@@ -327,20 +327,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             horizontal: 24.0,
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Get Started',
-                              style: TextStyle(
+                              _currentPage < _pages.length - 1
+                                  ? 'Next'
+                                  : 'Get Started',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 17.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.2,
                               ),
                             ),
-                            SizedBox(width: 8.0),
-                            Icon(
+                            const SizedBox(width: 8.0),
+                            const Icon(
                               Icons.arrow_forward_rounded,
                               color: Colors.white,
                               size: 20.0,

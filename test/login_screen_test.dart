@@ -76,6 +76,7 @@ void main() {
     expect(find.text('Forgot Password?'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
     expect(find.text('or continue with'), findsOneWidget);
+    expect(find.text('Sign in with Google'), findsOneWidget);
     expect(find.text("Don't have an account? "), findsOneWidget);
     expect(find.text('Sign up for free'), findsOneWidget);
   });

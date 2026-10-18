@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,6 +9,7 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/constants/grade_level.dart';
 import '../../../core/router/route_names.dart';
 import '../bloc/auth_bloc.dart';
+import '../widgets/animated_auth_background.dart';
 
 /// Registration / Sign Up screen designed to match the Figma CSS specification.
 /// Features atmospheric blur glows, glassmorphic registration card,
@@ -91,46 +91,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         fit: StackFit.expand,
         children: [
           // ==========================================
-          // 1. ATMOSPHERIC BACKGROUND GLOWS
+          // 1. ATMOSPHERIC BACKGROUND GLOWS (ANIMATED)
           // ==========================================
-
-          // Top-right Light Blue Glow (500x500 blur sphere)
-          Positioned(
-            top: -88.8,
-            right: -39.0,
-            child: IgnorePointer(
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                child: Container(
-                  width: 500,
-                  height: 500,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.orange500.withValues(alpha: 0.2),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Bottom-left Orange Glow (400x400 blur sphere)
-          Positioned(
-            bottom: -88.8,
-            left: -39.0,
-            child: IgnorePointer(
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                child: Container(
-                  width: 400,
-                  height: 400,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.glowBlue.withValues(alpha: 0.2),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const AnimatedAuthBackground(),
 
           // ==========================================
           // 2. MAIN REGISTRATION CONTENT
@@ -147,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                      borderRadius: AppRadius.roundedXl,
+                      borderRadius: BorderRadius.circular(24.0),
                       border: Border.all(color: AppColors.borderVariant),
                       boxShadow: AppElevation.elevationLg,
                     ),
