@@ -5,6 +5,8 @@ import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
+import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
+import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -47,14 +49,39 @@ class AppRouter {
       GoRoute(
         path: RouteNames.gradeDashboard,
         name: 'gradeDashboard',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Grade Dashboard Screen'))),
+        builder: (context, state) => const Grade12MatricExamScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.examSimulator,
+        name: 'examSimulator',
+        builder: (context, state) => const Grade12MatricExamScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.grade12MatricExam,
+        name: 'grade12MatricExam',
+        builder: (context, state) => const Grade12MatricExamScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.subjectExams,
+        name: 'subjectExams',
+        builder: (context, state) {
+          final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          final stream = state.uri.queryParameters['stream'] ?? 'NATURAL SCIENCE STREAM';
+          final subtitle = state.uri.queryParameters['subtitle'] ?? 'Official National University Entrance Papers';
+          return Grade12SubjectExamsScreen(
+            subjectTitle: title,
+            streamTitle: stream,
+            subtitle: subtitle,
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.subjectDetail,
         name: 'subjectDetail',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Subject Detail Screen'))),
+        builder: (context, state) {
+          final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          return Grade12SubjectExamsScreen(subjectTitle: title);
+        },
       ),
       GoRoute(
         path: RouteNames.quiz,

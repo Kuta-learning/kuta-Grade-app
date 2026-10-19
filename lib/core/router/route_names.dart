@@ -14,6 +14,13 @@ class RouteNames {
   static const String subjectDetail = '/subject-detail';
   static const String quiz = '/quiz';
 
+  // Grade 12 Matric Exam Simulator route
+  static const String examSimulator = '/exam-simulator';
+  static const String grade12MatricExam = '/grade-12-matric-exam';
+
+  // Grade 12 Subject national exam papers list
+  static const String subjectExams = '/subject-exams';
+
   // Profile route
   static const String profile = '/profile';
 

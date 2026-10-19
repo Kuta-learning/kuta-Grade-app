@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/constants/grade_level.dart';
 import '../../../core/router/route_names.dart';
 import '../bloc/auth_bloc.dart';
 
@@ -60,7 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
 
-          if (state.user.isKgStudent) {
+          if (state.user.gradeLevel == GradeLevel.grade12) {
+            context.go(RouteNames.examSimulator);
+          } else if (state.user.isKgStudent) {
             context.go(RouteNames.kgHome);
           } else {
             context.go(RouteNames.gradeDashboard);
