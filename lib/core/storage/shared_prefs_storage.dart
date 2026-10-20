@@ -12,6 +12,14 @@ class SharedPrefsStorage implements LocalStorage {
   static SharedPrefsStorage? _instance;
   static SharedPreferences? _prefs;
 
+  /// Synchronous accessor once warmed up in [main].
+  static SharedPrefsStorage get instance {
+    assert(_instance != null, 'SharedPrefsStorage not initialized. Call getInstance() first.');
+    return _instance!;
+  }
+
+  static SharedPrefsStorage? get instanceOrNull => _instance;
+
   /// Call once in [main] before [runApp] to warm-up the instance.
   static Future<SharedPrefsStorage> getInstance() async {
     if (_instance == null) {

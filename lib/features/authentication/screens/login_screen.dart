@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../core/constants/grade_level.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
+import '../widgets/animated_auth_background.dart';
 
 /// Unified Login Screen designed to match the reference design.
 /// Features a sky-blue to warm-peach vertical gradient, an elevated white card,
@@ -52,29 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Welcome back, ${state.user.name}!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-
-          if (state.user.gradeLevel == GradeLevel.grade12) {
-            context.go(RouteNames.examSimulator);
-          } else if (state.user.isKgStudent) {
-            context.go(RouteNames.kgHome);
-          } else {
-            context.go(RouteNames.gradeDashboard);
+          final destination = await AppRouter.resolveInitialRoute();
+          if (context.mounted) {
+            context.go(destination);
           }
         } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          AppSnackBar.showError(context, state.message);
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
@@ -82,20 +71,12 @@ class _LoginScreenState extends State<LoginScreen> {
           final isLoading = state is AuthLoading;
 
           return Scaffold(
-            body: Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFD4E5F9), // Soft sky blue
-                    Color(0xFFFAF0E7), // Soft warm peach / cream
-                  ],
-                ),
-              ),
-              child: SafeArea(
+            backgroundColor: AppColors.surfaceApp,
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                const AnimatedAuthBackground(),
+                SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -243,6 +224,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ],
                                   ),
+
+                                  const SizedBox(height: 20),
+
+                                  // --- Sign in with Google Button ---
+                                  _buildGoogleSignInButton(),
                                 ],
                               ),
                             ),
@@ -283,8 +269,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-            ),
-          );
+            ],
+          ),
+        );
         },
       ),
     );
@@ -484,6 +471,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleSignInButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          AppSnackBar.showInfo(context, 'Google Sign-In initiated...');
+        },
+        borderRadius: BorderRadius.circular(9999),
+        child: Ink(
+          height: 52,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(9999),
+            border: Border.all(color: AppColors.borderVariant, width: 1),
+            boxShadow: AppElevation.elevation1,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(AppIcons.googleSvg, width: 20, height: 20),
+              const SizedBox(width: 10),
+              Text('Sign in with Google', style: AppTypography.labelMd),
+            ],
           ),
         ),
       ),

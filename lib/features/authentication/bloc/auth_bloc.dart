@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
 import '../models/register_request.dart';
 import '../models/user_model.dart';
@@ -17,9 +18,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(this._authService) : super(const AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<RegisterRequested>(_onRegisterRequested);
+    on<AcademicProfileUpdated>(_onAcademicProfileUpdated);
     on<LoginRequested>(_onLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
   }
+
+  /// Exposes the underlying [AuthService] so child widgets/blocs can share
+  /// the same singleton instance without creating a duplicate.
+  AuthService get authService => _authService;
 
   // ── Session Check ──────────────────────────────────────────────────────
   Future<void> _onAuthCheckRequested(
@@ -58,6 +64,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthFailure(e.message));
     } catch (_) {
       emit(const AuthFailure('Something went wrong. Please try again.'));
+    }
+  }
+
+  // ── Update Academic Profile ───────────────────────────────────────────
+  Future<void> _onAcademicProfileUpdated(
+    AcademicProfileUpdated event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final updated = await _authService.updateAcademicProfile(
+        gradeLevel: event.gradeLevel,
+        stream: event.stream,
+      );
+      emit(AuthAuthenticated(updated));
+    } catch (_) {
+      // Keep existing state on error
     }
   }
 

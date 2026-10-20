@@ -7,7 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../core/router/route_names.dart';
+import '../../../core/router/app_router.dart';
 
 /// Splash Screen designed from the design tokens and layout specifications.
 /// Features ambient atmospheric blur glows, central branding badge with accent dot,
@@ -45,9 +45,12 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    _controller.addStatusListener((status) {
+    _controller.addStatusListener((status) async {
       if (status == AnimationStatus.completed && mounted) {
-        context.go(RouteNames.onboarding);
+        final destination = await AppRouter.resolveInitialRoute();
+        if (mounted) {
+          context.go(destination);
+        }
       }
     });
   }

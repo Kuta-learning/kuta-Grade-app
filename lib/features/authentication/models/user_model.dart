@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
 
 /// User model containing authentication and grade identity.
@@ -8,12 +9,14 @@ class UserModel {
   final String email;
   final String name;
   final GradeLevel gradeLevel;
+  final AcademicStream? academicStream;
 
   const UserModel({
     required this.id,
     required this.email,
     required this.name,
     required this.gradeLevel,
+    this.academicStream,
   });
 
   bool get isKgStudent => gradeLevel.isKg;
@@ -29,6 +32,7 @@ class UserModel {
         (g) => g.name == (json['gradeLevel'] as String),
         orElse: () => GradeLevel.values.first,
       ),
+      academicStream: AcademicStream.fromString(json['academicStream'] as String?),
     );
   }
 
@@ -37,6 +41,7 @@ class UserModel {
         'email': email,
         'name': name,
         'gradeLevel': gradeLevel.name,
+        if (academicStream != null) 'academicStream': academicStream!.name,
       };
 
   /// Encode to JSON string for [SharedPreferences] storage.
@@ -58,23 +63,37 @@ class UserModel {
     String? email,
     String? name,
     GradeLevel? gradeLevel,
+    AcademicStream? academicStream,
   }) {
     return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
       name: name ?? this.name,
       gradeLevel: gradeLevel ?? this.gradeLevel,
+      academicStream: academicStream ?? this.academicStream,
     );
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserModel && runtimeType == other.runtimeType && id == other.id;
+      other is UserModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          email == other.email &&
+          name == other.name &&
+          gradeLevel == other.gradeLevel &&
+          academicStream == other.academicStream;
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode =>
+      id.hashCode ^
+      email.hashCode ^
+      name.hashCode ^
+      gradeLevel.hashCode ^
+      academicStream.hashCode;
 
   @override
-  String toString() => 'UserModel(id: $id, email: $email, name: $name, grade: $gradeLevel)';
+  String toString() =>
+      'UserModel(id: $id, email: $email, name: $name, grade: ${gradeLevel.name}, stream: ${academicStream?.name})';
 }

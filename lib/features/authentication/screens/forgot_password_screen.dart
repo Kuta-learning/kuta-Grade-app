@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 /// Forgot Password screen designed to match the reference design specification.
 /// Features a warm peach-to-blue background gradient, custom reset badge,
@@ -40,13 +41,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = false);
 
     final email = _emailController.text.trim();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Password reset instructions have been sent to $email.',
-        ),
-        backgroundColor: AppColors.success,
-      ),
+    AppSnackBar.showSuccess(
+      context,
+      'Reset link sent to $email.',
+      title: 'Check Your Inbox',
     );
   }
 
