@@ -71,7 +71,7 @@ class _GradeSelectionView extends StatelessWidget {
           if (grade == GradeLevel.kg) {
             context.go(RouteNames.kgHome);
           } else {
-            context.go(RouteNames.gradeDashboard);
+            context.go(RouteNames.grade12MatricExam);
           }
         } else if (state.status == AcademicSelectionStatus.failure &&
             state.errorMessage != null) {

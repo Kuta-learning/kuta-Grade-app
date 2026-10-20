@@ -405,6 +405,7 @@ class _GradeDashboardScreenState extends State<GradeDashboardScreen> {
               accuracy: '84%',
               icon: Icons.calculate_rounded,
               color: const Color(0xFF2563EB),
+              navigateTo: RouteNames.grade12MatricExam,
             ),
             _SubjectCardItem(
               title: 'Physics',
@@ -412,6 +413,7 @@ class _GradeDashboardScreenState extends State<GradeDashboardScreen> {
               accuracy: '76%',
               icon: Icons.science_rounded,
               color: const Color(0xFFEA580C),
+              navigateTo: RouteNames.grade12MatricExam,
             ),
             _SubjectCardItem(
               title: 'Chemistry',
@@ -419,6 +421,7 @@ class _GradeDashboardScreenState extends State<GradeDashboardScreen> {
               accuracy: '81%',
               icon: Icons.biotech_rounded,
               color: const Color(0xFF16A34A),
+              navigateTo: RouteNames.grade12MatricExam,
             ),
             _SubjectCardItem(
               title: 'English',
@@ -426,6 +429,7 @@ class _GradeDashboardScreenState extends State<GradeDashboardScreen> {
               accuracy: '88%',
               icon: Icons.menu_book_rounded,
               color: const Color(0xFF9333EA),
+              navigateTo: RouteNames.grade12MatricExam,
             ),
           ]
         : [
@@ -469,68 +473,88 @@ class _GradeDashboardScreenState extends State<GradeDashboardScreen> {
             border: Border.all(color: AppColors.borderVariant),
             boxShadow: AppElevation.elevation1,
           ),
-          padding: const EdgeInsets.all(14.0),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: item.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(item.icon, color: item.color, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      style: AppTypography.headlineLg.copyWith(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${item.examsCount} Practice Exams Available',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.containerHigh,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16.0),
+            child: InkWell(
+              onTap: item.navigateTo != null
+                  ? () => context.push(item.navigateTo!)
+                  : null,
+              borderRadius: BorderRadius.circular(16.0),
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: Color(0xFF16A34A),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: item.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(item.icon, color: item.color, size: 22),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      item.accuracy,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: AppTypography.headlineLg.copyWith(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${item.examsCount} Practice Exams Available',
+                            style: AppTypography.bodyMd.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.containerHigh,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: Color(0xFF16A34A),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.accuracy,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (item.navigateTo != null) ...
+                      const [
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ],
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         );
       }).toList(),
@@ -587,6 +611,7 @@ class _SubjectCardItem {
   final String accuracy;
   final IconData icon;
   final Color color;
+  final String? navigateTo;
 
   _SubjectCardItem({
     required this.title,
@@ -594,5 +619,6 @@ class _SubjectCardItem {
     required this.accuracy,
     required this.icon,
     required this.color,
+    this.navigateTo,
   });
 }
