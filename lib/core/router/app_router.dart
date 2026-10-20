@@ -11,8 +11,8 @@ import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
-// TODO: import team dashboard screen here once merged from development
-import '../../features/kg/screens/kg_home_screen.dart';
+import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
+import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -67,8 +67,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.subjectDetail,
         name: 'subjectDetail',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Subject Detail Screen'))),
+        builder: (context, state) {
+          final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          return Grade12SubjectExamsScreen(subjectTitle: title);
+        },
       ),
       GoRoute(
         path: RouteNames.quiz,

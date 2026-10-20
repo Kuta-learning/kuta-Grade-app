@@ -17,7 +17,19 @@ class MockAuthService implements AuthService {
   @override
   Future<UserModel?> getCurrentUser() async {
     final raw = await _storage.getString(StorageKeys.authUser);
-    return UserModel.fromJsonString(raw);
+    final user = UserModel.fromJsonString(raw);
+    if (user != null && user.gradeLevel == GradeLevel.kg) {
+      final updatedUser = user.copyWith(
+        gradeLevel: GradeLevel.grade12,
+        name: user.name == 'Mock Student' ? 'Ruth' : user.name,
+      );
+      await _storage.setString(
+        StorageKeys.authUser,
+        updatedUser.toJsonString(),
+      );
+      return updatedUser;
+    }
+    return user;
   }
 
   @override
@@ -38,8 +50,8 @@ class MockAuthService implements AuthService {
     final user = UserModel(
       id: 'mock-user-001',
       email: email,
-      name: 'Mock Student',
-      gradeLevel: GradeLevel.values.first,
+      name: 'Ruth',
+      gradeLevel: GradeLevel.grade12,
     );
 
     await _storage.setString(StorageKeys.authUser, user.toJsonString());
