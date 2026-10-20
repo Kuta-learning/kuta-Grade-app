@@ -24,8 +24,8 @@ void main() {
       findsOneWidget,
     );
 
-    // Verify Get Started CTA button exists
-    expect(find.text('Get Started'), findsOneWidget);
+    // Verify Next CTA button exists
+    expect(find.text('Next'), findsOneWidget);
   });
 
   testWidgets('OnboardingScreen transitions through all 3 slides',
@@ -39,13 +39,15 @@ void main() {
 
     // Slide 1
     expect(find.text('Excel in Your Exams'), findsOneWidget);
+    expect(find.text('Next'), findsOneWidget);
 
-    // Tap Get Started to go to Slide 2
-    await tester.tap(find.text('Get Started'));
+    // Tap Next to go to Slide 2
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
     // Verify Slide 2 text
     expect(find.text('Learn at Your Pace'), findsOneWidget);
+    expect(find.text('Next'), findsOneWidget);
     expect(
       find.text(
         'Interactive lessons with videos, audio and quizzes designed to keep you engaged and motivated every day.',
@@ -53,12 +55,13 @@ void main() {
       findsOneWidget,
     );
 
-    // Tap Get Started to go to Slide 3
-    await tester.tap(find.text('Get Started'));
+    // Tap Next to go to Slide 3
+    await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
     // Verify Slide 3 text
     expect(find.text('Track Your Progress'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
     expect(
       find.text(
         'See how far you\'ve come. Complete lessons, earn badges and show your achievements to the world!',

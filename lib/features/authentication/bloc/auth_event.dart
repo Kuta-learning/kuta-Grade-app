@@ -15,13 +15,24 @@ final class RegisterRequested extends AuthEvent {
   final String name;
   final String email;
   final String password;
-  final GradeLevel gradeLevel;
+  final GradeLevel? gradeLevel;
 
   const RegisterRequested({
     required this.name,
     required this.email,
     required this.password,
+    this.gradeLevel,
+  });
+}
+
+/// Dispatched when the user selects their grade level and optional stream in the onboarding flow.
+final class AcademicProfileUpdated extends AuthEvent {
+  final GradeLevel gradeLevel;
+  final AcademicStream? stream;
+
+  const AcademicProfileUpdated({
     required this.gradeLevel,
+    this.stream,
   });
 }
 
