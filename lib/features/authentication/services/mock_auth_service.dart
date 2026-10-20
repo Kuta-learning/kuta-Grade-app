@@ -1,3 +1,4 @@
+import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
@@ -43,6 +44,11 @@ class MockAuthService implements AuthService {
 
     await _storage.setString(StorageKeys.authUser, user.toJsonString());
     await _storage.setString(StorageKeys.authToken, 'mock-token-abc123');
+    // If user has not explicitly set grade selection yet, default to true for existing logins
+    final existingGradeSelected = await _storage.getBool(StorageKeys.hasSelectedGrade);
+    if (existingGradeSelected == null) {
+      await _storage.setBool(StorageKeys.hasSelectedGrade, value: true);
+    }
     return user;
   }
 
@@ -62,18 +68,49 @@ class MockAuthService implements AuthService {
       id: 'mock-user-${DateTime.now().millisecondsSinceEpoch}',
       email: request.email,
       name: request.name,
-      gradeLevel: request.gradeLevel,
+      gradeLevel: request.gradeLevel ?? GradeLevel.grade6,
     );
 
     await _storage.setString(StorageKeys.authUser, user.toJsonString());
     await _storage.setString(StorageKeys.authToken, 'mock-token-${user.id}');
+    // Newly registered user has not selected their grade yet
+    await _storage.setBool(StorageKeys.hasSelectedGrade, value: false);
     return user;
   }
 
   @override
+  Future<UserModel> updateAcademicProfile({
+    required GradeLevel gradeLevel,
+    AcademicStream? stream,
+  }) async {
+    final current = await getCurrentUser();
+    final updated = (current ??
+            UserModel(
+              id: 'mock-user-${DateTime.now().millisecondsSinceEpoch}',
+              email: 'student@kuta.app',
+              name: 'Student',
+              gradeLevel: gradeLevel,
+              academicStream: stream,
+            ))
+        .copyWith(
+      gradeLevel: gradeLevel,
+      academicStream: stream,
+    );
+
+    await _storage.setString(StorageKeys.authUser, updated.toJsonString());
+    // Mark grade selection as completed in local storage
+    await _storage.setBool(StorageKeys.hasSelectedGrade, value: true);
+    return updated;
+  }
+
+  @override
   Future<void> logout() async {
+    // Clear user session and grade selection flag so registration/login is required again
     await _storage.remove(StorageKeys.authUser);
     await _storage.remove(StorageKeys.authToken);
     await _storage.remove(StorageKeys.authRefreshToken);
+    await _storage.remove(StorageKeys.hasSelectedGrade);
+    await _storage.remove(StorageKeys.hasSeenWelcomeSnackbar);
+    // Note: StorageKeys.hasSeenOnboarding is intentionally preserved so onboarding is only seen once
   }
 }

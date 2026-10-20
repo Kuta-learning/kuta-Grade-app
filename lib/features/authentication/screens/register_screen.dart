@@ -6,8 +6,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../core/constants/grade_level.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/animated_auth_background.dart';
 
@@ -28,16 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String? _selectedGrade;
-  GradeLevel? _selectedGradeLevel;
   bool _obscurePassword = true;
-
-  /// Maps display labels shown in the dropdown to [GradeLevel] enum values.
-  final Map<String, GradeLevel> _gradeLabelMap = {
-    for (final g in GradeLevel.values) g.displayName: g,
-  };
-
-  List<String> get _gradeOptions => _gradeLabelMap.keys.toList();
 
   @override
   void dispose() {
@@ -49,14 +40,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleSignUp() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_selectedGradeLevel == null) return;
 
     context.read<AuthBloc>().add(
           RegisterRequested(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            gradeLevel: _selectedGradeLevel!,
           ),
         );
   }
@@ -66,20 +55,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Account created for ${state.user.name}! Please login.'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          context.go(RouteNames.login);
+          context.go(RouteNames.gradeSelection);
         } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          AppSnackBar.showError(context, state.message);
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
@@ -156,13 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
 
                           AppSpacing.vGap4, // 16px gap
-                          // --- Field 2: Grade Level ---
-                          _buildLabel('Grade'),
-                          const SizedBox(height: 4),
-                          _buildGradeDropdown(),
-
-                          AppSpacing.vGap4, // 16px gap
-                          // --- Field 3: Email Address ---
+                          // --- Field 2: Email Address ---
                           _buildLabel('Email Address'),
                           const SizedBox(height: 4),
                           _buildTextInput(
@@ -377,73 +349,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildGradeDropdown() {
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedGrade,
-      icon: const SizedBox.shrink(),
-      style: AppTypography.bodyXl,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.inputFill,
-        prefixIcon: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Icon(
-            AppIcons.chevronDown,
-            color: AppColors.authIconBrown,
-            size: 18,
-          ),
-        ),
-        prefixIconConstraints: const BoxConstraints(
-          minWidth: 40,
-          minHeight: 20,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.roundedLg,
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.roundedLg,
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.roundedLg,
-          borderSide: const BorderSide(color: AppColors.mainAccent, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.roundedLg,
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.roundedLg,
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-      ),
-      hint: Text(
-        'Select your grade',
-        style: AppTypography.bodyXl.copyWith(color: AppColors.inputPlaceholder),
-      ),
-      items: _gradeOptions.map((grade) {
-        return DropdownMenuItem<String>(value: grade, child: Text(grade));
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedGrade = value;
-          _selectedGradeLevel = value != null ? _gradeLabelMap[value] : null;
-        });
-      },
-      validator: (val) {
-        if (val == null || val.isEmpty) {
-          return 'Please select your grade';
-        }
-        return null;
-      },
-    );
-  }
-
   Widget _buildPasswordInput() {
     return TextFormField(
       controller: _passwordController,
@@ -563,12 +468,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google Sign-In initiated...'),
-              backgroundColor: AppColors.info,
-            ),
-          );
+          AppSnackBar.showInfo(context, 'Google Sign-In initiated...');
         },
         borderRadius: BorderRadius.circular(9999),
         child: Ink(

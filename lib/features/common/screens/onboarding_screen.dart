@@ -8,6 +8,8 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/constants/asset_constants.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/storage/shared_prefs_storage.dart';
+import '../../../core/storage/storage_keys.dart';
 
 /// Onboarding screen displaying key product highlights matching the reference design.
 /// Features a soft ambient background, elevated landscape illustration with floating icons,
@@ -142,8 +144,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _navigateToRegister() {
-    context.go(RouteNames.register);
+  Future<void> _navigateToRegister() async {
+    // Record in local storage that onboarding has been completed
+    final storage = await SharedPrefsStorage.getInstance();
+    await storage.setBool(StorageKeys.hasSeenOnboarding, value: true);
+
+    if (mounted) {
+      context.go(RouteNames.register);
+    }
   }
 
   @override

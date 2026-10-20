@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kuta_learning_app/core/constants/academic_stream.dart';
 import 'package:kuta_learning_app/core/constants/grade_level.dart';
 import 'package:kuta_learning_app/features/authentication/bloc/auth_bloc.dart';
 import 'package:kuta_learning_app/features/authentication/models/register_request.dart';
@@ -31,7 +32,21 @@ class _FakeAuthService implements AuthService {
       id: 'test-123',
       email: request.email,
       name: request.name,
-      gradeLevel: request.gradeLevel,
+      gradeLevel: request.gradeLevel ?? GradeLevel.grade6,
+    );
+  }
+
+  @override
+  Future<UserModel> updateAcademicProfile({
+    required GradeLevel gradeLevel,
+    AcademicStream? stream,
+  }) async {
+    return UserModel(
+      id: 'test-123',
+      email: 'student@kuta.app',
+      name: 'Test Student',
+      gradeLevel: gradeLevel,
+      academicStream: stream,
     );
   }
 

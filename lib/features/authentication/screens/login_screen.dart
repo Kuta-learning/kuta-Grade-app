@@ -6,7 +6,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/animated_auth_background.dart';
 
@@ -54,27 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Welcome back, ${state.user.name}!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-
-          if (state.user.isKgStudent) {
-            context.go(RouteNames.kgHome);
-          } else {
-            context.go(RouteNames.gradeDashboard);
+          final destination = await AppRouter.resolveInitialRoute();
+          if (context.mounted) {
+            context.go(destination);
           }
         } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          AppSnackBar.showError(context, state.message);
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
@@ -493,12 +482,7 @@ class _LoginScreenState extends State<LoginScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google Sign-In initiated...'),
-              backgroundColor: AppColors.info,
-            ),
-          );
+          AppSnackBar.showInfo(context, 'Google Sign-In initiated...');
         },
         borderRadius: BorderRadius.circular(9999),
         child: Ink(

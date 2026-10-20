@@ -6,20 +6,20 @@ class RegisterRequest {
   final String name;
   final String email;
   final String password;
-  final GradeLevel gradeLevel;
+  final GradeLevel? gradeLevel;
 
   const RegisterRequest({
     required this.name,
     required this.email,
     required this.password,
-    required this.gradeLevel,
+    this.gradeLevel,
   });
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'email': email,
         'password': password,
-        'gradeLevel': gradeLevel.name,
+        if (gradeLevel != null) 'gradeLevel': gradeLevel!.name,
       };
 
   @override

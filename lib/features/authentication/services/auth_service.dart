@@ -1,3 +1,5 @@
+import '../../../core/constants/academic_stream.dart';
+import '../../../core/constants/grade_level.dart';
 import '../models/register_request.dart';
 import '../models/user_model.dart';
 
@@ -16,6 +18,12 @@ abstract class AuthService {
   /// Registers a new user using the provided [request].
   /// Throws [AuthException] on failure.
   Future<UserModel> register(RegisterRequest request);
+
+  /// Updates the academic profile (grade level and optional stream) of the current user.
+  Future<UserModel> updateAcademicProfile({
+    required GradeLevel gradeLevel,
+    AcademicStream? stream,
+  });
 
   /// Signs out the current user and clears the local session.
   Future<void> logout();
