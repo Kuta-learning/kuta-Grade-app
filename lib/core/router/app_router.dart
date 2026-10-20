@@ -11,7 +11,7 @@ import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
-import '../../features/grades/shared/screens/grade_dashboard_screen.dart';
+// TODO: import team dashboard screen here once merged from development
 import '../../features/kg/screens/kg_home_screen.dart';
 import 'route_names.dart';
 
@@ -59,7 +59,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.gradeDashboard,
         name: 'gradeDashboard',
-        builder: (context, state) => const GradeDashboardScreen(),
+        // TODO: replace with team dashboard screen once merged from development
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Dashboard — coming from development branch')),
+        ),
       ),
       GoRoute(
         path: RouteNames.subjectDetail,
