@@ -50,7 +50,7 @@ dependencies:
   flutter_svg: ^2.3.0
 
   # ── Animation ──────────────────────────────────────
-  rive: ^0.13.19
+  rive: ^0.14.11
 
 dev_dependencies:
   flutter_test:
