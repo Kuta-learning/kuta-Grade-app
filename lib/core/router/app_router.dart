@@ -13,8 +13,9 @@ import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
-import '../../features/grades/shared/screens/grade_dashboard_screen.dart';
+import '../../features/grades/shared/screens/bookmarks_screen.dart';
 import '../../features/kg/screens/kg_home_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -46,7 +47,11 @@ class AppRouter {
       GoRoute(
         path: RouteNames.gradeSelection,
         name: 'gradeSelection',
-        builder: (context, state) => const GradeSelectionScreen(),
+        builder: (context, state) {
+          final stepParam = state.uri.queryParameters['step'];
+          final initialStep = int.tryParse(stepParam ?? '1') ?? 1;
+          return GradeSelectionScreen(initialStep: initialStep);
+        },
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
@@ -57,11 +62,6 @@ class AppRouter {
         path: RouteNames.kgHome,
         name: 'kgHome',
         builder: (context, state) => const KgHomeScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.gradeDashboard,
-        name: 'gradeDashboard',
-        builder: (context, state) => const GradeDashboardScreen(),
       ),
       GoRoute(
         path: RouteNames.grade12MatricExam,
@@ -97,10 +97,14 @@ class AppRouter {
             const Scaffold(body: Center(child: Text('Quiz Screen'))),
       ),
       GoRoute(
+        path: RouteNames.bookmarks,
+        name: 'bookmarks',
+        builder: (context, state) => const BookmarksScreen(),
+      ),
+      GoRoute(
         path: RouteNames.profile,
         name: 'profile',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Profile Screen'))),
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

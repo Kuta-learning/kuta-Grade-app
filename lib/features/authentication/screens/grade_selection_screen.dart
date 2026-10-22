@@ -15,28 +15,40 @@ import '../bloc/auth_bloc.dart';
 /// and (for Grade 12) their academic specialization stream (Natural vs Social Science).
 /// Integrates with [AcademicSelectionBloc] for dynamic step calculation and state persistence.
 class GradeSelectionScreen extends StatelessWidget {
-  const GradeSelectionScreen({super.key});
+  final int initialStep;
+  const GradeSelectionScreen({super.key, this.initialStep = 1});
 
   @override
   Widget build(BuildContext context) {
-    // If AuthBloc is available in context (standard app runtime), instantiate AcademicSelectionBloc wired to it.
-    // If not (e.g. In isolated widget tests providing AcademicSelectionBloc directly), render view directly.
-    final hasAuthBloc =
-        context.findAncestorWidgetOfExactType<BlocProvider<AuthBloc>>() != null;
+    // Check if AcademicSelectionBloc is already provided (e.g. in tests)
+    AcademicSelectionBloc? existingBloc;
+    try {
+      existingBloc = context.read<AcademicSelectionBloc>();
+    } catch (_) {}
 
-    if (!hasAuthBloc) {
+    if (existingBloc != null) {
+      if (initialStep == 2 && existingBloc.state.currentStep != 2) {
+        existingBloc.add(const ChangeStep(2));
+      }
+      return const _GradeSelectionView();
+    }
+
+    AuthBloc? authBloc;
+    try {
+      authBloc = context.read<AuthBloc>();
+    } catch (_) {}
+
+    if (authBloc == null) {
       return const _GradeSelectionView();
     }
 
     // Provide AcademicSelectionBloc wired to AuthBloc's shared service
     return BlocProvider(
-      create: (ctx) {
-        final authBloc = ctx.read<AuthBloc>();
-        return AcademicSelectionBloc(
-          authService: authBloc.authService,
-          authBloc: authBloc,
-        );
-      },
+      create: (_) => AcademicSelectionBloc(
+        authService: authBloc!.authService,
+        authBloc: authBloc,
+        initialStep: initialStep,
+      ),
       child: const _GradeSelectionView(),
     );
   }

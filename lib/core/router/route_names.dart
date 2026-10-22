@@ -11,7 +11,6 @@ class RouteNames {
   static const String kgHome = '/kg-home';
 
   // Shared Grade routes (Grade 6, 8, 12)
-  static const String gradeDashboard = '/grade-dashboard';
   static const String subjectDetail = '/subject-detail';
   static const String quiz = '/quiz';
 
@@ -22,8 +21,9 @@ class RouteNames {
   // Grade 12 Subject national exam papers list
   static const String subjectExams = '/subject-exams';
 
-  // Profile route
+  // Profile and Bookmarks routes
   static const String profile = '/profile';
+  static const String bookmarks = '/bookmarks';
 
   RouteNames._();
 }
