@@ -6,7 +6,6 @@ import '../storage/storage_keys.dart';
 import '../../features/authentication/bloc/auth_bloc.dart';
 import '../../features/authentication/models/user_model.dart';
 import '../../features/authentication/screens/grade_selection_screen.dart';
-import '../constants/grade_level.dart';
 import '../../features/authentication/screens/login_screen.dart';
 import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
@@ -18,7 +17,8 @@ import '../../features/common/screens/splash_screen.dart';
 import '../../features/kg/screens/kg_home_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
-import '../../features/grades/shared/screens/grade_dashboard_screen.dart';
+import '../../features/grades/shared/screens/bookmarks_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -52,7 +52,11 @@ class AppRouter {
       GoRoute(
         path: RouteNames.gradeSelection,
         name: 'gradeSelection',
-        builder: (context, state) => const GradeSelectionScreen(),
+        builder: (context, state) {
+          final stepParam = state.uri.queryParameters['step'];
+          final initialStep = int.tryParse(stepParam ?? '1') ?? 1;
+          return GradeSelectionScreen(initialStep: initialStep);
+        },
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
@@ -82,42 +86,14 @@ class AppRouter {
         builder: (context, state) => const KgHomeScreen(),
       ),
       GoRoute(
-        path: RouteNames.gradeDashboard,
-        name: 'gradeDashboard',
-        builder: (context, state) {
-          final extraGrade = state.extra as GradeLevel?;
-          final authState = context.read<AuthBloc>().state;
-          final user = authState is AuthAuthenticated ? authState.user : null;
-          final grade = extraGrade ?? user?.gradeLevel ?? GradeLevel.grade12;
-          return GradeDashboardScreen(gradeLevel: grade);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.examSimulator,
-        name: 'examSimulator',
-        builder: (context, state) => const Grade12MatricExamScreen(),
-      ),
-      GoRoute(
         path: RouteNames.grade12MatricExam,
         name: 'grade12MatricExam',
         builder: (context, state) => const Grade12MatricExamScreen(),
       ),
       GoRoute(
-        path: RouteNames.subjectExams,
-        name: 'subjectExams',
-        builder: (context, state) {
-          final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
-          final stream =
-              state.uri.queryParameters['stream'] ?? 'NATURAL SCIENCE STREAM';
-          final subtitle =
-              state.uri.queryParameters['subtitle'] ??
-              'Official National University Entrance Papers';
-          return Grade12SubjectExamsScreen(
-            subjectTitle: title,
-            streamTitle: stream,
-            subtitle: subtitle,
-          );
-        },
+        path: RouteNames.examSimulator,
+        name: 'examSimulator',
+        builder: (context, state) => const Grade12MatricExamScreen(),
       ),
       GoRoute(
         path: RouteNames.subjectDetail,
@@ -128,16 +104,34 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: RouteNames.subjectExams,
+        name: 'subjectExams',
+        builder: (context, state) {
+          final subject =
+              state.uri.queryParameters['subject'] ?? 'Mathematics';
+          final subtitle = state.uri.queryParameters['subtitle'] ??
+              'Official National University Entrance Papers';
+          return Grade12SubjectExamsScreen(
+            subjectTitle: subject,
+            subtitle: subtitle,
+          );
+        },
+      ),
+      GoRoute(
         path: RouteNames.quiz,
         name: 'quiz',
         builder: (context, state) =>
             const Scaffold(body: Center(child: Text('Quiz Screen'))),
       ),
       GoRoute(
+        path: RouteNames.bookmarks,
+        name: 'bookmarks',
+        builder: (context, state) => const BookmarksScreen(),
+      ),
+      GoRoute(
         path: RouteNames.profile,
         name: 'profile',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Profile Screen'))),
+        builder: (context, state) => const ProfileScreen(),
       ),
       // ── DEV ONLY: Animation preview ────────────────────────────
       GoRoute(
@@ -155,7 +149,7 @@ class AppRouter {
   /// 1. If the user has NOT seen onboarding -> [RouteNames.onboarding]
   /// 2. If the user has seen onboarding, but has NOT registered/authenticated -> [RouteNames.register]
   /// 3. If the user is authenticated, but has NOT selected their grade level -> [RouteNames.gradeSelection]
-  /// 4. If the user is authenticated AND has selected their grade level -> [RouteNames.examSimulator] / [RouteNames.gradeDashboard] (or [RouteNames.kgHome])
+  /// 4. If the user is authenticated AND has selected their grade level -> [RouteNames.grade12MatricExam] (or [RouteNames.kgHome])
   static Future<String> resolveInitialRoute() async {
     final storage = await SharedPrefsStorage.getInstance();
 
@@ -186,7 +180,7 @@ class AppRouter {
     if (user != null && user.isKgStudent) {
       return RouteNames.kgHome;
     }
-    return RouteNames.gradeDashboard;
+    return RouteNames.grade12MatricExam;
   }
 
   /// Erases all navigation and session preferences from [SharedPreferences]

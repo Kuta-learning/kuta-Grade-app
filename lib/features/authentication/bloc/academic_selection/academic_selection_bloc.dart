@@ -21,11 +21,13 @@ class AcademicSelectionBloc
     AuthBloc? authBloc,
     GradeLevel initialGrade = GradeLevel.grade12,
     AcademicStream? initialStream = AcademicStream.natural,
+    int initialStep = 1,
   })  : _authService = authService,
         _authBloc = authBloc,
         super(AcademicSelectionState(
           selectedGrade: initialGrade,
           selectedStream: initialStream,
+          currentStep: initialStep,
         )) {
     on<SelectGrade>(_onSelectGrade);
     on<SelectStream>(_onSelectStream);

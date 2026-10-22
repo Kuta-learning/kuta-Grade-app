@@ -49,7 +49,7 @@ void main() {
   });
 
   test(
-      'Registered user who completed grade selection resolves to RouteNames.gradeDashboard',
+      'Registered user who completed grade selection resolves to RouteNames.grade12MatricExam',
       () async {
     final storage = await SharedPrefsStorage.getInstance();
     await storage.setBool(StorageKeys.hasSeenOnboarding, value: true);
@@ -65,7 +65,7 @@ void main() {
     await storage.setBool(StorageKeys.hasSelectedGrade, value: true);
 
     final route = await AppRouter.resolveInitialRoute();
-    expect(route, RouteNames.gradeDashboard);
+    expect(route, RouteNames.grade12MatricExam);
   });
 
   test('KG student who completed grade selection resolves to RouteNames.kgHome',

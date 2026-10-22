@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../core/storage/shared_prefs_storage.dart';
 import '../../../../core/storage/storage_keys.dart';
@@ -11,6 +12,7 @@ import '../../../authentication/bloc/auth_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../services/national_exam_service.dart';
+import '../../shared/widgets/grade_screen_shell.dart';
 
 /// Grade 12 National University Entrance Exam Preparation & Simulator Screen.
 /// Matches the reference design with high visual accuracy.
@@ -85,13 +87,13 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     AppSnackBar.showWelcome(context, name: name, subtitle: subtitle);
   }
 
-  static const Color _primaryBlue = Color(0xFF1B5EB8);
-  static const Color _pageBackground = Color(0xFFF4F6F9);
-  static const Color _orangeAccent = Color(0xFFEA580C);
-  static const Color _emeraldGreen = Color(0xFF10B981);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
-  static const Color _cardBorder = Color(0xFFF1F5F9);
+  static const Color _primaryBlue = AppColors.brandPrimary;
+  static const Color _pageBackground = AppColors.surfaceApp;
+  static const Color _orangeAccent = AppColors.accentHover;
+  static const Color _emeraldGreen = AppColors.success;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
+  static const Color _cardBorder = AppColors.containerHigh;
 
   final List<_ExamSubjectItem> _subjects = const [
     _ExamSubjectItem(
@@ -285,75 +287,17 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
 
   /// App Bar matching the screenshot
   Widget _buildCustomAppBar(BuildContext context) {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-            splashRadius: 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          Expanded(
-            child: Text(
-              'Exam Simulator',
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                letterSpacing: -0.3,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.bookmark_border_rounded,
-              color: Colors.white,
-              size: 23,
-            ),
-            splashRadius: 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bookmarks updated'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 6),
-          InkWell(
-            onTap: () {
-              context.push(RouteNames.profile);
-            },
-            borderRadius: BorderRadius.circular(17),
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFB45309), // Warm terracotta/brown avatar
-              ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return GradeExamAppBar(
+      title: 'Exam Simulator',
+      onBackPressed: () {
+        context.go('${RouteNames.gradeSelection}?step=2');
+      },
+      onBookmarkPressed: () {
+        context.push(RouteNames.bookmarks);
+      },
+      onProfilePressed: () {
+        context.push(RouteNames.profile);
+      },
     );
   }
 
@@ -596,7 +540,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
       child: InkWell(
         onTap: () {
           final encodedSubject = Uri.encodeComponent(subject.title);
-          final encodedSubtitle = Uri.encodeComponent(subject.subtitle);
+          final encodedSubtitle = Uri.encodeComponent('Official National University Entrance Papers');
           context.push(
             '${RouteNames.subjectExams}?subject=$encodedSubject&subtitle=$encodedSubtitle',
           );
@@ -754,105 +698,18 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     );
   }
 
-  /// Bottom Navigation Bar with 4 items matching reference
+  /// Bottom Navigation Bar reusing the shared GradeBottomNavBar component
   Widget _buildBottomNav(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-        ),
-      ),
-      padding: EdgeInsets.only(
-        top: 6,
-        bottom: bottomInset > 0 ? bottomInset : 6,
-      ),
-      child: Row(
-        children: [
-          _buildBottomNavItem(
-            index: 0,
-            label: 'Exams',
-            icon: Icons.assignment_outlined,
-            onTap: () {
-              setState(() {
-                _selectedBottomNavIndex = 0;
-              });
-            },
-          ),
-          _buildBottomNavItem(
-            index: 1,
-            label: 'Notes',
-            icon: Icons.article_outlined,
-            onTap: () {
-              setState(() {
-                _selectedBottomNavIndex = 1;
-              });
-            },
-          ),
-          _buildBottomNavItem(
-            index: 2,
-            label: 'Practice',
-            icon: Icons.edit_note_rounded,
-            onTap: () {
-              setState(() {
-                _selectedBottomNavIndex = 2;
-              });
-            },
-          ),
-          _buildBottomNavItem(
-            index: 3,
-            label: 'Profile',
-            icon: Icons.person_outline_rounded,
-            onTap: () {
-              setState(() {
-                _selectedBottomNavIndex = 3;
-              });
-              context.push(RouteNames.profile);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem({
-    required int index,
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = _selectedBottomNavIndex == index;
-    final color = isSelected ? _orangeAccent : _textSecondary;
-
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: color,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return GradeBottomNavBar(
+      currentIndex: _selectedBottomNavIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedBottomNavIndex = index;
+        });
+        if (index == 3) {
+          context.push(RouteNames.profile);
+        }
+      },
     );
   }
   _ExamSubjectItem _fromBackendSubject(NationalExamSubjectModel model) {
