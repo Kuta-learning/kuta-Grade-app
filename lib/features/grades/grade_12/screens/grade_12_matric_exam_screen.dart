@@ -4,6 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/router/route_names.dart';
+import '../../../../core/storage/shared_prefs_storage.dart';
+import '../../../../core/storage/storage_keys.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../authentication/bloc/auth_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../models/national_exam_dashboard_model.dart';
+import '../services/national_exam_service.dart';
 
 /// Grade 12 National University Entrance Exam Preparation & Simulator Screen.
 /// Matches the reference design with high visual accuracy.
@@ -19,6 +26,64 @@ typedef ExamSimulatorScreen = Grade12MatricExamScreen;
 
 class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
   int _selectedBottomNavIndex = 0;
+  NationalExamDashboardModel? _dashboardData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showWelcomeSnackbarOnce();
+    });
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final service = NationalExamService();
+      final data = await service.getDashboard();
+      if (mounted) {
+        setState(() {
+          _dashboardData = data;
+        });
+      }
+    } catch (_) {
+      // Gracefully fall back to reference design items
+    }
+  }
+
+  void _showWelcomeSnackbarOnce() async {
+    final storage = SharedPrefsStorage.instanceOrNull;
+    if (storage == null) return;
+    final alreadySeen =
+        await storage.getBool(StorageKeys.hasSeenWelcomeSnackbar) ?? false;
+    if (alreadySeen || !mounted) return;
+
+    await storage.setBool(StorageKeys.hasSeenWelcomeSnackbar, value: true);
+    if (!mounted) return;
+
+    String name = 'Student';
+    String? subtitle = 'Grade 12 • Natural Science';
+    try {
+      final authBloc =
+          context.findAncestorWidgetOfExactType<BlocProvider<AuthBloc>>() !=
+                  null
+              ? context.read<AuthBloc>()
+              : null;
+      if (authBloc != null) {
+        final freshUser = await authBloc.authService.getCurrentUser();
+        if (freshUser?.name != null && freshUser!.name.trim().isNotEmpty) {
+          name = freshUser.name.trim();
+        }
+        final streamName = freshUser?.academicStream?.displayName;
+        if (streamName != null) {
+          subtitle = 'Grade 12 • $streamName';
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    AppSnackBar.showWelcome(context, name: name, subtitle: subtitle);
+  }
 
   static const Color _primaryBlue = Color(0xFF1B5EB8);
   static const Color _pageBackground = Color(0xFFF4F6F9);
@@ -173,7 +238,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                           ),
                         ),
                         Text(
-                          '6 Subjects',
+                          '${_dashboardData?.subjectsCount ?? _subjects.length} Subjects',
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
@@ -200,7 +265,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
-                  children: _subjects.map((subject) {
+                  children: _displaySubjects.map((subject) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _buildSubjectCard(context, subject),
@@ -309,7 +374,9 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome back, Ruth!',
+            _dashboardData != null && _dashboardData!.student.name.isNotEmpty
+                ? 'Welcome back, ${_dashboardData!.student.name}!'
+                : 'Welcome back, Ruth!',
             style: GoogleFonts.inter(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -319,7 +386,9 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
           ),
           const SizedBox(height: 3),
           Text(
-            'Grade 12 Natural Science',
+            _dashboardData != null
+                ? 'Grade ${_dashboardData!.student.gradeLevel} ${_dashboardData!.student.stream == 'SOCIAL' ? 'Social' : 'Natural'} Science'
+                : 'Grade 12 Natural Science',
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
@@ -375,7 +444,9 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Physics 2022 National Exam',
+                      _dashboardData?.bannerExam != null
+                          ? '${_dashboardData!.bannerExam!.subjectName} ${_dashboardData!.bannerExam!.title}'
+                          : 'Physics 2022 National Exam',
                       style: GoogleFonts.inter(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
@@ -396,7 +467,9 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            '42 mins remaining',
+                            _dashboardData?.bannerExam != null
+                                ? _dashboardData!.bannerExam!.formattedRemainingTime
+                                : '42 mins remaining',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -480,7 +553,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Resume Exam',
+                        _dashboardData?.bannerExam?.action ?? 'Resume Exam',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -781,6 +854,35 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
         ),
       ),
     );
+  }
+  _ExamSubjectItem _fromBackendSubject(NationalExamSubjectModel model) {
+    final pctInt = model.progressPercentage.round();
+    final progressVal = (model.progressPercentage / 100.0).clamp(0.0, 1.0);
+    final color = model.parsedColor;
+
+    return _ExamSubjectItem(
+      title: model.name,
+      subtitle: model.subcategories.isNotEmpty
+          ? model.subcategories
+          : (model.stream == 'COMMON'
+              ? 'Common Track'
+              : '${model.stream} Science Track'),
+      progress: progressVal,
+      progressText: '$pctInt%',
+      progressColor: pctInt >= 50 ? _emeraldGreen : _orangeAccent,
+      icon: model.iconData,
+      iconBgColor: model.iconBackgroundColor,
+      iconColor: color,
+      historyText: '${model.totalExams} Exam Papers Available',
+      questionsText: '${model.totalQuestions} Questions',
+    );
+  }
+
+  List<_ExamSubjectItem> get _displaySubjects {
+    if (_dashboardData != null && _dashboardData!.subjects.isNotEmpty) {
+      return _dashboardData!.subjects.map(_fromBackendSubject).toList();
+    }
+    return _subjects;
   }
 }
 

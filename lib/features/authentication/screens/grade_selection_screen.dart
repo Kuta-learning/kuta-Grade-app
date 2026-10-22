@@ -70,8 +70,10 @@ class _GradeSelectionView extends StatelessWidget {
           final grade = state.selectedGrade;
           if (grade == GradeLevel.kg) {
             context.go(RouteNames.kgHome);
+          } else if (grade == GradeLevel.grade12) {
+            context.go(RouteNames.examSimulator);
           } else {
-            context.go(RouteNames.gradeDashboard);
+            context.go(RouteNames.gradeDashboard, extra: grade);
           }
         } else if (state.status == AcademicSelectionStatus.failure &&
             state.errorMessage != null) {

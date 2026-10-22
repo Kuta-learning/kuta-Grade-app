@@ -46,8 +46,12 @@ enum AcademicStream {
 
   static AcademicStream? fromString(String? value) {
     if (value == null) return null;
+    final lower = value.trim().toLowerCase();
     return AcademicStream.values.cast<AcademicStream?>().firstWhere(
-          (s) => s?.name == value || s?.displayName.toLowerCase() == value.toLowerCase(),
+          (s) =>
+              s != null &&
+              (s.name.toLowerCase() == lower ||
+                  s.displayName.toLowerCase() == lower),
           orElse: () => null,
         );
   }

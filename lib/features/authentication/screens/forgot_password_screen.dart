@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../bloc/auth_bloc.dart';
+import '../services/auth_service.dart';
 
 /// Forgot Password screen designed to match the reference design specification.
 /// Features a warm peach-to-blue background gradient, custom reset badge,
@@ -31,21 +34,38 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleSendInstructions() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    final email = _emailController.text.trim();
     setState(() => _isLoading = true);
 
-    // Simulate async network request
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      final authBloc = context.read<AuthBloc>();
+      await authBloc.authService.requestPasswordReset(email);
 
-    if (!mounted) return;
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    setState(() => _isLoading = false);
+      AppSnackBar.showSuccess(
+        context,
+        'Verification code sent to $email.',
+        title: 'Check Your Inbox',
+      );
 
-    final email = _emailController.text.trim();
-    AppSnackBar.showSuccess(
-      context,
-      'Reset link sent to $email.',
-      title: 'Check Your Inbox',
-    );
+      // Navigate to OTP verification screen
+      context.push(
+        '${RouteNames.otpVerification}?email=${Uri.encodeComponent(email)}',
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      AppSnackBar.showError(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      AppSnackBar.showError(
+        context,
+        'Could not send verification instructions. Please try again.',
+      );
+    }
   }
 
   void _handleBackToLogin() {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app.dart';
+import 'core/network/api_client.dart';
 import 'core/storage/shared_prefs_storage.dart';
-import 'features/authentication/services/mock_auth_service.dart';
+import 'features/authentication/services/api_auth_service.dart';
 import 'features/authentication/bloc/auth_bloc.dart';
 
 void main() async {
@@ -10,7 +11,8 @@ void main() async {
 
   // Initialize local storage once before the app starts
   final storage = await SharedPrefsStorage.getInstance();
-  final authService = MockAuthService(storage);
+  final apiClient = ApiClient();
+  final authService = ApiAuthService(apiClient: apiClient, storage: storage);
 
   runApp(
     BlocProvider<AuthBloc>(

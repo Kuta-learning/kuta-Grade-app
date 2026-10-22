@@ -11,12 +11,16 @@ class AppSnackBar {
   AppSnackBar._();
 
   /// Displays the animated Welcome SnackBar on the Dashboard once all setup steps are complete.
-  static void showWelcome(BuildContext context, {required String name}) {
+  static void showWelcome(
+    BuildContext context, {
+    required String name,
+    String? subtitle,
+  }) {
     show(
       context,
       type: AppSnackBarType.welcome,
       title: 'Welcome, $name!',
-      message: 'Your Journey Starts Now!!',
+      message: subtitle ?? 'Your Journey Starts Now!!',
       duration: const Duration(milliseconds: 3200),
     );
   }

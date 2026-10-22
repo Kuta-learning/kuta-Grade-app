@@ -25,6 +25,23 @@ abstract class AuthService {
     AcademicStream? stream,
   });
 
+  /// Requests a 6-digit OTP code sent to [email] for password recovery.
+  Future<void> requestPasswordReset(String email);
+
+  /// Verifies the 6-digit OTP code sent to [email].
+  /// Returns a signed resetToken to authorize password update.
+  Future<String> verifyOtp({
+    required String email,
+    required String otp,
+  });
+
+  /// Updates the password using the signed [resetToken] returned from [verifyOtp].
+  Future<void> resetPassword({
+    required String email,
+    required String resetToken,
+    required String newPassword,
+  });
+
   /// Signs out the current user and clears the local session.
   Future<void> logout();
 }
