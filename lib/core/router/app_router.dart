@@ -11,6 +11,7 @@ import '../../features/authentication/screens/login_screen.dart';
 import '../../features/authentication/screens/forgot_password_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
 import '../../features/authentication/screens/reset_password_screen.dart';
+import '../screens/animation_preview_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
@@ -24,6 +25,8 @@ import 'route_names.dart';
 /// Directs users across splash, authentication, KG, and Grade modules.
 class AppRouter {
   static final GoRouter router = GoRouter(
+    // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
+    // DEV TIP: Change to RouteNames.animationPreview to preview loading animation
     initialLocation: RouteNames.splash,
     routes: [
       GoRoute(
@@ -104,8 +107,11 @@ class AppRouter {
         name: 'subjectExams',
         builder: (context, state) {
           final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
-          final stream = state.uri.queryParameters['stream'] ?? 'NATURAL SCIENCE STREAM';
-          final subtitle = state.uri.queryParameters['subtitle'] ?? 'Official National University Entrance Papers';
+          final stream =
+              state.uri.queryParameters['stream'] ?? 'NATURAL SCIENCE STREAM';
+          final subtitle =
+              state.uri.queryParameters['subtitle'] ??
+              'Official National University Entrance Papers';
           return Grade12SubjectExamsScreen(
             subjectTitle: title,
             streamTitle: stream,
@@ -133,6 +139,12 @@ class AppRouter {
         builder: (context, state) =>
             const Scaffold(body: Center(child: Text('Profile Screen'))),
       ),
+      // ── DEV ONLY: Animation preview ────────────────────────────
+      GoRoute(
+        path: RouteNames.animationPreview,
+        name: 'animationPreview',
+        builder: (context, state) => const AnimationPreviewScreen(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(child: Text('No route defined for ${state.uri}')),
@@ -148,7 +160,8 @@ class AppRouter {
     final storage = await SharedPrefsStorage.getInstance();
 
     // 1. Check if user has completed introductory onboarding slides
-    final hasSeenOnboarding = await storage.getBool(StorageKeys.hasSeenOnboarding) ?? false;
+    final hasSeenOnboarding =
+        await storage.getBool(StorageKeys.hasSeenOnboarding) ?? false;
     if (!hasSeenOnboarding) {
       return RouteNames.onboarding;
     }
@@ -164,7 +177,7 @@ class AppRouter {
     final user = UserModel.fromJsonString(authUserRaw);
     final hasSelectedGrade =
         (await storage.getBool(StorageKeys.hasSelectedGrade) ?? false) ||
-            (user?.onboardingCompleted ?? false);
+        (user?.onboardingCompleted ?? false);
     if (!hasSelectedGrade) {
       return RouteNames.gradeSelection;
     }

@@ -27,5 +27,8 @@ class RouteNames {
   // Profile route
   static const String profile = '/profile';
 
+  // Dev preview route
+  static const String animationPreview = '/animation-preview';
+
   RouteNames._();
 }
