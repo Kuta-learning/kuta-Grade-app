@@ -51,6 +51,20 @@ class _FakeAuthService implements AuthService {
   }
 
   @override
+  Future<void> requestPasswordReset(String email) async {}
+
+  @override
+  Future<String> verifyOtp({required String email, required String otp}) async =>
+      'fake-reset-token';
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String resetToken,
+    required String newPassword,
+  }) async {}
+
+  @override
   Future<void> logout() async {}
 }
 

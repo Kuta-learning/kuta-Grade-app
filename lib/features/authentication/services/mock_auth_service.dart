@@ -80,7 +80,7 @@ class MockAuthService implements AuthService {
       id: 'mock-user-${DateTime.now().millisecondsSinceEpoch}',
       email: request.email,
       name: request.name,
-      gradeLevel: request.gradeLevel ?? GradeLevel.grade6,
+      gradeLevel: request.gradeLevel ?? GradeLevel.grade12,
     );
 
     await _storage.setString(StorageKeys.authUser, user.toJsonString());
@@ -113,6 +113,38 @@ class MockAuthService implements AuthService {
     // Mark grade selection as completed in local storage
     await _storage.setBool(StorageKeys.hasSelectedGrade, value: true);
     return updated;
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (email.isEmpty || !email.contains('@')) {
+      throw const AuthException('Invalid email address.', code: 'invalid_email');
+    }
+  }
+
+  @override
+  Future<String> verifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (otp.length != 6) {
+      throw const AuthException('Invalid OTP code. Must be 6 digits.', code: 'invalid_otp');
+    }
+    return 'mock-reset-token-xyz123';
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (newPassword.length < 8) {
+      throw const AuthException('Password must be at least 8 characters.', code: 'invalid_password');
+    }
   }
 
   @override

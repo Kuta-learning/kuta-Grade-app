@@ -8,13 +8,16 @@ import '../../features/authentication/models/user_model.dart';
 import '../../features/authentication/screens/grade_selection_screen.dart';
 import '../../features/authentication/screens/login_screen.dart';
 import '../../features/authentication/screens/forgot_password_screen.dart';
+import '../../features/authentication/screens/otp_verification_screen.dart';
+import '../../features/authentication/screens/reset_password_screen.dart';
+import '../screens/animation_preview_screen.dart';
 import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
+import '../../features/kg/screens/kg_home_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
 import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
 import '../../features/grades/shared/screens/bookmarks_screen.dart';
-import '../../features/kg/screens/kg_home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import 'route_names.dart';
 
@@ -22,6 +25,8 @@ import 'route_names.dart';
 /// Directs users across splash, authentication, KG, and Grade modules.
 class AppRouter {
   static final GoRouter router = GoRouter(
+    // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
+    // DEV TIP: Change to RouteNames.animationPreview to preview loading animation
     initialLocation: RouteNames.splash,
     routes: [
       GoRoute(
@@ -59,6 +64,23 @@ class AppRouter {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: RouteNames.otpVerification,
+        name: 'otpVerification',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return OtpVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.resetPassword,
+        name: 'resetPassword',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(email: email, resetToken: token);
+        },
+      ),
+      GoRoute(
         path: RouteNames.kgHome,
         name: 'kgHome',
         builder: (context, state) => const KgHomeScreen(),
@@ -66,6 +88,11 @@ class AppRouter {
       GoRoute(
         path: RouteNames.grade12MatricExam,
         name: 'grade12MatricExam',
+        builder: (context, state) => const Grade12MatricExamScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.examSimulator,
+        name: 'examSimulator',
         builder: (context, state) => const Grade12MatricExamScreen(),
       ),
       GoRoute(
@@ -106,6 +133,12 @@ class AppRouter {
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
       ),
+      // ── DEV ONLY: Animation preview ────────────────────────────
+      GoRoute(
+        path: RouteNames.animationPreview,
+        name: 'animationPreview',
+        builder: (context, state) => const AnimationPreviewScreen(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(child: Text('No route defined for ${state.uri}')),
@@ -121,7 +154,8 @@ class AppRouter {
     final storage = await SharedPrefsStorage.getInstance();
 
     // 1. Check if user has completed introductory onboarding slides
-    final hasSeenOnboarding = await storage.getBool(StorageKeys.hasSeenOnboarding) ?? false;
+    final hasSeenOnboarding =
+        await storage.getBool(StorageKeys.hasSeenOnboarding) ?? false;
     if (!hasSeenOnboarding) {
       return RouteNames.onboarding;
     }
@@ -134,13 +168,15 @@ class AppRouter {
     }
 
     // 3. Check if user has completed grade & academic stream selection
-    final hasSelectedGrade = await storage.getBool(StorageKeys.hasSelectedGrade) ?? false;
+    final user = UserModel.fromJsonString(authUserRaw);
+    final hasSelectedGrade =
+        (await storage.getBool(StorageKeys.hasSelectedGrade) ?? false) ||
+        (user?.onboardingCompleted ?? false);
     if (!hasSelectedGrade) {
       return RouteNames.gradeSelection;
     }
 
-    // 4. User is authenticated and grade is chosen: route to appropriate dashboard
-    final user = UserModel.fromJsonString(authUserRaw);
+    // 4. User is authenticated and grade is chosen: route to appropriate dashboard / exam screen
     if (user != null && user.isKgStudent) {
       return RouteNames.kgHome;
     }

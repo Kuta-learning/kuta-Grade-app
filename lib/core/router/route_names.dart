@@ -6,6 +6,8 @@ class RouteNames {
   static const String register = '/register';
   static const String gradeSelection = '/grade-selection';
   static const String forgotPassword = '/forgot-password';
+  static const String otpVerification = '/verify-otp';
+  static const String resetPassword = '/reset-password';
 
   // Kindergarten route
   static const String kgHome = '/kg-home';
@@ -24,6 +26,9 @@ class RouteNames {
   // Profile and Bookmarks routes
   static const String profile = '/profile';
   static const String bookmarks = '/bookmarks';
+
+  // Dev preview route
+  static const String animationPreview = '/animation-preview';
 
   RouteNames._();
 }

@@ -84,6 +84,9 @@ class AcademicSelectionBloc
         stream: state.isGrade12 ? state.selectedStream : null,
       ));
 
+      // Allow a microtask tick so AuthBloc processes the update
+      await Future<void>.delayed(Duration.zero);
+
       emit(state.copyWith(status: AcademicSelectionStatus.success));
     } catch (e) {
       emit(state.copyWith(
