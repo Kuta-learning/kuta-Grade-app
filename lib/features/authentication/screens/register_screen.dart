@@ -54,8 +54,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          context.go(RouteNames.gradeSelection);
+        if (state is AuthRegisterSuccess) {
+          AppSnackBar.showSuccess(
+            context,
+            'Welcome, ${state.userName}! Please log in to continue.',
+            title: 'Account Created',
+          );
+          context.go(RouteNames.login);
         } else if (state is AuthFailure) {
           AppSnackBar.showError(context, state.message);
         }
@@ -125,12 +130,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'John Doe',
                             prefixIcon: AppIcons.person,
                             keyboardType: TextInputType.name,
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Please enter your full name';
-                              }
-                              return null;
-                            },
+                             validator: (val) {
+                               if (val == null || val.trim().isEmpty) {
+                                 return 'Please enter your full name';
+                               }
+                               final trimmed = val.trim();
+                               if (trimmed.length < 2) {
+                                 return 'Name must be at least 2 characters';
+                               }
+                               if (trimmed.length > 60) {
+                                 return 'Name must be 60 characters or fewer';
+                               }
+                               return null;
+                             },
                           ),
 
                           AppSpacing.vGap4, // 16px gap
@@ -142,15 +154,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'student@example.com',
                             prefixIcon: AppIcons.email,
                             keyboardType: TextInputType.emailAddress,
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!val.contains('@') || !val.contains('.')) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
-                            },
+                             validator: (val) {
+                               if (val == null || val.trim().isEmpty) {
+                                 return 'Please enter your email';
+                               }
+                               final emailRegex = RegExp(
+                                 r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+                               );
+                               if (!emailRegex.hasMatch(val.trim())) {
+                                 return 'Please enter a valid email address';
+                               }
+                               return null;
+                             },
                           ),
 
                           AppSpacing.vGap4, // 16px gap
@@ -354,8 +369,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: _passwordController,
       obscureText: _obscurePassword,
       validator: (val) {
-        if (val == null || val.length < 8) {
+        if (val == null || val.isEmpty) {
+          return 'Please enter a password';
+        }
+        if (val.length < 8) {
           return 'Password must be at least 8 characters';
+        }
+        if (!RegExp(r'[a-zA-Z]').hasMatch(val)) {
+          return 'Password must contain at least one letter';
+        }
+        if (!RegExp(r'[0-9]').hasMatch(val)) {
+          return 'Password must contain at least one number';
         }
         return null;
       },
