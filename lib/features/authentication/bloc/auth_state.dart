@@ -15,6 +15,13 @@ final class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
+/// Registration completed successfully; user should now log in.
+/// Carries [userName] for a personalised success message.
+final class AuthRegisterSuccess extends AuthState {
+  final String userName;
+  const AuthRegisterSuccess(this.userName);
+}
+
 /// A user is fully authenticated with a valid session.
 final class AuthAuthenticated extends AuthState {
   final UserModel user;

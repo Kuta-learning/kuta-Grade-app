@@ -59,7 +59,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         gradeLevel: event.gradeLevel,
       );
       final user = await _authService.register(request);
-      emit(AuthAuthenticated(user));
+      emit(AuthRegisterSuccess(user.name));
     } on AuthException catch (e) {
       emit(AuthFailure(e.message));
     } catch (_) {

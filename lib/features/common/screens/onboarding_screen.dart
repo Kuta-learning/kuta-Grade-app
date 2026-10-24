@@ -187,6 +187,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SafeArea(
             child: Column(
               children: [
+                // ── Skip Button (top-right, hidden on last slide) ──
+                if (_currentPage < _pages.length - 1)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0, right: 16.0),
+                      child: TextButton(
+                        onPressed: _navigateToRegister,
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF9D4300),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 40), // reserve space so layout is stable
+
                 // Scrollable Page Content Area
                 Expanded(
                   child: PageView.builder(
