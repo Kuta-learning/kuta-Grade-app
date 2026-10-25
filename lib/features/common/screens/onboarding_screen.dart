@@ -187,37 +187,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SafeArea(
             child: Column(
               children: [
-                // ── Skip Button (top-right, hidden on last slide) ──
-                if (_currentPage < _pages.length - 1)
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0, right: 16.0),
-                      child: TextButton(
-                        onPressed: _navigateToRegister,
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF9D4300),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                // ── Top Navigation Row: Back Arrow (left) + Skip (right) ──
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back Arrow – visible on slides 2 and 3
+                      if (_currentPage > 0)
+                        IconButton(
+                          onPressed: () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 380),
+                              curve: Curves.easeInOutCubic,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Color(0xFF9D4300),
+                            size: 24.0,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                          tooltip: 'Back',
+                          padding: const EdgeInsets.all(8.0),
+                        )
+                      else
+                        const SizedBox(width: 48.0), // placeholder to keep Skip aligned
+
+                      // Skip Button – hidden on last slide
+                      if (_currentPage < _pages.length - 1)
+                        TextButton(
+                          onPressed: _navigateToRegister,
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF9D4300),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Skip',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
+                          child: const Text(
+                            'Skip',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  const SizedBox(height: 40), // reserve space so layout is stable
+                        )
+                      else
+                        const SizedBox(width: 48.0), // reserve space so layout is stable
+                    ],
+                  ),
+                ),
 
                 // Scrollable Page Content Area
                 Expanded(
@@ -253,6 +276,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 Text(
                                   item.title,
                                   style: AppTypography.displayLg.copyWith(
+                                    fontSize: 32,
                                     color: AppColors.textPrimary,
                                     letterSpacing: -0.7,
                                   ),
@@ -264,13 +288,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 // Subtitle / Body Description
                                 ConstrainedBox(
                                   constraints: const BoxConstraints(
-                                    maxWidth: 300,
+                                    maxWidth: 320,
                                   ),
                                   child: Text(
                                     item.description,
                                     style: AppTypography.bodyLg.copyWith(
+                                      fontSize: 17,
+                                      height: 1.55,
                                       color: AppColors.textSecondary,
-                                      letterSpacing: 0.4,
+                                      letterSpacing: 0.3,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
