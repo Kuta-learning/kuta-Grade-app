@@ -79,7 +79,13 @@ class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
-        RiveFailed() => const SizedBox.shrink(),
+        RiveFailed() => const Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
         RiveLoaded() => RiveWidget(
             controller: state.controller,
             fit: Fit.contain,

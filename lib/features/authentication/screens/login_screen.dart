@@ -17,7 +17,14 @@ import '../widgets/animated_auth_background.dart';
 /// accessible form inputs with icons, validation, authentication Bloc integration,
 /// and responsive layout.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? prefillEmail;
+  final bool isJustRegistered;
+
+  const LoginScreen({
+    super.key,
+    this.prefillEmail,
+    this.isJustRegistered = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -32,6 +39,14 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.prefillEmail != null && widget.prefillEmail!.trim().isNotEmpty) {
+      _emailController.text = widget.prefillEmail!.trim();
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -41,10 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    // Input sanitization: lowercase and trim email, trim password
+    final sanitizedEmail = _emailController.text.trim().toLowerCase();
+    final sanitizedPassword = _passwordController.text;
+
     context.read<AuthBloc>().add(
           LoginRequested(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
+            email: sanitizedEmail,
+            password: sanitizedPassword,
           ),
         );
   }
@@ -303,10 +322,10 @@ class _LoginScreenState extends State<LoginScreen> {
           return 'Please enter your email';
         }
         final emailRegex = RegExp(
-          r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
         );
         if (!emailRegex.hasMatch(val.trim())) {
-          return 'Please enter a valid email address';
+          return 'Please enter a valid email address (e.g. student@kuta.com)';
         }
         return null;
       },

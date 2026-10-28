@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kuta_learning_app/features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
+import 'package:kuta_grade/features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
 
 void main() {
-  testWidgets('Grade12MatricExamScreen renders all reference design elements',
-      (WidgetTester tester) async {
+  testWidgets('Grade12MatricExamScreen renders all reference design elements', (
+    WidgetTester tester,
+  ) async {
     // Set a phone screen size
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Grade12MatricExamScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: Grade12MatricExamScreen()));
     await tester.pumpAndSettle();
 
     // 1. App Bar

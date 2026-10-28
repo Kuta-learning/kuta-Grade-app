@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kuta_learning_app/features/common/screens/onboarding_screen.dart';
+import 'package:kuta_grade/features/common/screens/onboarding_screen.dart';
 
 void main() {
-  testWidgets('OnboardingScreen renders slide 1 with Skip button',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: OnboardingScreen(),
-      ),
-    );
+  testWidgets('OnboardingScreen renders slide 1 with Skip button', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: OnboardingScreen()));
     await tester.pumpAndSettle();
 
     // Verify Skip button IS visible on slide 1 (not the last slide)
@@ -28,12 +25,11 @@ void main() {
     expect(find.text('Next'), findsOneWidget);
   });
 
-  testWidgets('Skip button is hidden on the last onboarding slide',
-      (WidgetTester tester) async {
+  testWidgets('Skip button is hidden on the last onboarding slide', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: OnboardingScreen(initialPage: 2),
-      ),
+      const MaterialApp(home: OnboardingScreen(initialPage: 2)),
     );
     await tester.pumpAndSettle();
 
@@ -42,13 +38,10 @@ void main() {
     expect(find.text('Get Started'), findsOneWidget);
   });
 
-  testWidgets('OnboardingScreen transitions through all 3 slides',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: OnboardingScreen(),
-      ),
-    );
+  testWidgets('OnboardingScreen transitions through all 3 slides', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: OnboardingScreen()));
     await tester.pumpAndSettle();
 
     // Slide 1

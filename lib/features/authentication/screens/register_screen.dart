@@ -41,11 +41,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _handleSignUp() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    // Input sanitization: collapse internal whitespace for name, lowercase email
+    final sanitizedName =
+        _nameController.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final sanitizedEmail = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+
     context.read<AuthBloc>().add(
           RegisterRequested(
-            name: _nameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
+            name: sanitizedName,
+            email: sanitizedEmail,
+            password: password,
           ),
         );
   }
@@ -57,10 +63,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthRegisterSuccess) {
           AppSnackBar.showSuccess(
             context,
-            'Welcome, ${state.userName}! Please log in to continue.',
+            'Welcome, ${state.userName}! Please select your grade level to continue.',
             title: 'Account Created',
           );
-          context.go(RouteNames.login);
+          // Flow: Registration -> Onboarding (Grade & Stream Selection) -> Login
+          context.go(RouteNames.gradeSelection);
         } else if (state is AuthFailure) {
           AppSnackBar.showError(context, state.message);
         }
@@ -138,8 +145,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                if (trimmed.length < 2) {
                                  return 'Name must be at least 2 characters';
                                }
-                               if (trimmed.length > 60) {
-                                 return 'Name must be 60 characters or fewer';
+                               if (trimmed.length > 50) {
+                                 return 'Name must be 50 characters or fewer';
+                               }
+                               final nameRegex = RegExp(r"^[a-zA-Z\s\-'.]+$");
+                               if (!nameRegex.hasMatch(trimmed)) {
+                                 return 'Name should only contain letters and spaces';
                                }
                                return null;
                              },
@@ -159,10 +170,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                  return 'Please enter your email';
                                }
                                final emailRegex = RegExp(
-                                 r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+                                 r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                                );
                                if (!emailRegex.hasMatch(val.trim())) {
-                                 return 'Please enter a valid email address';
+                                 return 'Please enter a valid email address (e.g. student@kuta.com)';
                                }
                                return null;
                              },
@@ -237,8 +248,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           AppSpacing.vGap6, // 24px gap
                           // Already have an account? Login Screen
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
                                 'Already have an account? ',
@@ -261,12 +273,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 32,
-                                height: 1,
-                                color: AppColors.borderVariant,
+                              Flexible(
+                                child: Container(
+                                  width: 32,
+                                  height: 1,
+                                  color: AppColors.borderVariant,
+                                ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               Text(
                                 'SAFE & SECURE',
                                 style: AppTypography.captionBold.copyWith(
@@ -275,11 +289,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Container(
-                                width: 32,
-                                height: 1,
-                                color: AppColors.borderVariant,
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Container(
+                                  width: 32,
+                                  height: 1,
+                                  color: AppColors.borderVariant,
+                                ),
                               ),
                             ],
                           ),

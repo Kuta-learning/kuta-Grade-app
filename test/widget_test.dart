@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kuta_learning_app/app.dart';
-import 'package:kuta_learning_app/features/common/screens/splash_screen.dart';
+import 'package:kuta_grade/app.dart';
+import 'package:kuta_grade/features/common/screens/splash_screen.dart';
 
 void main() {
   testWidgets('App smoke test builds KutaApp', (WidgetTester tester) async {

@@ -78,12 +78,37 @@ class _GradeSelectionView extends StatelessWidget {
     return BlocConsumer<AcademicSelectionBloc, AcademicSelectionState>(
       listener: (context, state) {
         if (state.status == AcademicSelectionStatus.success) {
-          // Route user according to selected grade level per routing architecture
-          final grade = state.selectedGrade;
-          if (grade == GradeLevel.kg) {
-            context.go(RouteNames.kgHome);
+          // Flow: Registration -> Onboarding (Grade & Stream Selection) -> Login
+          AuthBloc? authBloc;
+          try {
+            authBloc = context.read<AuthBloc>();
+          } catch (_) {}
+
+          final bloc = authBloc;
+          if (bloc != null) {
+            bloc.authService.getCurrentUser().then((user) async {
+              final email = user?.email ?? '';
+              // Clear temporary onboarding session so student logs in fresh
+              await bloc.authService.logout();
+              bloc.add(const LogoutRequested());
+
+              if (!context.mounted) return;
+              AppSnackBar.showSuccess(
+                context,
+                'Account setup completed! Please log in with your credentials.',
+                title: 'Welcome to Kuta',
+              );
+              final loginUri = email.isNotEmpty
+                  ? '${RouteNames.login}?registered=true&email=${Uri.encodeComponent(email)}'
+                  : '${RouteNames.login}?registered=true';
+              context.go(loginUri);
+            }).catchError((_) {
+              if (context.mounted) {
+                context.go('${RouteNames.login}?registered=true');
+              }
+            });
           } else {
-            context.go(RouteNames.grade12MatricExam);
+            context.go('${RouteNames.login}?registered=true');
           }
         } else if (state.status == AcademicSelectionStatus.failure &&
             state.errorMessage != null) {
