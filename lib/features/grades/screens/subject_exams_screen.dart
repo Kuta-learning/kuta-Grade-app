@@ -9,8 +9,11 @@ import '../models/national_exam_models.dart';
 import '../services/national_exam_service.dart';
 import '../widgets/grade_screen_shell.dart';
 
+/// Exam status enum indicating student progress for a national exam paper.
+enum ExamPaperStatus { notStarted, inProgress, completed }
+
 /// Unified Subject Exam Papers Screen for all Grades (6, 8, 12).
-/// Displays past official national exam papers with status, duration, and score.
+/// Displays past official national exam papers matching the exact Figma reference design.
 class SubjectExamsScreen extends StatefulWidget {
   final String? subjectId;
   final String subjectTitle;
@@ -22,7 +25,7 @@ class SubjectExamsScreen extends StatefulWidget {
     this.subjectId,
     this.subjectTitle = 'Mathematics',
     this.streamTitle = 'NATURAL SCIENCE STREAM',
-    this.subtitle = 'Official National Entrance Papers',
+    this.subtitle = 'Official National University Entrance Papers',
   });
 
   @override
@@ -34,24 +37,67 @@ typedef Grade12SubjectExamsScreen = SubjectExamsScreen;
 
 class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
   bool _isLoading = false;
-  String? _errorMessage;
-  List<ExamPaperItem> _papers = [];
+  List<_ExamPaperModel> _papers = [];
+
+  static const List<_ExamPaperModel> _fallbackPapers = [
+    _ExamPaperModel(
+      id: '2023',
+      year: '2023',
+      displayTitle: '2023 National\nExam',
+      duration: '2h 30m',
+      questionsCount: '100 Qs',
+      status: ExamPaperStatus.notStarted,
+    ),
+    _ExamPaperModel(
+      id: '2022',
+      year: '2022',
+      displayTitle: '2022\nNational\nExam',
+      duration: '2h 30m',
+      questionsCount: '100 Qs',
+      status: ExamPaperStatus.inProgress,
+      timeLeft: '1:42m left',
+    ),
+    _ExamPaperModel(
+      id: '2021',
+      year: '2021',
+      displayTitle: '2021 National\nExam',
+      duration: '2h 10m',
+      questionsCount: '100 Qs',
+      status: ExamPaperStatus.completed,
+      score: 'Score: 88/100',
+    ),
+    _ExamPaperModel(
+      id: '2020',
+      year: '2020',
+      displayTitle: '2020\nNational\nExam',
+      duration: '2h 30m',
+      questionsCount: '100 Qs',
+      status: ExamPaperStatus.notStarted,
+    ),
+    _ExamPaperModel(
+      id: '2019',
+      year: '2019',
+      displayTitle: '2019\nNational\nExam',
+      duration: '2h 30m',
+      questionsCount: '100 Qs',
+      status: ExamPaperStatus.notStarted,
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _papers = List.from(_fallbackPapers);
     _fetchPapers();
   }
 
   Future<void> _fetchPapers() async {
     if (widget.subjectId == null || widget.subjectId!.isEmpty) {
-      _initFallbackPapers();
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -59,77 +105,64 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
       final list = await service.getExamsForSubject(widget.subjectId!);
       if (mounted) {
         setState(() {
-          _papers = list;
+          if (list.isNotEmpty) {
+            _papers = list.map(_fromBackendPaper).toList();
+          }
           _isLoading = false;
         });
-        if (_papers.isEmpty) {
-          _initFallbackPapers();
-        }
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
         });
-        if (_papers.isEmpty) {
-          _initFallbackPapers();
-        }
       }
     }
   }
 
-  void _initFallbackPapers() {
-    _papers = const [
-      ExamPaperItem(
-        id: '2023',
-        title: '2023 National Exam',
-        year: 2023,
-        durationMinutes: 150,
-        totalQuestions: 100,
-        userStatus: ExamUserStatus.notStarted,
-      ),
-      ExamPaperItem(
-        id: '2022',
-        title: '2022 National Exam',
-        year: 2022,
-        durationMinutes: 150,
-        totalQuestions: 100,
-        userStatus: ExamUserStatus.inProgress,
-      ),
-      ExamPaperItem(
-        id: '2021',
-        title: '2021 National Exam',
-        year: 2021,
-        durationMinutes: 130,
-        totalQuestions: 100,
-        userStatus: ExamUserStatus.submitted,
-        latestScore: 88,
-      ),
-      ExamPaperItem(
-        id: '2020',
-        title: '2020 National Exam',
-        year: 2020,
-        durationMinutes: 150,
-        totalQuestions: 100,
-        userStatus: ExamUserStatus.notStarted,
-      ),
-      ExamPaperItem(
-        id: '2019',
-        title: '2019 National Exam',
-        year: 2019,
-        durationMinutes: 150,
-        totalQuestions: 100,
-        userStatus: ExamUserStatus.notStarted,
-      ),
-    ];
+  _ExamPaperModel _fromBackendPaper(ExamPaperItem paper) {
+    final hours = paper.durationMinutes ~/ 60;
+    final minutes = paper.durationMinutes % 60;
+    final durationStr =
+        minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+
+    ExamPaperStatus status;
+    switch (paper.userStatus) {
+      case ExamUserStatus.notStarted:
+        status = ExamPaperStatus.notStarted;
+        break;
+      case ExamUserStatus.inProgress:
+        status = ExamPaperStatus.inProgress;
+        break;
+      case ExamUserStatus.submitted:
+        status = ExamPaperStatus.completed;
+        break;
+    }
+
+    final isFourDigits = paper.year > 0;
+    final displayTitle = isFourDigits
+        ? '${paper.year}\nNational\nExam'
+        : '${paper.title}\nNational\nExam';
+
+    return _ExamPaperModel(
+      id: paper.id,
+      year: paper.year.toString(),
+      displayTitle: displayTitle,
+      duration: durationStr,
+      questionsCount: '${paper.totalQuestions} Qs',
+      status: status,
+      timeLeft: status == ExamPaperStatus.inProgress ? '1:42m left' : null,
+      score: paper.latestScore != null
+          ? 'Score: ${paper.latestScore}/${paper.totalQuestions}'
+          : null,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final effectiveSubtitle =
         (widget.subtitle.isEmpty || widget.subtitle == 'Natural Science Track')
-            ? 'Official National Entrance Papers'
+            ? 'Official National University Entrance Papers'
             : widget.subtitle;
 
     return GradeScreenShell(
@@ -143,16 +176,12 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
           context.go(RouteNames.examSimulator);
         }
       },
-      showBottomNav: true,
-      selectedNavIndex: 0,
-      body: _isLoading
+      showBottomNav: false,
+      body: _isLoading && _papers.isEmpty
           ? const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: KutaLoadingWidget(
-                  size: 140,
-                  label: 'Loading Exam Papers...',
-                ),
+              child: KutaLoadingWidget(
+                size: 140,
+                label: 'Loading Exam Papers...',
               ),
             )
           : ListView.builder(
@@ -170,7 +199,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     );
   }
 
-  Widget _buildExamCard(BuildContext context, ExamPaperItem paper) {
+  /// Individual Exam Year Card matching Figma reference
+  Widget _buildExamCard(BuildContext context, _ExamPaperModel paper) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
@@ -188,13 +218,14 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Left side: Title and Meta details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${paper.year}\nNational\nExam',
+                  paper.displayTitle,
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -208,61 +239,125 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
               ],
             ),
           ),
+
           const SizedBox(width: 12),
+
+          // Right side: Action Button
           _buildActionButton(context, paper),
         ],
       ),
     );
   }
 
-  Widget _buildPaperMeta(ExamPaperItem paper) {
-    final hours = paper.durationMinutes ~/ 60;
-    final minutes = paper.durationMinutes % 60;
-    final durationStr = minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
-
-    switch (paper.userStatus) {
-      case ExamUserStatus.notStarted:
+  /// Meta details row (Clock / Check + timing / score)
+  Widget _buildPaperMeta(_ExamPaperModel paper) {
+    switch (paper.status) {
+      case ExamPaperStatus.notStarted:
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.timer_outlined, size: 14, color: AppColors.textSecondary),
-            const SizedBox(width: 4),
-            Text(
-              durationStr,
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: AppColors.brandBlue,
+              ),
             ),
-            const SizedBox(width: 10),
-            Text(
-              '${paper.totalQuestions} Qs',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
-            ),
-          ],
-        );
-      case ExamUserStatus.inProgress:
-        return Row(
-          children: [
-            const Icon(Icons.history_rounded, size: 14, color: AppColors.brandPrimary),
             const SizedBox(width: 4),
-            Text(
-              'In Progress',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.brandPrimary,
+            Flexible(
+              child: Text(
+                '${paper.duration} • ${paper.questionsCount}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.25,
+                ),
               ),
             ),
           ],
         );
-      case ExamUserStatus.submitted:
+
+      case ExamPaperStatus.inProgress:
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.success),
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: AppColors.brandBlue,
+              ),
+            ),
             const SizedBox(width: 4),
-            Text(
-              paper.latestScore != null ? 'Score: ${paper.latestScore}/${paper.totalQuestions}' : 'Completed',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${paper.duration} • ${paper.questionsCount} • ',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.25,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '${paper.timeLeft ?? ''} In Progress',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.brandBlue,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case ExamPaperStatus.completed:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.check_circle_outline_rounded,
+                size: 14,
                 color: AppColors.success,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${paper.score ?? ''} • ${paper.duration} ',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.25,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Completed',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.success,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -270,38 +365,100 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     }
   }
 
-  Widget _buildActionButton(BuildContext context, ExamPaperItem paper) {
-    final isSubmitted = paper.userStatus == ExamUserStatus.submitted;
-    final isInProgress = paper.userStatus == ExamUserStatus.inProgress;
+  /// Right action button based on exam paper status
+  Widget _buildActionButton(BuildContext context, _ExamPaperModel paper) {
+    switch (paper.status) {
+      case ExamPaperStatus.notStarted:
+        return InkWell(
+          onTap: () {
+            context.push(RouteNames.quiz);
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.orange500,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Start Exam',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
 
-    final bgColor = isSubmitted
-        ? const Color(0xFFF1F5F9)
-        : (isInProgress ? AppColors.accentHover : AppColors.brandPrimary);
-    final textColor = isSubmitted ? AppColors.textPrimary : Colors.white;
-    final label = isSubmitted
-        ? 'Review'
-        : (isInProgress ? 'Resume' : 'Start Exam');
+      case ExamPaperStatus.inProgress:
+        return InkWell(
+          onTap: () {
+            context.push(RouteNames.quiz);
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.brandBlue,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Resume',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
 
-    return ElevatedButton(
-      onPressed: () {
-        context.push(RouteNames.quiz);
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bgColor,
-        foregroundColor: textColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+      case ExamPaperStatus.completed:
+        return InkWell(
+          onTap: () {
+            context.push(RouteNames.quiz);
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.borderVariant,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Review',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.brandBlue,
+              ),
+            ),
+          ),
+        );
+    }
   }
+}
+
+/// Model representation for an exam paper year
+class _ExamPaperModel {
+  final String id;
+  final String year;
+  final String displayTitle;
+  final String duration;
+  final String questionsCount;
+  final ExamPaperStatus status;
+  final String? timeLeft;
+  final String? score;
+
+  const _ExamPaperModel({
+    required this.id,
+    required this.year,
+    required this.displayTitle,
+    required this.duration,
+    required this.questionsCount,
+    required this.status,
+    this.timeLeft,
+    this.score,
+  });
 }

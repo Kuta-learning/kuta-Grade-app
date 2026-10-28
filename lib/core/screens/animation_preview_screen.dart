@@ -20,7 +20,7 @@ class AnimationPreviewScreen extends StatefulWidget {
 class _AnimationPreviewScreenState extends State<AnimationPreviewScreen> {
   bool _showOverlay = false;
   double _selectedSize = 120; // Default dashboard size
-  int _bgIndex = 0; // 0: White card, 1: Soft Peach, 2: Dark Navy (contrast test)
+  int _bgIndex = 0; // 0: Pure Transparent (No background), 1: Clean White, 2: Soft Peach
 
   static const List<Map<String, dynamic>> _sizes = [
     {'label': 'Small (60px)', 'size': 60.0},
@@ -29,6 +29,12 @@ class _AnimationPreviewScreenState extends State<AnimationPreviewScreen> {
   ];
 
   static const List<Map<String, dynamic>> _backgrounds = [
+    {
+      'name': 'Transparent',
+      'cardColor': Colors.transparent,
+      'border': Colors.transparent,
+      'textColor': Color(0xFF0F172A),
+    },
     {
       'name': 'Clean White',
       'cardColor': Colors.white,
@@ -40,12 +46,6 @@ class _AnimationPreviewScreenState extends State<AnimationPreviewScreen> {
       'cardColor': Color(0xFFFFF7ED),
       'border': Color(0xFFFED7AA),
       'textColor': Color(0xFF9A3412),
-    },
-    {
-      'name': 'Navy Contrast',
-      'cardColor': Color(0xFF0A3366),
-      'border': Color(0xFF1E40AF),
-      'textColor': Colors.white,
     },
   ];
 

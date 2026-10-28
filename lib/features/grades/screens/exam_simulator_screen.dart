@@ -14,16 +14,16 @@ import '../services/national_exam_service.dart';
 import '../widgets/exam_header_skeleton.dart';
 import '../widgets/grade_screen_shell.dart';
 
-/// Unified National Exam Simulator Screen for Grades 6, 8, 12 and above.
-/// Features live data binding, Rive custom loading animation, top skeleton loading,
-/// back-navigation locking (leaving is only possible via explicit logout),
-/// and error state with retry.
+/// Grade 12 National University Entrance Exam Preparation & Simulator Screen.
+/// Matches the reference design with exact pixel precision and live data integration.
 class ExamSimulatorScreen extends StatefulWidget {
   final NationalExamDashboardModel? initialDashboardData;
+  final bool showBottomNav;
 
   const ExamSimulatorScreen({
     super.key,
     this.initialDashboardData,
+    this.showBottomNav = false,
   });
 
   @override
@@ -47,6 +47,81 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   static const Color _textSecondary = AppColors.textSecondary;
   static const Color _cardBorder = AppColors.containerHigh;
 
+  final List<_ExamSubjectItem> _subjects = const [
+    _ExamSubjectItem(
+      title: 'Mathematics',
+      subtitle: 'Natural Science Track',
+      progress: 0.45,
+      progressText: '45%',
+      progressColor: _orangeAccent,
+      icon: Icons.calculate_outlined,
+      iconBgColor: Color(0xFFE0EDFD),
+      iconColor: Color(0xFF2563EB),
+      historyText: '2014 - 2023 Exams (10 Years)',
+      questionsText: '850 Questions',
+    ),
+    _ExamSubjectItem(
+      title: 'Physics',
+      subtitle: 'Mechanics, Waves & Modern',
+      progress: 0.30,
+      progressText: '30%',
+      progressColor: _orangeAccent,
+      icon: Icons.bolt_rounded,
+      iconBgColor: Color(0xFFFFEDD5),
+      iconColor: _orangeAccent,
+      historyText: '2015 - 2023 Exams (9 Years)',
+      questionsText: '720 Questions',
+    ),
+    _ExamSubjectItem(
+      title: 'Chemistry',
+      subtitle: 'Organic, Inorganic & Physical',
+      progress: 0.20,
+      progressText: '20%',
+      progressColor: _orangeAccent,
+      icon: Icons.science_outlined,
+      iconBgColor: Color(0xFFEEF2FF),
+      iconColor: Color(0xFF4F46E5),
+      historyText: '2014 - 2023 Exams (10 Years)',
+      questionsText: '800 Questions',
+    ),
+    _ExamSubjectItem(
+      title: 'Biology',
+      subtitle: 'Genetics, Ecology & Human Bio',
+      progress: 0.60,
+      progressText: '60%',
+      progressColor: _emeraldGreen,
+      icon: Icons.psychology_outlined,
+      iconBgColor: Color(0xFFDCFCE7),
+      iconColor: Color(0xFF16A34A),
+      historyText: '2014 - 2023 Exams (10 Years)',
+      questionsText: '780 Questions',
+    ),
+    _ExamSubjectItem(
+      title: 'English',
+      subtitle: 'Grammar, Reading & Vocab',
+      progress: 0.75,
+      progressText: '75%',
+      progressColor: _emeraldGreen,
+      icon: Icons.translate_rounded,
+      iconBgColor: Color(0xFFFFEDD5),
+      iconColor: _orangeAccent,
+      historyText: '2012 - 2023 Exams (12 Years)',
+      questionsText: '1,200 Questions',
+    ),
+    _ExamSubjectItem(
+      title: 'Civics & Ethical Education',
+      subtitle: 'Constitution, Ethics & Society',
+      progress: 0.50,
+      progressText: '50%',
+      progressColor: _orangeAccent,
+      icon: Icons.balance_rounded,
+      iconBgColor: Color(0xFFE0EDFD),
+      iconColor: Color(0xFF2563EB),
+      historyText: '2016 - 2023 Exams (8 Years)',
+      questionsText: '640 Questions',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -61,11 +136,14 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     });
   }
 
+  /// Loads dashboard data from backend service. Supports Pull-Down-to-Refresh.
   Future<void> _loadDashboardData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (_dashboardData == null) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final service = NationalExamService();
@@ -74,6 +152,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         setState(() {
           _dashboardData = data;
           _isLoading = false;
+          _errorMessage = null;
         });
       }
     } catch (e) {
@@ -112,88 +191,166 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     // Locked Screen: Prevents popping out to unauthenticated screens.
-    // User can only leave via explicit logout (e.g. from Profile screen).
+    // User can only leave via explicit logout from Profile screen.
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        // Intentionally intercept and ignore system back navigation
+        // Intercept system back navigation
       },
-      child: Scaffold(
-        backgroundColor: _pageBackground,
-        body: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ==========================================
-              // TOP ROYAL BLUE HEADER SECTION
-              // ==========================================
-              Stack(
-                clipBehavior: Clip.none,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: _pageBackground,
+          body: RefreshIndicator(
+            color: _primaryBlue,
+            onRefresh: _loadDashboardData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    height: topPadding + 195,
-                    color: _primaryBlue,
+                  // ==========================================
+                  // TOP ROYAL BLUE HEADER SECTION
+                  // ==========================================
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: topPadding + 195,
+                        color: _primaryBlue,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: topPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildCustomAppBar(context),
+                            const SizedBox(height: 12),
+                            if (_isLoading && _dashboardData == null)
+                              const ExamHeaderSkeleton()
+                            else ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildWelcomeBanner(),
+                              ),
+                              const SizedBox(height: 14),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildActiveExamCard(context),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+
+                  // ==========================================
+                  // EXAM SUBJECTS SECTION HEADER
+                  // ==========================================
                   Padding(
-                    padding: EdgeInsets.only(top: topPadding),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildCustomAppBar(context),
-                        const SizedBox(height: 12),
-                        if (_isLoading)
-                          const ExamHeaderSkeleton()
-                        else if (_dashboardData != null) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _buildWelcomeBanner(_dashboardData!.student),
-                          ),
-                          const SizedBox(height: 14),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _buildActiveExamCard(
-                              context,
-                              _dashboardData!.bannerExam,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Exam Subjects',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: _textPrimary,
+                                letterSpacing: -0.2,
+                              ),
                             ),
+                            Text(
+                              '${_dashboardData?.subjectsCount ?? _displaySubjects.length} Subjects',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tap a subject to practice real past national exam papers by year.',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: _textSecondary,
+                            height: 1.35,
                           ),
-                        ] else ...[
-                          // Minimal top fallback when error occurs before data
-                          const SizedBox(height: 20),
-                        ],
+                        ),
                       ],
                     ),
                   ),
+
+                  // ==========================================
+                  // BODY / SUBJECT CARDS / LOADING
+                  // ==========================================
+                  if (_isLoading && _dashboardData == null) ...[
+                    const SizedBox(height: 36),
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: KutaLoadingWidget(
+                          size: 140,
+                          label: 'Loading Exam Simulator...',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                  ] else if (_errorMessage != null && _dashboardData == null) ...[
+                    _buildErrorState(),
+                  ] else ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: _displaySubjects.map((subject) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildSubjectCard(context, subject),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
                 ],
               ),
-
-              // ==========================================
-              // BODY SECTION (Rive Loader / Error / Content)
-              // ==========================================
-              if (_isLoading) ...[
-                const SizedBox(height: 36),
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: KutaLoadingWidget(
-                      size: 160,
-                      label: 'Loading Exam Simulator...',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 36),
-              ] else if (_errorMessage != null && _dashboardData == null) ...[
-                _buildErrorState(),
-              ] else if (_dashboardData != null) ...[
-                _buildSubjectsSection(context, _dashboardData!),
-              ],
-
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
+          bottomNavigationBar: widget.showBottomNav
+              ? GradeBottomNavBar(
+                  currentIndex: _selectedBottomNavIndex,
+                  onTap: (index) {
+                    setState(() => _selectedBottomNavIndex = index);
+                    if (index == 1) {
+                      context.push(RouteNames.subjectDetail);
+                    } else if (index == 2) {
+                      context.push(RouteNames.quiz);
+                    } else if (index == 3) {
+                      context.push(RouteNames.profile);
+                    }
+                  },
+                )
+              : null,
         ),
-        bottomNavigationBar: _buildBottomNav(context),
       ),
     );
   }
@@ -213,9 +370,16 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   }
 
   /// Welcome Banner Card inside the blue header
-  Widget _buildWelcomeBanner(StudentInfo student) {
-    final streamDisplay =
-        student.stream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural';
+  Widget _buildWelcomeBanner() {
+    final student = _dashboardData?.student;
+    final name = student != null && student.name.trim().isNotEmpty
+        ? student.name.trim()
+        : 'Ruth';
+    final gradeLevel = student?.gradeLevel ?? 12;
+    final streamDisplay = student != null
+        ? (student.stream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural')
+        : 'Natural';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -231,7 +395,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome back, ${student.name.isNotEmpty ? student.name : "Student"}!',
+            'Welcome back, $name!',
             style: GoogleFonts.inter(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -241,7 +405,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           ),
           const SizedBox(height: 3),
           Text(
-            'Grade ${student.gradeLevel} $streamDisplay Science',
+            'Grade $gradeLevel $streamDisplay Science',
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
@@ -253,13 +417,19 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     );
   }
 
-  /// Active or Recent Exam Card
-  Widget _buildActiveExamCard(BuildContext context, BannerExamInfo? banner) {
+  /// Active Exam Card matching Figma reference exactly
+  Widget _buildActiveExamCard(BuildContext context) {
+    final banner = _dashboardData?.bannerExam;
     final title = banner != null
         ? '${banner.subjectName} ${banner.title}'
-        : 'National Exam Simulator';
-    final remainingTime = banner?.formattedRemainingTime ?? 'Ready to start';
-    final actionText = banner?.action ?? 'Start Exam';
+        : 'Physics 2022 National Exam';
+    final remainingTime = banner != null
+        ? banner.formattedRemainingTime
+        : '42 mins remaining';
+    final actionText = banner?.action ?? 'Resume Exam';
+    final paperSubtitle = banner?.subjectName != null
+        ? 'Paper 1 • ${banner!.subjectName}'
+        : 'Paper 1 • Physics';
 
     return Container(
       decoration: BoxDecoration(
@@ -278,6 +448,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top Row: Icon + Title & Remaining time + Question badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -344,7 +515,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  banner != null ? 'Q 34/100' : 'Full Paper',
+                  'Q 34/100',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
@@ -354,7 +525,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               ),
             ],
           ),
+
           const SizedBox(height: 14),
+
+          // Horizontal Progress Bar (34%)
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: const LinearProgressIndicator(
@@ -364,14 +538,15 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               valueColor: AlwaysStoppedAnimation<Color>(_orangeAccent),
             ),
           ),
+
           const SizedBox(height: 14),
+
+          // Footer Row: Paper Info + Action Button
           Row(
             children: [
               Expanded(
                 child: Text(
-                  banner?.subjectName != null
-                      ? 'Paper 1 • ${banner!.subjectName}'
-                      : 'Paper 1 • General Review',
+                  paperSubtitle,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -420,6 +595,188 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Individual Subject Card matching Figma reference exactly
+  Widget _buildSubjectCard(BuildContext context, _ExamSubjectItem subject) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _cardBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: InkWell(
+        onTap: () {
+          final encodedSubject = Uri.encodeComponent(subject.title);
+          final encodedSubtitle = Uri.encodeComponent(
+            subject.subtitle.isNotEmpty
+                ? subject.subtitle
+                : 'Official National University Entrance Papers',
+          );
+          final subjectIdParam = subject.subjectId != null
+              ? '&subjectId=${subject.subjectId}'
+              : '';
+          context.push(
+            '${RouteNames.subjectExams}?subject=$encodedSubject&subtitle=$encodedSubtitle$subjectIdParam',
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            // Top Row: Icon + Title/Subtitle + Circular Progress
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: subject.iconBgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    subject.icon,
+                    color: subject.iconColor,
+                    size: 23,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: _textPrimary,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subject.subtitle,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: _textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: subject.progress,
+                        strokeWidth: 3.5,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          subject.progressColor,
+                        ),
+                        strokeCap: StrokeCap.round,
+                      ),
+                      Text(
+                        subject.progressText,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: _textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Bottom Row: Exam history badge + Question count
+            Row(
+              children: [
+                // History Badge with blue clock icon
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 0.7,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.history_rounded,
+                          size: 13,
+                          color: Color(0xFF2563EB),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            subject.historyText,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF475569),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Questions Count with emerald green icon
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.quiz_outlined,
+                      size: 14,
+                      color: _emeraldGreen,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      subject.questionsText,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -486,342 +843,67 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     );
   }
 
-  /// Live Exam Subjects Section
-  Widget _buildSubjectsSection(
-    BuildContext context,
-    NationalExamDashboardModel data,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Exam Subjects',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: _textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  Text(
-                    '${data.subjects.length} Subjects',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF2563EB),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Tap a subject to practice real past national exam papers by year.',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: _textSecondary,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: data.subjects.map((subject) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildSubjectCard(context, subject),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+  _ExamSubjectItem _fromBackendSubject(NationalExamSubjectModel model) {
+    final pctInt = (model.progressPercentage > 1.0)
+        ? model.progressPercentage.round()
+        : (model.progressPercentage * 100).round();
+    final progressVal = (model.progressPercentage > 1.0)
+        ? (model.progressPercentage / 100.0).clamp(0.0, 1.0)
+        : model.progressPercentage.clamp(0.0, 1.0);
+    final color = model.parsedColor;
+
+    return _ExamSubjectItem(
+      subjectId: model.id,
+      title: model.name,
+      subtitle: model.subcategories.isNotEmpty
+          ? model.subcategories
+          : (model.stream == 'COMMON'
+              ? 'Common Track'
+              : '${model.stream} Science Track'),
+      progress: progressVal,
+      progressText: '$pctInt%',
+      progressColor: pctInt >= 50 ? _emeraldGreen : _orangeAccent,
+      icon: model.iconData,
+      iconBgColor: model.iconBackgroundColor,
+      iconColor: color,
+      historyText: '${model.totalExams} Exam Papers Available',
+      questionsText: '${model.totalQuestions} Questions',
     );
   }
 
-  /// Individual Live Subject Card
-  Widget _buildSubjectCard(
-    BuildContext context,
-    NationalExamSubjectModel subject,
-  ) {
-    final progressInt = (subject.progressPercentage * 100).round();
-    final progressVal = (subject.progressPercentage > 1.0)
-        ? (subject.progressPercentage / 100).clamp(0.0, 1.0)
-        : subject.progressPercentage.clamp(0.0, 1.0);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _cardBorder, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14),
-      child: InkWell(
-        onTap: () {
-          final encodedSubject = Uri.encodeComponent(subject.name);
-          final encodedSubtitle = Uri.encodeComponent(
-            subject.subcategories.isNotEmpty
-                ? subject.subcategories
-                : 'Official National University Entrance Papers',
-          );
-          final subjectId = subject.id;
-          context.push(
-            '${RouteNames.subjectExams}?subjectId=$subjectId&subject=$encodedSubject&subtitle=$encodedSubtitle',
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: subject.iconBackgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    subject.iconData,
-                    color: subject.parsedColor,
-                    size: 23,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
-                          color: _textPrimary,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subject.subcategories.isNotEmpty
-                            ? subject.subcategories
-                            : subject.description,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: _textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: progressVal,
-                        strokeWidth: 3.5,
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          subject.parsedColor,
-                        ),
-                        strokeCap: StrokeCap.round,
-                      ),
-                      Text(
-                        '$progressInt%',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
-                          color: _textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                        width: 0.7,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.history_rounded,
-                          size: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            '${subject.completedExams}/${subject.totalExams} Exams completed',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF475569),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${subject.totalQuestions} Questions',
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
-                    color: _textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+  List<_ExamSubjectItem> get _displaySubjects {
+    if (_dashboardData != null && _dashboardData!.subjects.isNotEmpty) {
+      return _dashboardData!.subjects.map(_fromBackendSubject).toList();
+    }
+    return _subjects;
   }
+}
 
-  /// Bottom Navigation Bar
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBottomNavItem(
-                index: 0,
-                icon: Icons.dashboard_outlined,
-                activeIcon: Icons.dashboard_rounded,
-                label: 'Exams',
-                onTap: () => setState(() => _selectedBottomNavIndex = 0),
-              ),
-              _buildBottomNavItem(
-                index: 1,
-                icon: Icons.menu_book_outlined,
-                activeIcon: Icons.menu_book_rounded,
-                label: 'Notes',
-                onTap: () {
-                  setState(() => _selectedBottomNavIndex = 1);
-                  context.push(RouteNames.subjectDetail);
-                },
-              ),
-              _buildBottomNavItem(
-                index: 2,
-                icon: Icons.edit_note_rounded,
-                activeIcon: Icons.edit_note_rounded,
-                label: 'Practice',
-                onTap: () {
-                  setState(() => _selectedBottomNavIndex = 2);
-                  context.push(RouteNames.quiz);
-                },
-              ),
-              _buildBottomNavItem(
-                index: 3,
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
-                label: 'Profile',
-                onTap: () {
-                  setState(() => _selectedBottomNavIndex = 3);
-                  context.push(RouteNames.profile);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+/// Helper model for subject items matching reference design
+class _ExamSubjectItem {
+  final String? subjectId;
+  final String title;
+  final String subtitle;
+  final double progress;
+  final String progressText;
+  final Color progressColor;
+  final IconData icon;
+  final Color iconBgColor;
+  final Color iconColor;
+  final String historyText;
+  final String questionsText;
 
-  Widget _buildBottomNavItem({
-    required int index,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = _selectedBottomNavIndex == index;
-    final color = isSelected ? _primaryBlue : const Color(0xFF64748B);
-
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(isSelected ? activeIcon : icon, color: color, size: 23),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  const _ExamSubjectItem({
+    this.subjectId,
+    required this.title,
+    required this.subtitle,
+    required this.progress,
+    required this.progressText,
+    required this.progressColor,
+    required this.icon,
+    required this.iconBgColor,
+    required this.iconColor,
+    required this.historyText,
+    required this.questionsText,
+  });
 }

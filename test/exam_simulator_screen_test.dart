@@ -119,6 +119,7 @@ void main() {
       const MaterialApp(
         home: ExamSimulatorScreen(
           initialDashboardData: testDashboardData,
+          showBottomNav: true,
         ),
       ),
     );
