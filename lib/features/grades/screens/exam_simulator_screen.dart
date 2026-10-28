@@ -15,7 +15,7 @@ import '../widgets/exam_header_skeleton.dart';
 import '../widgets/grade_screen_shell.dart';
 
 /// Grade 12 National University Entrance Exam Preparation & Simulator Screen.
-/// Matches the reference design with exact pixel precision and live data integration.
+/// Displays live integrated data from the backend with zero hardcoded fallbacks.
 class ExamSimulatorScreen extends StatefulWidget {
   final NationalExamDashboardModel? initialDashboardData;
   final bool showBottomNav;
@@ -46,81 +46,6 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   static const Color _textPrimary = AppColors.textPrimary;
   static const Color _textSecondary = AppColors.textSecondary;
   static const Color _cardBorder = AppColors.containerHigh;
-
-  final List<_ExamSubjectItem> _subjects = const [
-    _ExamSubjectItem(
-      title: 'Mathematics',
-      subtitle: 'Natural Science Track',
-      progress: 0.45,
-      progressText: '45%',
-      progressColor: _orangeAccent,
-      icon: Icons.calculate_outlined,
-      iconBgColor: Color(0xFFE0EDFD),
-      iconColor: Color(0xFF2563EB),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '850 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Physics',
-      subtitle: 'Mechanics, Waves & Modern',
-      progress: 0.30,
-      progressText: '30%',
-      progressColor: _orangeAccent,
-      icon: Icons.bolt_rounded,
-      iconBgColor: Color(0xFFFFEDD5),
-      iconColor: _orangeAccent,
-      historyText: '2015 - 2023 Exams (9 Years)',
-      questionsText: '720 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Chemistry',
-      subtitle: 'Organic, Inorganic & Physical',
-      progress: 0.20,
-      progressText: '20%',
-      progressColor: _orangeAccent,
-      icon: Icons.science_outlined,
-      iconBgColor: Color(0xFFEEF2FF),
-      iconColor: Color(0xFF4F46E5),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '800 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Biology',
-      subtitle: 'Genetics, Ecology & Human Bio',
-      progress: 0.60,
-      progressText: '60%',
-      progressColor: _emeraldGreen,
-      icon: Icons.psychology_outlined,
-      iconBgColor: Color(0xFFDCFCE7),
-      iconColor: Color(0xFF16A34A),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '780 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'English',
-      subtitle: 'Grammar, Reading & Vocab',
-      progress: 0.75,
-      progressText: '75%',
-      progressColor: _emeraldGreen,
-      icon: Icons.translate_rounded,
-      iconBgColor: Color(0xFFFFEDD5),
-      iconColor: _orangeAccent,
-      historyText: '2012 - 2023 Exams (12 Years)',
-      questionsText: '1,200 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Civics & Ethical Education',
-      subtitle: 'Constitution, Ethics & Society',
-      progress: 0.50,
-      progressText: '50%',
-      progressColor: _orangeAccent,
-      icon: Icons.balance_rounded,
-      iconBgColor: Color(0xFFE0EDFD),
-      iconColor: Color(0xFF2563EB),
-      historyText: '2016 - 2023 Exams (8 Years)',
-      questionsText: '640 Questions',
-    ),
-  ];
 
   @override
   void initState() {
@@ -189,6 +114,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final hasBannerExam = _dashboardData?.bannerExam != null;
 
     // Locked Screen: Prevents popping out to unauthenticated screens.
     // User can only leave via explicit logout from Profile screen.
@@ -223,7 +149,12 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     children: [
                       Container(
                         width: double.infinity,
-                        height: topPadding + 195,
+                        height: topPadding +
+                            (_isLoading && _dashboardData == null
+                                ? 145
+                                : hasBannerExam
+                                    ? 195
+                                    : 125),
                         color: _primaryBlue,
                       ),
                       Padding(
@@ -233,20 +164,24 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                           children: [
                             _buildCustomAppBar(context),
                             const SizedBox(height: 12),
-                            if (_isLoading && _dashboardData == null)
-                              const ExamHeaderSkeleton()
-                            else ...[
+                            if (_isLoading && _dashboardData == null) ...[
+                              const ExamHeaderSkeleton(),
+                              const SizedBox(height: 10),
+                            ]
+                            else if (_dashboardData != null) ...[
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
                                 child: _buildWelcomeBanner(),
                               ),
-                              const SizedBox(height: 14),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: _buildActiveExamCard(context),
-                              ),
+                              if (hasBannerExam) ...[
+                                const SizedBox(height: 14),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: _buildActiveExamCard(context),
+                                ),
+                              ],
                             ],
                           ],
                         ),
@@ -276,7 +211,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                               ),
                             ),
                             Text(
-                              '${_dashboardData?.subjectsCount ?? _displaySubjects.length} Subjects',
+                              '${_dashboardData?.subjects.length ?? _displaySubjects.length} Subjects',
                               style: GoogleFonts.inter(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w500,
@@ -316,6 +251,22 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     const SizedBox(height: 36),
                   ] else if (_errorMessage != null && _dashboardData == null) ...[
                     _buildErrorState(),
+                  ] else if (_displaySubjects.isEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 32,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No exam subjects found for your grade level.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: _textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
                   ] else ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -374,7 +325,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     final student = _dashboardData?.student;
     final name = student != null && student.name.trim().isNotEmpty
         ? student.name.trim()
-        : 'Ruth';
+        : 'Student';
     final gradeLevel = student?.gradeLevel ?? 12;
     final streamDisplay = student != null
         ? (student.stream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural')
@@ -417,19 +368,22 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     );
   }
 
-  /// Active Exam Card matching Figma reference exactly
+  /// Active Exam Card: displays the live banner exam from backend
   Widget _buildActiveExamCard(BuildContext context) {
     final banner = _dashboardData?.bannerExam;
-    final title = banner != null
+    if (banner == null) return const SizedBox.shrink();
+
+    final title = banner.subjectName.isNotEmpty
         ? '${banner.subjectName} ${banner.title}'
-        : 'Physics 2022 National Exam';
-    final remainingTime = banner != null
-        ? banner.formattedRemainingTime
-        : '42 mins remaining';
-    final actionText = banner?.action ?? 'Resume Exam';
-    final paperSubtitle = banner?.subjectName != null
-        ? 'Paper 1 • ${banner!.subjectName}'
-        : 'Paper 1 • Physics';
+        : banner.title;
+    final remainingTime = banner.formattedRemainingTime;
+    final actionText = banner.action;
+    final paperSubtitle = banner.subjectName.isNotEmpty
+        ? 'Paper 1 • ${banner.subjectName}'
+        : 'Paper 1 • National Review';
+    final badge = banner.badgeText;
+    final progress = banner.progressValue;
+    final showProgress = banner.isInProgress && progress > 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -515,7 +469,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Q 34/100',
+                  badge,
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
@@ -526,18 +480,20 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             ],
           ),
 
-          const SizedBox(height: 14),
-
-          // Horizontal Progress Bar (34%)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: const LinearProgressIndicator(
-              value: 0.34,
-              minHeight: 6,
-              backgroundColor: Color(0xFFF1F5F9),
-              valueColor: AlwaysStoppedAnimation<Color>(_orangeAccent),
+          if (showProgress) ...[
+            const SizedBox(height: 14),
+            // Horizontal Progress Bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: const Color(0xFFF1F5F9),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(_orangeAccent),
+              ),
             ),
-          ),
+          ],
 
           const SizedBox(height: 14),
 
@@ -872,10 +828,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   }
 
   List<_ExamSubjectItem> get _displaySubjects {
-    if (_dashboardData != null && _dashboardData!.subjects.isNotEmpty) {
+    if (_dashboardData != null) {
       return _dashboardData!.subjects.map(_fromBackendSubject).toList();
     }
-    return _subjects;
+    return [];
   }
 }
 

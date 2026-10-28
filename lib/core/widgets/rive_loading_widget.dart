@@ -73,23 +73,23 @@ class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
       fileLoader: _fileLoader,
       builder: (context, state) => switch (state) {
         RiveLoading() => const Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
+        ),
         RiveFailed() => const Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
+        ),
         RiveLoaded() => RiveWidget(
-            controller: state.controller,
-            fit: Fit.contain,
-          ),
+          controller: state.controller,
+          fit: Fit.contain,
+        ),
       },
     );
 
@@ -103,16 +103,13 @@ class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          width: widget.size,
-          height: widget.size,
-          child: riveChild,
-        ),
+        SizedBox(width: widget.size, height: widget.size, child: riveChild),
         if (widget.label != null) ...[
           const SizedBox(height: 12),
           Text(
             widget.label!,
-            style: widget.labelStyle ??
+            style:
+                widget.labelStyle ??
                 theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   letterSpacing: 0.3,
@@ -148,7 +145,6 @@ class KutaLoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
       alignment: Alignment.center,
       child: KutaLoadingWidget(
         size: 180,

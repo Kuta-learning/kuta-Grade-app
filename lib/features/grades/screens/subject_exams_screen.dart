@@ -36,85 +36,49 @@ class SubjectExamsScreen extends StatefulWidget {
 typedef Grade12SubjectExamsScreen = SubjectExamsScreen;
 
 class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
-  bool _isLoading = false;
+  bool _isLoading = true;
+  String? _errorMessage;
   List<_ExamPaperModel> _papers = [];
-
-  static const List<_ExamPaperModel> _fallbackPapers = [
-    _ExamPaperModel(
-      id: '2023',
-      year: '2023',
-      displayTitle: '2023 National\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-    _ExamPaperModel(
-      id: '2022',
-      year: '2022',
-      displayTitle: '2022\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.inProgress,
-      timeLeft: '1:42m left',
-    ),
-    _ExamPaperModel(
-      id: '2021',
-      year: '2021',
-      displayTitle: '2021 National\nExam',
-      duration: '2h 10m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.completed,
-      score: 'Score: 88/100',
-    ),
-    _ExamPaperModel(
-      id: '2020',
-      year: '2020',
-      displayTitle: '2020\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-    _ExamPaperModel(
-      id: '2019',
-      year: '2019',
-      displayTitle: '2019\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _papers = List.from(_fallbackPapers);
     _fetchPapers();
   }
 
+  /// Loads exam papers from backend. Supports pull-to-refresh.
   Future<void> _fetchPapers() async {
     if (widget.subjectId == null || widget.subjectId!.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'No subject ID provided. Please go back and try again.';
+      });
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Only show full loading state on initial load (not on refresh)
+    if (_papers.isEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final service = NationalExamService();
       final list = await service.getExamsForSubject(widget.subjectId!);
       if (mounted) {
         setState(() {
-          if (list.isNotEmpty) {
-            _papers = list.map(_fromBackendPaper).toList();
-          }
+          _papers = list.map(_fromBackendPaper).toList();
           _isLoading = false;
+          _errorMessage = null;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -141,8 +105,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 
     final isFourDigits = paper.year > 0;
     final displayTitle = isFourDigits
-        ? '${paper.year}\nNational\nExam'
-        : '${paper.title}\nNational\nExam';
+        ? '${paper.year} National Exam'
+        : '${paper.title} National Exam';
 
     return _ExamPaperModel(
       id: paper.id,
@@ -177,25 +141,125 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
         }
       },
       showBottomNav: false,
-      body: _isLoading && _papers.isEmpty
-          ? const Center(
-              child: KutaLoadingWidget(
-                size: 140,
-                label: 'Loading Exam Papers...',
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    // Initial loading state with custom Rive animation
+    if (_isLoading && _papers.isEmpty) {
+      return const Center(
+        child: KutaLoadingWidget(
+          size: 140,
+          label: 'Loading Exam Papers...',
+        ),
+      );
+    }
+
+    // Error state with retry
+    if (_errorMessage != null && _papers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: AppColors.error,
+                  size: 28,
+                ),
               ),
-            )
-          : ListView.builder(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              itemCount: _papers.length,
-              itemBuilder: (context, index) {
-                final paper = _papers[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildExamCard(context, paper),
-                );
-              },
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load exam papers',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _errorMessage ?? 'Please check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _fetchPapers,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Empty state
+    if (_papers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.quiz_outlined,
+              size: 48,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
             ),
+            const SizedBox(height: 12),
+            Text(
+              'No exam papers found for this subject.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Papers list with pull-to-refresh
+    return RefreshIndicator(
+      color: AppColors.brandPrimary,
+      onRefresh: _fetchPapers,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        itemCount: _papers.length,
+        itemBuilder: (context, index) {
+          final paper = _papers[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildExamCard(context, paper),
+          );
+        },
+      ),
     );
   }
 

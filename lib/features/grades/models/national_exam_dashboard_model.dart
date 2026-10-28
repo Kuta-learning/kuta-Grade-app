@@ -65,6 +65,9 @@ class BannerExamInfo {
   final String? status;
   final String action;
   final int timeRemainingSeconds;
+  final int? answeredQuestions;
+  final int? totalQuestions;
+  final double? progress;
 
   const BannerExamInfo({
     this.attemptId,
@@ -75,9 +78,24 @@ class BannerExamInfo {
     this.status,
     required this.action,
     required this.timeRemainingSeconds,
+    this.answeredQuestions,
+    this.totalQuestions,
+    this.progress,
   });
 
   factory BannerExamInfo.fromJson(Map<String, dynamic> json) {
+    final rawProgress = json['progress'] ?? json['progressPercentage'];
+    final double? prog = rawProgress is num
+        ? rawProgress.toDouble()
+        : double.tryParse(rawProgress?.toString() ?? '');
+
+    final answered = json['answeredQuestions'] as int? ??
+        json['currentQuestion'] as int? ??
+        json['answeredCount'] as int?;
+    final total = json['totalQuestions'] as int? ??
+        json['questionsCount'] as int? ??
+        json['totalCount'] as int?;
+
     return BannerExamInfo(
       attemptId: json['attemptId'] as String?,
       examId: json['examId'] as String?,
@@ -85,13 +103,51 @@ class BannerExamInfo {
       subjectName: json['subjectName'] as String? ?? 'Subject',
       year: json['year'] as int?,
       status: json['status'] as String?,
-      action: json['action'] as String? ?? 'Resume Exam',
+      action: json['action'] as String? ?? 'Start Exam',
       timeRemainingSeconds: json['timeRemainingSeconds'] as int? ?? 0,
+      answeredQuestions: answered,
+      totalQuestions: total,
+      progress: prog,
     );
   }
 
+  bool get isInProgress =>
+      status == 'IN_PROGRESS' ||
+      action.toLowerCase().contains('resume') ||
+      (answeredQuestions != null && answeredQuestions! > 0);
+
+  String get badgeText {
+    if (answeredQuestions != null &&
+        totalQuestions != null &&
+        totalQuestions! > 0) {
+      return 'Q $answeredQuestions/$totalQuestions';
+    }
+    if (isInProgress) {
+      return 'In Progress';
+    }
+    return totalQuestions != null && totalQuestions! > 0
+        ? '$totalQuestions Qs'
+        : 'Full Paper';
+  }
+
+  double get progressValue {
+    if (progress != null) {
+      return progress! > 1.0
+          ? (progress! / 100.0).clamp(0.0, 1.0)
+          : progress!.clamp(0.0, 1.0);
+    }
+    if (answeredQuestions != null &&
+        totalQuestions != null &&
+        totalQuestions! > 0) {
+      return (answeredQuestions! / totalQuestions!).clamp(0.0, 1.0);
+    }
+    return 0.0;
+  }
+
   String get formattedRemainingTime {
-    if (timeRemainingSeconds <= 0) return 'Ready to start';
+    if (timeRemainingSeconds <= 0) {
+      return isInProgress ? 'In progress' : 'Ready to start';
+    }
     final minutes = (timeRemainingSeconds / 60).round();
     return '$minutes mins remaining';
   }
