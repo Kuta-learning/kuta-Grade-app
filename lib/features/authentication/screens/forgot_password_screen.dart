@@ -8,6 +8,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../services/auth_service.dart';
+import '../widgets/animated_auth_background.dart';
 
 /// Forgot Password screen designed to match the reference design specification.
 /// Features a warm peach-to-blue background gradient, custom reset badge,
@@ -79,20 +80,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF1E8), // Warm soft peach / cream
-              Color(0xFFEFF5FC), // Soft sky blue
-            ],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: AppColors.surfaceApp,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const AnimatedAuthBackground(),
+          SafeArea(
           child: Center(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
@@ -114,14 +107,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFDEEE3), // Soft terracotta background
+                        color: const Color(
+                          0xFFFDEEE3,
+                        ), // Soft terracotta background
                         borderRadius: BorderRadius.circular(28.0),
                       ),
                       child: const Center(
                         child: Icon(
                           Icons.lock_reset,
                           size: 42,
-                          color: Color(0xFF9D4300), // Deep terracotta / secondAccent
+                          color: Color(
+                            0xFF9D4300,
+                          ), // Deep terracotta / secondAccent
                         ),
                       ),
                     ),
@@ -183,7 +180,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           children: [
                             // Label: Email Address
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2.0,
+                              ),
                               child: Text(
                                 'Email Address',
                                 style: AppTypography.labelMd.copyWith(
@@ -201,9 +200,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _handleSendInstructions(),
+                              onFieldSubmitted: (_) =>
+                                  _handleSendInstructions(),
                               autofillHints: const [AutofillHints.email],
-                              style: AppTypography.bodyXl.copyWith(fontSize: 15),
+                              style: AppTypography.bodyXl.copyWith(
+                                fontSize: 15,
+                              ),
                               validator: (val) {
                                 if (val == null || val.trim().isEmpty) {
                                   return 'Please enter your email';
@@ -328,8 +330,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  );
   }
 
   Widget _buildSendButton() {

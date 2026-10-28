@@ -10,6 +10,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../services/auth_service.dart';
+import '../widgets/animated_auth_background.dart';
 
 /// Premium 6-digit OTP verification screen matching the Kuta design language.
 /// Features dedicated pin boxes, auto-advance, backspace handling, clipboard pasting,
@@ -17,10 +18,7 @@ import '../services/auth_service.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
 
-  const OtpVerificationScreen({
-    super.key,
-    required this.email,
-  });
+  const OtpVerificationScreen({super.key, required this.email});
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -28,10 +26,14 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   static const int _otpLength = 6;
-  final List<TextEditingController> _controllers =
-      List.generate(_otpLength, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes =
-      List.generate(_otpLength, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(
+    _otpLength,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(
+    _otpLength,
+    (_) => FocusNode(),
+  );
 
   bool _isLoading = false;
   bool _isResending = false;
@@ -86,8 +88,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             _controllers[i].text = digits[i];
           }
         }
-        final targetIndex =
-            (digits.length >= _otpLength) ? _otpLength - 1 : digits.length;
+        final targetIndex = (digits.length >= _otpLength)
+            ? _otpLength - 1
+            : digits.length;
         _focusNodes[targetIndex].requestFocus();
         if (digits.length >= _otpLength) {
           _handleVerify();
@@ -188,7 +191,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isResending = false);
-      AppSnackBar.showError(context, 'Could not resend code. Please try again.');
+      AppSnackBar.showError(
+        context,
+        'Could not resend code. Please try again.',
+      );
     }
   }
 
@@ -202,24 +208,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedTime =
-        '00:${_secondsRemaining.toString().padLeft(2, '0')}';
+    final formattedTime = '00:${_secondsRemaining.toString().padLeft(2, '0')}';
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF1E8), // Warm soft peach / cream
-              Color(0xFFEFF5FC), // Soft sky blue
-            ],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: AppColors.surfaceApp,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const AnimatedAuthBackground(),
+          SafeArea(
           child: Center(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
@@ -282,7 +279,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ),
                           children: [
                             const TextSpan(
-                              text: "We've sent a 6-digit verification code to\n",
+                              text:
+                                  "We've sent a 6-digit verification code to\n",
                             ),
                             TextSpan(
                               text: widget.email.isNotEmpty
@@ -332,8 +330,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             child: Text(
                               '6-DIGIT CODE',
                               style: AppTypography.captionSm.copyWith(
-                                color:
-                                    AppColors.authBrown.withValues(alpha: 0.7),
+                                color: AppColors.authBrown.withValues(
+                                  alpha: 0.7,
+                                ),
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.2,
                                 fontSize: 11.5,
@@ -369,11 +368,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                         const SizedBox(width: 5),
                                         Text(
                                           "Didn't get code? Resend in $formattedTime",
-                                          style: AppTypography.captionSm.copyWith(
-                                            color: AppColors.authBrown,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                          style: AppTypography.captionSm
+                                              .copyWith(
+                                                color: AppColors.authBrown,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                         ),
                                       ],
                                     )
@@ -382,10 +382,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                       children: [
                                         Text(
                                           "Didn't receive code? ",
-                                          style: AppTypography.captionSm.copyWith(
-                                            color: AppColors.authBrown,
-                                            fontSize: 13,
-                                          ),
+                                          style: AppTypography.captionSm
+                                              .copyWith(
+                                                color: AppColors.authBrown,
+                                                fontSize: 13,
+                                              ),
                                         ),
                                         GestureDetector(
                                           onTap: _isResending
@@ -397,20 +398,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                                   height: 14,
                                                   child:
                                                       CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    color: Color(0xFF2563EB),
-                                                  ),
+                                                        strokeWidth: 2,
+                                                        color: Color(
+                                                          0xFF2563EB,
+                                                        ),
+                                                      ),
                                                 )
                                               : Text(
                                                   'Resend Code',
                                                   style: AppTypography
                                                       .labelMdSemiBold
                                                       .copyWith(
-                                                    color:
-                                                        const Color(0xFF2563EB),
-                                                    fontSize: 13.5,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                        color: const Color(
+                                                          0xFF2563EB,
+                                                        ),
+                                                        fontSize: 13.5,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
                                                 ),
                                         ),
                                       ],
@@ -476,8 +481,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  );
   }
 
   Widget _buildOtpDigitBox(int index) {
@@ -511,9 +517,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             fontWeight: FontWeight.w700,
             color: AppColors.headlineDark,
           ),
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             counterText: '',
             filled: true,
