@@ -1,5 +1,6 @@
 import '../../../../core/constants/academic_stream.dart';
 import '../../../../core/constants/grade_level.dart';
+import '../../models/user_model.dart';
 
 enum AcademicSelectionStatus { initial, submitting, success, failure }
 
@@ -9,6 +10,7 @@ class AcademicSelectionState {
   final int currentStep;
   final AcademicSelectionStatus status;
   final String? errorMessage;
+  final UserModel? updatedUser;
 
   const AcademicSelectionState({
     this.selectedGrade = GradeLevel.grade12, // Default pre-selection as shown in design
@@ -16,6 +18,7 @@ class AcademicSelectionState {
     this.currentStep = 1,
     this.status = AcademicSelectionStatus.initial,
     this.errorMessage,
+    this.updatedUser,
   });
 
   bool get isGrade12 => selectedGrade == GradeLevel.grade12;
@@ -62,6 +65,7 @@ class AcademicSelectionState {
     int? currentStep,
     AcademicSelectionStatus? status,
     String? errorMessage,
+    UserModel? updatedUser,
   }) {
     return AcademicSelectionState(
       selectedGrade: selectedGrade ?? this.selectedGrade,
@@ -69,6 +73,7 @@ class AcademicSelectionState {
       currentStep: currentStep ?? this.currentStep,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
+      updatedUser: updatedUser ?? this.updatedUser,
     );
   }
 }

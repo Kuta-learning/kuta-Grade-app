@@ -184,7 +184,7 @@ void main() {
 
     expect(find.text('Name must be at least 2 characters'), findsOneWidget);
     expect(
-      find.text('Please enter a valid email address (e.g. student@kuta.com)'),
+      find.text('Please enter a valid email address'),
       findsOneWidget,
     );
     expect(find.text('Password must be at least 8 characters'), findsOneWidget);

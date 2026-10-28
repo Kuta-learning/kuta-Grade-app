@@ -69,25 +69,30 @@ class AcademicSelectionBloc
   ) async {
     final grade = state.selectedGrade;
     if (grade == null) return;
+    if (state.status == AcademicSelectionStatus.submitting) return;
 
     emit(state.copyWith(status: AcademicSelectionStatus.submitting));
 
     try {
-      await _authService.updateAcademicProfile(
+      final updatedUser = await _authService.updateAcademicProfile(
         gradeLevel: grade,
         stream: state.isGrade12 ? state.selectedStream : null,
       );
 
-      // Notify parent AuthBloc if available so global session stays updated
+      // Notify parent AuthBloc with the already-updated user to avoid duplicate network call
       _authBloc?.add(AcademicProfileUpdated(
         gradeLevel: grade,
         stream: state.isGrade12 ? state.selectedStream : null,
+        user: updatedUser,
       ));
 
       // Allow a microtask tick so AuthBloc processes the update
       await Future<void>.delayed(Duration.zero);
 
-      emit(state.copyWith(status: AcademicSelectionStatus.success));
+      emit(state.copyWith(
+        status: AcademicSelectionStatus.success,
+        updatedUser: updatedUser,
+      ));
     } catch (e) {
       emit(state.copyWith(
         status: AcademicSelectionStatus.failure,
