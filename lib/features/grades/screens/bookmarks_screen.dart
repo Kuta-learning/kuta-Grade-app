@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/route_names.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
 import '../widgets/grade_screen_shell.dart';
 
 /// Screen displaying bookmarked subjects, past exam papers, and questions.

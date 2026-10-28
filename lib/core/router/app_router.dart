@@ -15,9 +15,9 @@ import '../../features/common/screens/onboarding_screen.dart';
 import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
 import '../../features/kg/screens/kg_home_screen.dart';
-import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart';
-import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
-import '../../features/grades/shared/screens/bookmarks_screen.dart';
+import '../../features/grades/screens/exam_simulator_screen.dart';
+import '../../features/grades/screens/subject_exams_screen.dart';
+import '../../features/grades/screens/bookmarks_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import 'route_names.dart';
 
@@ -96,19 +96,23 @@ class AppRouter {
       GoRoute(
         path: RouteNames.grade12MatricExam,
         name: 'grade12MatricExam',
-        builder: (context, state) => const Grade12MatricExamScreen(),
+        builder: (context, state) => const ExamSimulatorScreen(),
       ),
       GoRoute(
         path: RouteNames.examSimulator,
         name: 'examSimulator',
-        builder: (context, state) => const Grade12MatricExamScreen(),
+        builder: (context, state) => const ExamSimulatorScreen(),
       ),
       GoRoute(
         path: RouteNames.subjectDetail,
         name: 'subjectDetail',
         builder: (context, state) {
           final title = state.uri.queryParameters['subject'] ?? 'Mathematics';
-          return Grade12SubjectExamsScreen(subjectTitle: title);
+          final subjectId = state.uri.queryParameters['subjectId'];
+          return SubjectExamsScreen(
+            subjectId: subjectId,
+            subjectTitle: title,
+          );
         },
       ),
       GoRoute(
@@ -119,7 +123,9 @@ class AppRouter {
               state.uri.queryParameters['subject'] ?? 'Mathematics';
           final subtitle = state.uri.queryParameters['subtitle'] ??
               'Official National University Entrance Papers';
-          return Grade12SubjectExamsScreen(
+          final subjectId = state.uri.queryParameters['subjectId'];
+          return SubjectExamsScreen(
+            subjectId: subjectId,
             subjectTitle: subject,
             subtitle: subtitle,
           );

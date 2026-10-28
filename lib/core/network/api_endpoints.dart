@@ -21,4 +21,13 @@ class ApiEndpoints {
   // ── National Exams & Exam Simulator ───────────────────────────────────────
   static const String nationalExamsDashboard = '/national-exams/dashboard';
   static const String nationalExamsSubjects = '/national-exams/subjects';
+  static String nationalExamsBySubject(String subjectId) =>
+      '/national-exams/subjects/$subjectId/exams';
+  static String startExam(String examId) => '/national-exams/$examId/start';
+  static String saveExamProgress(String attemptId) =>
+      '/national-exams/attempts/$attemptId/save-progress';
+  static String submitExam(String attemptId) =>
+      '/national-exams/attempts/$attemptId/submit';
+  static String examAttemptResult(String attemptId) =>
+      '/national-exams/attempts/$attemptId';
 }

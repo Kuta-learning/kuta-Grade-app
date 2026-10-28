@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/route_names.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
 
 /// Reusable App Bar for Grade screens matching the Figma reference design.
 /// Includes back navigation, screen title, bookmark action, and student profile avatar.
 class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final bool showBackButton;
   final VoidCallback? onBackPressed;
   final VoidCallback? onBookmarkPressed;
   final VoidCallback? onProfilePressed;
@@ -18,6 +19,7 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GradeExamAppBar({
     super.key,
     required this.title,
+    this.showBackButton = true,
     this.onBackPressed,
     this.onBookmarkPressed,
     this.onProfilePressed,
@@ -34,23 +36,25 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-            splashRadius: 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Back',
-            onPressed: () {
-              if (onBackPressed != null) {
-                onBackPressed!();
-              } else if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('${RouteNames.gradeSelection}?step=2');
-              }
-            },
-          ),
-          const SizedBox(width: 8),
+          if (showBackButton) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              splashRadius: 22,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              tooltip: 'Back',
+              onPressed: () {
+                if (onBackPressed != null) {
+                  onBackPressed!();
+                } else if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('${RouteNames.gradeSelection}?step=2');
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: Text(
               title,
