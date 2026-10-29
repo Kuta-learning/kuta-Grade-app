@@ -193,6 +193,8 @@ class GradeBottomNavBar extends StatelessWidget {
           } else {
             if (index == 0) {
               context.go(RouteNames.grade12MatricExam);
+            } else if (index == 1) {
+              context.go(RouteNames.highSchoolNotes);
             } else if (index == 3) {
               context.push(RouteNames.profile);
             }

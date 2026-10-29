@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -161,23 +160,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Soft Warm Ambient Glow (Top-Right)
+          // 1. Soft Warm Ambient Glow (Top-Right) — static BoxShadow, no blur filter
           Positioned(
             top: -60,
             right: -60,
             child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.45,
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
-                  child: Container(
-                    width: 240,
-                    height: 240,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFFFDBCA),
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFFDBCA).withValues(alpha: 0.45),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFDBCA).withValues(alpha: 0.5),
+                      blurRadius: 80,
+                      spreadRadius: 40,
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -246,6 +246,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
                     itemCount: _pages.length,
                     onPageChanged: (index) {
                       setState(() {
@@ -257,7 +258,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                       return Center(
                         child: SingleChildScrollView(
-                          physics: const ClampingScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.space6,
@@ -466,18 +467,21 @@ class _OnboardingCard extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 1. Soft Blue Ambient Glow behind illustration
+            // 1. Soft Blue Ambient Glow behind illustration (static BoxShadow, GPU-friendly)
             Positioned.fill(
               child: Center(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
-                  child: Container(
-                    width: cardWidth * 0.95,
-                    height: cardHeight * 1.5,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF81AEFF).withValues(alpha: 0.28),
-                    ),
+                child: Container(
+                  width: cardWidth * 0.95,
+                  height: cardHeight * 1.5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF81AEFF).withValues(alpha: 0.35),
+                        blurRadius: 70,
+                        spreadRadius: 20,
+                      ),
+                    ],
                   ),
                 ),
               ),

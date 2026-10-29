@@ -19,6 +19,9 @@ import '../../features/grades/grade_12/screens/grade_12_matric_exam_screen.dart'
 import '../../features/grades/grade_12/screens/grade_12_subject_exams_screen.dart';
 import '../../features/grades/shared/screens/bookmarks_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/grades/high_school_notes_screen.dart';
+import '../../features/grades/note_detail_screen.dart';
+import '../../features/grades/lesson_detail_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -26,7 +29,6 @@ import 'route_names.dart';
 class AppRouter {
   static final GoRouter router = GoRouter(
     // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
-    // DEV TIP: Change to RouteNames.animationPreview to preview loading animation
     initialLocation: RouteNames.splash,
     routes: [
       GoRoute(
@@ -138,6 +140,47 @@ class AppRouter {
         path: RouteNames.animationPreview,
         name: 'animationPreview',
         builder: (context, state) => const AnimationPreviewScreen(),
+      ),
+      // ── High school notes screen preview ───────────────────────
+      GoRoute(
+        path: RouteNames.highSchoolNotes,
+        name: 'highSchoolNotes',
+        builder: (context, state) => const HighSchoolNotesScreen(),
+      ),
+      // ── Note detail screen ─────────────────────────────────────
+      GoRoute(
+        path: RouteNames.noteDetail,
+        name: 'noteDetail',
+        builder: (context, state) {
+          final subject = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          final grade = state.uri.queryParameters['grade'] ?? 'Grade 12';
+          return NoteDetailScreen(
+            subjectTitle: subject,
+            gradeLevel: grade,
+          );
+        },
+      ),
+      // ── Lesson detail (reader) screen ──────────────────────────
+      GoRoute(
+        path: RouteNames.lessonDetail,
+        name: 'lessonDetail',
+        builder: (context, state) {
+          final subject =
+              state.uri.queryParameters['subject'] ?? 'Fractions';
+          final gradeLevel =
+              state.uri.queryParameters['gradeLevel'] ?? 'Grade 8 Math';
+          final chapterTitle =
+              state.uri.queryParameters['chapterTitle'] ??
+                  'Equivalence and Simplification';
+          final chapterNumber =
+              state.uri.queryParameters['chapterNumber'] ?? '4.2';
+          return LessonDetailScreen(
+            subject: subject,
+            gradeLevel: gradeLevel,
+            chapterTitle: chapterTitle,
+            chapterNumber: chapterNumber,
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

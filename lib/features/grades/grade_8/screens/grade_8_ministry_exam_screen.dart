@@ -7,9 +7,7 @@ class Grade8MinistryExamScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Text('Grade 8 Ministry Exam Prep'),
-      ),
+      body: Center(child: Text('Grade 8 Ministry Exam Prep')),
     );
   }
 }

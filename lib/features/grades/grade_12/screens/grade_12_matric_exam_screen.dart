@@ -703,11 +703,14 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     return GradeBottomNavBar(
       currentIndex: _selectedBottomNavIndex,
       onTap: (index) {
-        setState(() {
-          _selectedBottomNavIndex = index;
-        });
-        if (index == 3) {
+        if (index == 1) {
+          context.go(RouteNames.highSchoolNotes);
+        } else if (index == 3) {
           context.push(RouteNames.profile);
+        } else {
+          setState(() {
+            _selectedBottomNavIndex = index;
+          });
         }
       },
     );
