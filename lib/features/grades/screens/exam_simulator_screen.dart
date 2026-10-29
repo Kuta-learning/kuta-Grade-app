@@ -3,53 +3,90 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/route_names.dart';
-import '../../../../core/storage/shared_prefs_storage.dart';
-import '../../../../core/storage/storage_keys.dart';
-import '../../../../core/widgets/app_snackbar.dart';
-import '../../../authentication/bloc/auth_bloc.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
+import '../../../core/storage/shared_prefs_storage.dart';
+import '../../../core/storage/storage_keys.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../services/national_exam_service.dart';
-import '../../shared/widgets/grade_screen_shell.dart';
+import '../widgets/exam_header_skeleton.dart';
+import '../widgets/grade_screen_shell.dart';
 
 /// Grade 12 National University Entrance Exam Preparation & Simulator Screen.
-/// Matches the reference design with high visual accuracy.
-class Grade12MatricExamScreen extends StatefulWidget {
-  const Grade12MatricExamScreen({super.key});
+/// Displays live integrated data from the backend with zero hardcoded fallbacks.
+class ExamSimulatorScreen extends StatefulWidget {
+  final NationalExamDashboardModel? initialDashboardData;
+  final bool showBottomNav;
+
+  const ExamSimulatorScreen({
+    super.key,
+    this.initialDashboardData,
+    this.showBottomNav = false,
+  });
 
   @override
-  State<Grade12MatricExamScreen> createState() => _Grade12MatricExamScreenState();
+  State<ExamSimulatorScreen> createState() => _ExamSimulatorScreenState();
 }
 
-/// Alias for Grade12MatricExamScreen
-typedef ExamSimulatorScreen = Grade12MatricExamScreen;
+/// Backward compatibility alias for Grade 12 references
+typedef Grade12MatricExamScreen = ExamSimulatorScreen;
 
-class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
+class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   int _selectedBottomNavIndex = 0;
+  bool _isLoading = true;
+  String? _errorMessage;
   NationalExamDashboardModel? _dashboardData;
+
+  static const Color _primaryBlue = AppColors.brandPrimary;
+  static const Color _pageBackground = AppColors.surfaceApp;
+  static const Color _orangeAccent = AppColors.accentHover;
+  static const Color _emeraldGreen = AppColors.success;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
+  static const Color _cardBorder = AppColors.containerHigh;
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    if (widget.initialDashboardData != null) {
+      _dashboardData = widget.initialDashboardData;
+      _isLoading = false;
+    } else {
+      _loadDashboardData();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _showWelcomeSnackbarOnce();
     });
   }
 
+  /// Loads dashboard data from backend service. Supports Pull-Down-to-Refresh.
   Future<void> _loadDashboardData() async {
+    if (_dashboardData == null) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
     try {
       final service = NationalExamService();
       final data = await service.getDashboard();
       if (mounted) {
         setState(() {
           _dashboardData = data;
+          _isLoading = false;
+          _errorMessage = null;
         });
       }
-    } catch (_) {
-      // Gracefully fall back to reference design items
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
     }
   }
 
@@ -63,235 +100,217 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     await storage.setBool(StorageKeys.hasSeenWelcomeSnackbar, value: true);
     if (!mounted) return;
 
-    String name = 'Student';
-    String? subtitle = 'Grade 12 • Natural Science';
-    try {
-      final authBloc =
-          context.findAncestorWidgetOfExactType<BlocProvider<AuthBloc>>() !=
-                  null
-              ? context.read<AuthBloc>()
-              : null;
-      if (authBloc != null) {
-        final freshUser = await authBloc.authService.getCurrentUser();
-        if (freshUser?.name != null && freshUser!.name.trim().isNotEmpty) {
-          name = freshUser.name.trim();
-        }
-        final streamName = freshUser?.academicStream?.displayName;
-        if (streamName != null) {
-          subtitle = 'Grade 12 • $streamName';
-        }
-      }
-    } catch (_) {}
+    final student = _dashboardData?.student;
+    final name = student != null && student.name.trim().isNotEmpty
+        ? student.name.trim()
+        : 'Student';
+    final grade = student?.gradeLevel ?? 12;
+    final stream = student?.stream == 'SOCIAL' ? 'Social' : 'Natural';
+    final subtitle = 'Grade $grade • $stream Science';
 
-    if (!mounted) return;
     AppSnackBar.showWelcome(context, name: name, subtitle: subtitle);
   }
-
-  static const Color _primaryBlue = AppColors.brandPrimary;
-  static const Color _pageBackground = AppColors.surfaceApp;
-  static const Color _orangeAccent = AppColors.accentHover;
-  static const Color _emeraldGreen = AppColors.success;
-  static const Color _textPrimary = AppColors.textPrimary;
-  static const Color _textSecondary = AppColors.textSecondary;
-  static const Color _cardBorder = AppColors.containerHigh;
-
-  final List<_ExamSubjectItem> _subjects = const [
-    _ExamSubjectItem(
-      title: 'Mathematics',
-      subtitle: 'Natural Science Track',
-      progress: 0.45,
-      progressText: '45%',
-      progressColor: _orangeAccent,
-      icon: Icons.calculate_outlined,
-      iconBgColor: Color(0xFFE0EDFD),
-      iconColor: Color(0xFF2563EB),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '850 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Physics',
-      subtitle: 'Mechanics, Waves & Modern',
-      progress: 0.30,
-      progressText: '30%',
-      progressColor: _orangeAccent,
-      icon: Icons.bolt_rounded,
-      iconBgColor: Color(0xFFFFEDD5),
-      iconColor: _orangeAccent,
-      historyText: '2015 - 2023 Exams (9 Years)',
-      questionsText: '720 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Chemistry',
-      subtitle: 'Organic, Inorganic & Physical',
-      progress: 0.20,
-      progressText: '20%',
-      progressColor: _orangeAccent,
-      icon: Icons.science_outlined,
-      iconBgColor: Color(0xFFEEF2FF),
-      iconColor: Color(0xFF4F46E5),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '800 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Biology',
-      subtitle: 'Genetics, Ecology & Human Bio',
-      progress: 0.60,
-      progressText: '60%',
-      progressColor: _emeraldGreen,
-      icon: Icons.psychology_outlined,
-      iconBgColor: Color(0xFFDCFCE7),
-      iconColor: Color(0xFF16A34A),
-      historyText: '2014 - 2023 Exams (10 Years)',
-      questionsText: '780 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'English',
-      subtitle: 'Grammar, Reading & Vocab',
-      progress: 0.75,
-      progressText: '75%',
-      progressColor: _emeraldGreen,
-      icon: Icons.translate_rounded,
-      iconBgColor: Color(0xFFFFEDD5),
-      iconColor: _orangeAccent,
-      historyText: '2012 - 2023 Exams (12 Years)',
-      questionsText: '1,200 Questions',
-    ),
-    _ExamSubjectItem(
-      title: 'Civics & Ethical Education',
-      subtitle: 'Constitution, Ethics & Society',
-      progress: 0.50,
-      progressText: '50%',
-      progressColor: _orangeAccent,
-      icon: Icons.balance_rounded,
-      iconBgColor: Color(0xFFE0EDFD),
-      iconColor: Color(0xFF2563EB),
-      historyText: '2016 - 2023 Exams (8 Years)',
-      questionsText: '640 Questions',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final hasBannerExam = _dashboardData?.bannerExam != null;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: _pageBackground,
-        body: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Section with Royal Blue Background
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Blue container extending behind AppBar, Welcome banner and upper part of active exam card
-                  Container(
-                    width: double.infinity,
-                    height: topPadding + 195,
-                    color: _primaryBlue,
-                  ),
-                  // Content: Header + Welcome Banner + Active Exam Card
-                  Padding(
-                    padding: EdgeInsets.only(top: topPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildCustomAppBar(context),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildWelcomeBanner(),
-                        ),
-                        const SizedBox(height: 14),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildActiveExamCard(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+    // Locked Screen: Prevents popping out to unauthenticated screens.
+    // User can only leave via explicit logout from Profile screen.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        // Intercept system back navigation
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: _pageBackground,
+          body: RefreshIndicator(
+            color: _primaryBlue,
+            onRefresh: _loadDashboardData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
               ),
-
-              // Exam Subjects Section Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Exam Subjects',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: _textPrimary,
-                            letterSpacing: -0.2,
-                          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ==========================================
+                  // TOP ROYAL BLUE HEADER SECTION
+                  // ==========================================
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: topPadding +
+                            (_isLoading && _dashboardData == null
+                                ? 145
+                                : hasBannerExam
+                                    ? 195
+                                    : 125),
+                        color: _primaryBlue,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: topPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildCustomAppBar(context),
+                            const SizedBox(height: 12),
+                            if (_isLoading && _dashboardData == null) ...[
+                              const ExamHeaderSkeleton(),
+                              const SizedBox(height: 10),
+                            ]
+                            else if (_dashboardData != null) ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildWelcomeBanner(),
+                              ),
+                              if (hasBannerExam) ...[
+                                const SizedBox(height: 14),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: _buildActiveExamCard(context),
+                                ),
+                              ],
+                            ],
+                          ],
                         ),
+                      ),
+                    ],
+                  ),
+
+                  // ==========================================
+                  // EXAM SUBJECTS SECTION HEADER
+                  // ==========================================
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Exam Subjects',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: _textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            Text(
+                              '${_dashboardData?.subjects.length ?? _displaySubjects.length} Subjects',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
                         Text(
-                          '${_dashboardData?.subjectsCount ?? _subjects.length} Subjects',
+                          'Tap a subject to practice real past national exam papers by year.',
                           style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF2563EB),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: _textSecondary,
+                            height: 1.35,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Tap a subject to practice real past national exam papers by year.',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: _textSecondary,
-                        height: 1.35,
+                  ),
+
+                  // ==========================================
+                  // BODY / SUBJECT CARDS / LOADING
+                  // ==========================================
+                  if (_isLoading && _dashboardData == null) ...[
+                    const SizedBox(height: 36),
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: KutaLoadingWidget(
+                          size: 140,
+                          label: 'Loading Exam Simulator...',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                  ] else if (_errorMessage != null && _dashboardData == null) ...[
+                    _buildErrorState(),
+                  ] else if (_displaySubjects.isEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 32,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No exam subjects found for your grade level.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: _textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: _displaySubjects.map((subject) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildSubjectCard(context, subject),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
-                ),
-              ),
 
-              // Subject Cards List
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: _displaySubjects.map((subject) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildSubjectCard(context, subject),
-                    );
-                  }).toList(),
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
-
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
+          bottomNavigationBar: widget.showBottomNav
+              ? GradeBottomNavBar(
+                  currentIndex: _selectedBottomNavIndex,
+                  onTap: (index) {
+                    setState(() => _selectedBottomNavIndex = index);
+                    if (index == 1) {
+                      context.push(RouteNames.subjectDetail);
+                    } else if (index == 2) {
+                      context.push(RouteNames.quiz);
+                    } else if (index == 3) {
+                      context.push(RouteNames.profile);
+                    }
+                  },
+                )
+              : null,
         ),
-        bottomNavigationBar: _buildBottomNav(context),
       ),
     );
   }
 
-  /// App Bar matching the screenshot
+  /// App Bar without back button (locked exam root dashboard)
   Widget _buildCustomAppBar(BuildContext context) {
     return GradeExamAppBar(
       title: 'Exam Simulator',
-      onBackPressed: () {
-        context.go('${RouteNames.gradeSelection}?step=2');
-      },
+      showBackButton: false, // Back button removed per team lead requirement
       onBookmarkPressed: () {
         context.push(RouteNames.bookmarks);
       },
@@ -303,6 +322,15 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
 
   /// Welcome Banner Card inside the blue header
   Widget _buildWelcomeBanner() {
+    final student = _dashboardData?.student;
+    final name = student != null && student.name.trim().isNotEmpty
+        ? student.name.trim()
+        : 'Student';
+    final gradeLevel = student?.gradeLevel ?? 12;
+    final streamDisplay = student != null
+        ? (student.stream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural')
+        : 'Natural';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -318,9 +346,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _dashboardData != null && _dashboardData!.student.name.isNotEmpty
-                ? 'Welcome back, ${_dashboardData!.student.name}!'
-                : 'Welcome back, Ruth!',
+            'Welcome back, $name!',
             style: GoogleFonts.inter(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -330,9 +356,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
           ),
           const SizedBox(height: 3),
           Text(
-            _dashboardData != null
-                ? 'Grade ${_dashboardData!.student.gradeLevel} ${_dashboardData!.student.stream == 'SOCIAL' ? 'Social' : 'Natural'} Science'
-                : 'Grade 12 Natural Science',
+            'Grade $gradeLevel $streamDisplay Science',
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
@@ -344,8 +368,23 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     );
   }
 
-  /// Active Exam Card
+  /// Active Exam Card: displays the live banner exam from backend
   Widget _buildActiveExamCard(BuildContext context) {
+    final banner = _dashboardData?.bannerExam;
+    if (banner == null) return const SizedBox.shrink();
+
+    final title = banner.subjectName.isNotEmpty
+        ? '${banner.subjectName} ${banner.title}'
+        : banner.title;
+    final remainingTime = banner.formattedRemainingTime;
+    final actionText = banner.action;
+    final paperSubtitle = banner.subjectName.isNotEmpty
+        ? 'Paper 1 • ${banner.subjectName}'
+        : 'Paper 1 • National Review';
+    final badge = banner.badgeText;
+    final progress = banner.progressValue;
+    final showProgress = banner.isInProgress && progress > 0;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -367,7 +406,6 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Light orange rounded square with lightning icon
               Container(
                 width: 44,
                 height: 44,
@@ -382,15 +420,12 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Exam Title and Remaining Time
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _dashboardData?.bannerExam != null
-                          ? '${_dashboardData!.bannerExam!.subjectName} ${_dashboardData!.bannerExam!.title}'
-                          : 'Physics 2022 National Exam',
+                      title,
                       style: GoogleFonts.inter(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
@@ -411,9 +446,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            _dashboardData?.bannerExam != null
-                                ? _dashboardData!.bannerExam!.formattedRemainingTime
-                                : '42 mins remaining',
+                            remainingTime,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -429,7 +462,6 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Question Progress Badge: Q 34/100
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
@@ -437,7 +469,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Q 34/100',
+                  badge,
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
@@ -448,27 +480,29 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
             ],
           ),
 
-          const SizedBox(height: 14),
-
-          // Horizontal Progress Bar (34%)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: const LinearProgressIndicator(
-              value: 0.34,
-              minHeight: 6,
-              backgroundColor: Color(0xFFF1F5F9),
-              valueColor: AlwaysStoppedAnimation<Color>(_orangeAccent),
+          if (showProgress) ...[
+            const SizedBox(height: 14),
+            // Horizontal Progress Bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: const Color(0xFFF1F5F9),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(_orangeAccent),
+              ),
             ),
-          ),
+          ],
 
           const SizedBox(height: 14),
 
-          // Footer Row: Paper Info + Resume Exam Button
+          // Footer Row: Paper Info + Action Button
           Row(
             children: [
               Expanded(
                 child: Text(
-                  'Paper 1 • General Physics',
+                  paperSubtitle,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -497,7 +531,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _dashboardData?.bannerExam?.action ?? 'Resume Exam',
+                        actionText,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -521,7 +555,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     );
   }
 
-  /// Individual Subject Card
+  /// Individual Subject Card matching Figma reference exactly
   Widget _buildSubjectCard(BuildContext context, _ExamSubjectItem subject) {
     return Container(
       decoration: BoxDecoration(
@@ -540,9 +574,16 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
       child: InkWell(
         onTap: () {
           final encodedSubject = Uri.encodeComponent(subject.title);
-          final encodedSubtitle = Uri.encodeComponent('Official National University Entrance Papers');
+          final encodedSubtitle = Uri.encodeComponent(
+            subject.subtitle.isNotEmpty
+                ? subject.subtitle
+                : 'Official National University Entrance Papers',
+          );
+          final subjectIdParam = subject.subjectId != null
+              ? '&subjectId=${subject.subjectId}'
+              : '';
           context.push(
-            '${RouteNames.subjectExams}?subject=$encodedSubject&subtitle=$encodedSubtitle',
+            '${RouteNames.subjectExams}?subject=$encodedSubject&subtitle=$encodedSubtitle$subjectIdParam',
           );
         },
         borderRadius: BorderRadius.circular(12),
@@ -551,7 +592,6 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
             // Top Row: Icon + Title/Subtitle + Circular Progress
             Row(
               children: [
-                // Rounded-square subject icon
                 Container(
                   width: 44,
                   height: 44,
@@ -566,7 +606,6 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Title and Subtitle
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,7 +636,6 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Circular Progress Indicator with percentage text
                 SizedBox(
                   width: 40,
                   height: 40,
@@ -632,10 +670,11 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
             // Bottom Row: Exam history badge + Question count
             Row(
               children: [
-                // History Badge
+                // History Badge with blue clock icon
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(8),
@@ -670,7 +709,7 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Questions Count
+                // Questions Count with emerald green icon
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -698,26 +737,79 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
     );
   }
 
-  /// Bottom Navigation Bar reusing the shared GradeBottomNavBar component
-  Widget _buildBottomNav(BuildContext context) {
-    return GradeBottomNavBar(
-      currentIndex: _selectedBottomNavIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedBottomNavIndex = index;
-        });
-        if (index == 3) {
-          context.push(RouteNames.profile);
-        }
-      },
+  /// Error state widget with retry button
+  Widget _buildErrorState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load Exam Simulator',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage ?? 'Please check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: _textSecondary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _loadDashboardData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
   _ExamSubjectItem _fromBackendSubject(NationalExamSubjectModel model) {
-    final pctInt = model.progressPercentage.round();
-    final progressVal = (model.progressPercentage / 100.0).clamp(0.0, 1.0);
+    final pctInt = (model.progressPercentage > 1.0)
+        ? model.progressPercentage.round()
+        : (model.progressPercentage * 100).round();
+    final progressVal = (model.progressPercentage > 1.0)
+        ? (model.progressPercentage / 100.0).clamp(0.0, 1.0)
+        : model.progressPercentage.clamp(0.0, 1.0);
     final color = model.parsedColor;
 
     return _ExamSubjectItem(
+      subjectId: model.id,
       title: model.name,
       subtitle: model.subcategories.isNotEmpty
           ? model.subcategories
@@ -736,15 +828,16 @@ class _Grade12MatricExamScreenState extends State<Grade12MatricExamScreen> {
   }
 
   List<_ExamSubjectItem> get _displaySubjects {
-    if (_dashboardData != null && _dashboardData!.subjects.isNotEmpty) {
+    if (_dashboardData != null) {
       return _dashboardData!.subjects.map(_fromBackendSubject).toList();
     }
-    return _subjects;
+    return [];
   }
 }
 
-/// Helper model for subject items
+/// Helper model for subject items matching reference design
 class _ExamSubjectItem {
+  final String? subjectId;
   final String title;
   final String subtitle;
   final double progress;
@@ -757,6 +850,7 @@ class _ExamSubjectItem {
   final String questionsText;
 
   const _ExamSubjectItem({
+    this.subjectId,
     required this.title,
     required this.subtitle,
     required this.progress,
@@ -769,4 +863,3 @@ class _ExamSubjectItem {
     required this.questionsText,
   });
 }
-

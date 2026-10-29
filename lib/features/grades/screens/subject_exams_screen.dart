@@ -2,90 +2,254 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/route_names.dart';
-import '../../shared/widgets/grade_screen_shell.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
+import '../../../core/widgets/rive_loading_widget.dart';
+import '../models/national_exam_models.dart';
+import '../services/national_exam_service.dart';
+import '../widgets/grade_screen_shell.dart';
 
 /// Exam status enum indicating student progress for a national exam paper.
 enum ExamPaperStatus { notStarted, inProgress, completed }
 
-/// Grade 12 Subject National Entrance Exam Papers Screen (e.g. Mathematics).
-/// Displays past official national exam papers matching the Figma reference design.
-class Grade12SubjectExamsScreen extends StatelessWidget {
+/// Unified Subject Exam Papers Screen for all Grades (6, 8, 12).
+/// Displays past official national exam papers matching the exact Figma reference design.
+class SubjectExamsScreen extends StatefulWidget {
+  final String? subjectId;
   final String subjectTitle;
   final String streamTitle;
   final String subtitle;
 
-  const Grade12SubjectExamsScreen({
+  const SubjectExamsScreen({
     super.key,
+    this.subjectId,
     this.subjectTitle = 'Mathematics',
     this.streamTitle = 'NATURAL SCIENCE STREAM',
     this.subtitle = 'Official National University Entrance Papers',
   });
 
-  static const List<_ExamPaperModel> _papers = [
-    _ExamPaperModel(
-      year: '2023',
-      displayTitle: '2023 National\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-    _ExamPaperModel(
-      year: '2022',
-      displayTitle: '2022\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.inProgress,
-      timeLeft: '1:42m left',
-    ),
-    _ExamPaperModel(
-      year: '2021',
-      displayTitle: '2021 National\nExam',
-      duration: '2h 10m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.completed,
-      score: 'Score: 88/100',
-    ),
-    _ExamPaperModel(
-      year: '2020',
-      displayTitle: '2020\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-    _ExamPaperModel(
-      year: '2019',
-      displayTitle: '2019\nNational\nExam',
-      duration: '2h 30m',
-      questionsCount: '100 Qs',
-      status: ExamPaperStatus.notStarted,
-    ),
-  ];
+  @override
+  State<SubjectExamsScreen> createState() => _SubjectExamsScreenState();
+}
+
+/// Backward compatibility alias for Grade 12 references
+typedef Grade12SubjectExamsScreen = SubjectExamsScreen;
+
+class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<_ExamPaperModel> _papers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPapers();
+  }
+
+  /// Loads exam papers from backend. Supports pull-to-refresh.
+  Future<void> _fetchPapers() async {
+    if (widget.subjectId == null || widget.subjectId!.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'No subject ID provided. Please go back and try again.';
+      });
+      return;
+    }
+
+    // Only show full loading state on initial load (not on refresh)
+    if (_papers.isEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final service = NationalExamService();
+      final list = await service.getExamsForSubject(widget.subjectId!);
+      if (mounted) {
+        setState(() {
+          _papers = list.map(_fromBackendPaper).toList();
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  _ExamPaperModel _fromBackendPaper(ExamPaperItem paper) {
+    final hours = paper.durationMinutes ~/ 60;
+    final minutes = paper.durationMinutes % 60;
+    final durationStr =
+        minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+
+    ExamPaperStatus status;
+    switch (paper.userStatus) {
+      case ExamUserStatus.notStarted:
+        status = ExamPaperStatus.notStarted;
+        break;
+      case ExamUserStatus.inProgress:
+        status = ExamPaperStatus.inProgress;
+        break;
+      case ExamUserStatus.submitted:
+        status = ExamPaperStatus.completed;
+        break;
+    }
+
+    final isFourDigits = paper.year > 0;
+    final displayTitle = isFourDigits
+        ? '${paper.year} National Exam'
+        : '${paper.title} National Exam';
+
+    return _ExamPaperModel(
+      id: paper.id,
+      year: paper.year.toString(),
+      displayTitle: displayTitle,
+      duration: durationStr,
+      questionsCount: '${paper.totalQuestions} Qs',
+      status: status,
+      timeLeft: status == ExamPaperStatus.inProgress ? '1:42m left' : null,
+      score: paper.latestScore != null
+          ? 'Score: ${paper.latestScore}/${paper.totalQuestions}'
+          : null,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Normalize subtitle to the official entrance papers banner matching the reference design
     final effectiveSubtitle =
-        (subtitle.isEmpty || subtitle == 'Natural Science Track')
+        (widget.subtitle.isEmpty || widget.subtitle == 'Natural Science Track')
             ? 'Official National University Entrance Papers'
-            : subtitle;
+            : widget.subtitle;
 
     return GradeScreenShell(
-      title: subjectTitle,
-      streamTitle: streamTitle,
+      title: widget.subjectTitle,
+      streamTitle: widget.streamTitle,
       subtitle: effectiveSubtitle,
       onBackPressed: () {
         if (context.canPop()) {
           context.pop();
         } else {
-          context.go(RouteNames.grade12MatricExam);
+          context.go(RouteNames.examSimulator);
         }
       },
-      showBottomNav: true,
-      selectedNavIndex: 0,
-      body: ListView.builder(
-        physics: const ClampingScrollPhysics(),
+      showBottomNav: false,
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    // Initial loading state with custom Rive animation
+    if (_isLoading && _papers.isEmpty) {
+      return const Center(
+        child: KutaLoadingWidget(
+          size: 140,
+          label: 'Loading Exam Papers...',
+        ),
+      );
+    }
+
+    // Error state with retry
+    if (_errorMessage != null && _papers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: AppColors.error,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load exam papers',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _errorMessage ?? 'Please check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _fetchPapers,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Empty state
+    if (_papers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.quiz_outlined,
+              size: 48,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No exam papers found for this subject.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Papers list with pull-to-refresh
+    return RefreshIndicator(
+      color: AppColors.brandPrimary,
+      onRefresh: _fetchPapers,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        ),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         itemCount: _papers.length,
         itemBuilder: (context, index) {
@@ -342,6 +506,7 @@ class Grade12SubjectExamsScreen extends StatelessWidget {
 
 /// Model representation for an exam paper year
 class _ExamPaperModel {
+  final String id;
   final String year;
   final String displayTitle;
   final String duration;
@@ -351,6 +516,7 @@ class _ExamPaperModel {
   final String? score;
 
   const _ExamPaperModel({
+    required this.id,
     required this.year,
     required this.displayTitle,
     required this.duration,

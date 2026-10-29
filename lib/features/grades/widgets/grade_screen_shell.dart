@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/route_names.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
 
 /// Reusable App Bar for Grade screens matching the Figma reference design.
 /// Includes back navigation, screen title, bookmark action, and student profile avatar.
 class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final bool showBackButton;
   final VoidCallback? onBackPressed;
   final VoidCallback? onBookmarkPressed;
   final VoidCallback? onProfilePressed;
@@ -18,6 +19,7 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GradeExamAppBar({
     super.key,
     required this.title,
+    this.showBackButton = true,
     this.onBackPressed,
     this.onBookmarkPressed,
     this.onProfilePressed,
@@ -31,26 +33,28 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-            splashRadius: 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Back',
-            onPressed: () {
-              if (onBackPressed != null) {
-                onBackPressed!();
-              } else if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('${RouteNames.gradeSelection}?step=2');
-              }
-            },
-          ),
-          const SizedBox(width: 8),
+          if (showBackButton) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              splashRadius: 22,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              tooltip: 'Back',
+              onPressed: () {
+                if (onBackPressed != null) {
+                  onBackPressed!();
+                } else if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('${RouteNames.gradeSelection}?step=2');
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: Text(
               title,
@@ -132,58 +136,71 @@ class GradeBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceWhite,
-        border: Border(
-          top: BorderSide(color: AppColors.borderVariant, width: 1.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
-      ),
-      padding: EdgeInsets.only(
-        top: 6,
-        bottom: bottomInset > 0 ? bottomInset : 6,
-      ),
-      child: Row(
-        children: [
-          _buildItem(
-            context: context,
-            index: 0,
-            label: 'Exams',
-            icon: Icons.assignment_outlined,
-          ),
-          _buildItem(
-            context: context,
-            index: 1,
-            label: 'Notes',
-            icon: Icons.article_outlined,
-          ),
-          _buildItem(
-            context: context,
-            index: 2,
-            label: 'Practice',
-            icon: Icons.edit_note_rounded,
-          ),
-          _buildItem(
-            context: context,
-            index: 3,
-            label: 'Profile',
-            icon: Icons.person_outline_rounded,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildBottomNavItem(
+                context: context,
+                index: 0,
+                icon: Icons.dashboard_outlined,
+                activeIcon: Icons.dashboard_rounded,
+                label: 'Exams',
+              ),
+              _buildBottomNavItem(
+                context: context,
+                index: 1,
+                icon: Icons.menu_book_outlined,
+                activeIcon: Icons.menu_book_rounded,
+                label: 'Notes',
+              ),
+              _buildBottomNavItem(
+                context: context,
+                index: 2,
+                icon: Icons.edit_note_rounded,
+                activeIcon: Icons.edit_note_rounded,
+                label: 'Practice',
+              ),
+              _buildBottomNavItem(
+                context: context,
+                index: 3,
+                icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildItem({
+  Widget _buildBottomNavItem({
     required BuildContext context,
     required int index,
-    required String label,
     required IconData icon,
+    required IconData activeIcon,
+    required String label,
   }) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.orange500 : AppColors.textSecondary;
+    final color = isSelected ? AppColors.brandPrimary : const Color(0xFF64748B);
 
     return Expanded(
       child: InkWell(
@@ -192,29 +209,29 @@ class GradeBottomNavBar extends StatelessWidget {
             onTap!(index);
           } else {
             if (index == 0) {
-              context.go(RouteNames.grade12MatricExam);
+              context.go(RouteNames.examSimulator);
+            } else if (index == 1) {
+              context.push(RouteNames.subjectDetail);
+            } else if (index == 2) {
+              context.push(RouteNames.quiz);
             } else if (index == 3) {
               context.push(RouteNames.profile);
             }
           }
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 22,
-                color: color,
-              ),
-              const SizedBox(height: 2),
+              Icon(isSelected ? activeIcon : icon, color: color, size: 23),
+              const SizedBox(height: 3),
               Text(
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: color,
                 ),
               ),
@@ -255,7 +272,7 @@ class GradeScreenShell extends StatelessWidget {
     this.onProfilePressed,
     required this.body,
     this.bottomNavigationBar,
-    this.showBottomNav = true,
+    this.showBottomNav = false,
     this.selectedNavIndex = 0,
     this.onNavTap,
     this.backgroundColor = AppColors.surfaceApp,
