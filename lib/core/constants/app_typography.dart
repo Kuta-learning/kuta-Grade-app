@@ -70,6 +70,22 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  /// subtitle-lg (Mobile: 18px / 28px line height, Regular 400) - Profile subtitles
+  static final TextStyle subtitleLg = GoogleFonts.inter(
+    fontSize: 18,
+    height: 28 / 18,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+
+  /// stat-value (Mobile: 32px / 40px line height, SemiBold 600) - Profile metric values
+  static final TextStyle statValue = GoogleFonts.inter(
+    fontSize: 32,
+    height: 40 / 32,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+
   /// label-md (Mobile: 14px / 20px line height, SemiBold 600) - Form labels & buttons
   static final TextStyle labelMd = GoogleFonts.inter(
     fontSize: 14,
