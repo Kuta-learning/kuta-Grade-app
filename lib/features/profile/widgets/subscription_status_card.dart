@@ -76,7 +76,6 @@ class SubscriptionStatusCard extends StatelessWidget {
                 onPressed: onChangeSubscription,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
-                  minimumSize: const Size.fromHeight(AppSpacing.space8 / 2),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(

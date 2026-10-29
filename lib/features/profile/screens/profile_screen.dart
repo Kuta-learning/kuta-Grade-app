@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_loading_indicator.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../authentication/bloc/auth_bloc.dart';
 import '../bloc/profile_bloc.dart';
@@ -94,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ) {
     // Full-screen loading (normal spinner, not the Rive animation)
     if (profile == null && isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingIndicator(color: AppColors.orange500);
     }
 
     // Full-screen error with retry when nothing is loaded yet
