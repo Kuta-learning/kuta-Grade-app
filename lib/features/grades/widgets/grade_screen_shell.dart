@@ -112,7 +112,7 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
                 if (onProfilePressed != null) {
                   onProfilePressed!();
                 } else {
-                  context.push(RouteNames.profile);
+                  context.go(RouteNames.profile);
                 }
               },
             ),
@@ -123,7 +123,10 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Common bottom navigation bar for Grade screens (Exams, Notes, Practice, Profile).
+/// Common bottom navigation bar matching the premium Figma reference design.
+/// Displays the 4 app tabs: Exams, Notes, Practice, Profile.
+/// Active item is highlighted with a vibrant orange capsule pill (#FF6A00),
+/// with white icon and white label.
 class GradeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
@@ -139,46 +142,47 @@ class GradeBottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: const Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          top: BorderSide(color: Color(0xFFF1F5F9), width: 1),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 60,
+          height: 68,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildBottomNavItem(
+              _buildNavItem(
                 context: context,
                 index: 0,
                 icon: Icons.dashboard_outlined,
                 activeIcon: Icons.dashboard_rounded,
                 label: 'Exams',
               ),
-              _buildBottomNavItem(
+              _buildNavItem(
                 context: context,
                 index: 1,
                 icon: Icons.menu_book_outlined,
                 activeIcon: Icons.menu_book_rounded,
                 label: 'Notes',
               ),
-              _buildBottomNavItem(
+              _buildNavItem(
                 context: context,
                 index: 2,
                 icon: Icons.edit_note_rounded,
                 activeIcon: Icons.edit_note_rounded,
                 label: 'Practice',
               ),
-              _buildBottomNavItem(
+              _buildNavItem(
                 context: context,
                 index: 3,
                 icon: Icons.person_outline_rounded,
@@ -192,7 +196,7 @@ class GradeBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNavItem({
+  Widget _buildNavItem({
     required BuildContext context,
     required int index,
     required IconData icon,
@@ -200,45 +204,76 @@ class GradeBottomNavBar extends StatelessWidget {
     required String label,
   }) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.brandPrimary : const Color(0xFF64748B);
 
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          if (onTap != null) {
-            onTap!(index);
-          } else {
-            if (index == 0) {
+    return InkWell(
+      onTap: () {
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          switch (index) {
+            case 0:
               context.go(RouteNames.examSimulator);
-            } else if (index == 1) {
+              break;
+            case 1:
               context.push(RouteNames.subjectDetail);
-            } else if (index == 2) {
+              break;
+            case 2:
               context.push(RouteNames.quiz);
-            } else if (index == 3) {
-              context.push(RouteNames.profile);
-            }
+              break;
+            case 3:
+              context.go(RouteNames.profile);
+              break;
           }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(isSelected ? activeIcon : icon, color: color, size: 23),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: color,
-                ),
+        }
+      },
+      borderRadius: BorderRadius.circular(28),
+      child: isSelected
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6A00),
+                borderRadius: BorderRadius.circular(28),
               ),
-            ],
-          ),
-        ),
-      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(activeIcon, color: Colors.white, size: 21),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: const Color(0xFF374151),
+                    size: 22,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
