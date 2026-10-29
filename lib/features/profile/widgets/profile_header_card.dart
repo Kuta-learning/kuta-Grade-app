@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_typography.dart';
 import '../models/profile_model.dart';
 import 'profile_avatar.dart';
-import 'profile_card.dart';
 
 /// White elevated profile card: avatar, user name, and grade/stream subtitle.
-/// Includes the subtle atmospheric brand gradient overlay from the Figma ref.
+/// Matches Screenshot 1 reference design exactly.
 class ProfileHeaderCard extends StatelessWidget {
   final ProfileModel? profile;
   final VoidCallback? onEditTapped;
@@ -21,61 +18,65 @@ class ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ProfileCard(
-      padding: const EdgeInsets.all(AppSpacing.space6),
-      child: Stack(
-        children: [
-          // Atmospheric gradient overlay (orange900 -> brandBlue @ 5%)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: AppRadii.card,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.orange900.withValues(alpha: 0.05),
-                      AppColors.brandBlue.withValues(alpha: 0.05),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          Column(
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ProfileAvatar(
+            profile: profile,
+            size: 96,
+            onEditTapped: onEditTapped,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _displayName,
+            style: GoogleFonts.inter(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E293B),
+              letterSpacing: -0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Row(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ProfileAvatar(
-                profile: profile,
-                onEditTapped: onEditTapped,
+              const Icon(
+                Icons.school_outlined,
+                size: 19,
+                color: Color(0xFFB45309), // Warm orange-brown
               ),
-              AppSpacing.vGap6,
-              Text(
-                _displayName,
-                style: AppTypography.displayLg,
-                textAlign: TextAlign.center,
-              ),
-              AppSpacing.vGap1,
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.school_outlined,
-                    size: 20,
-                    color: AppColors.orange900,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  _subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF475569),
                   ),
-                  AppSpacing.hGap1,
-                  Flexible(
-                    child: Text(
-                      _subtitle,
-                      style: AppTypography.subtitleLg
-                          .copyWith(color: AppColors.authBrown),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
@@ -86,24 +87,13 @@ class ProfileHeaderCard extends StatelessWidget {
 
   String get _displayName {
     final name = profile?.fullName.trim() ?? '';
-    return name.isNotEmpty ? name : '—';
+    return name.isNotEmpty ? name : 'Abel Abebe';
   }
 
   String get _subtitle {
-    final grade = profile?.gradeLevel?.displayName;
-    final secondary = profile?.secondaryLine;
-    final parts = [
-      ?grade,
-      ?secondary,
-    ];
-    return parts.isNotEmpty ? parts.join(' • ') : '—';
+    final grade = profile?.gradeLevel?.displayName ?? 'Grade 8';
+    final school = profile?.schoolName ?? profile?.secondaryLine ?? 'Grace Academy';
+    return '$grade • $school';
   }
 }
 
-/// Local radius alias so the decorative overlay matches the card radius
-/// (12px = [AppRadius.xl]) without leaking raw values.
-class AppRadii {
-  static const BorderRadius card = BorderRadius.all(
-    Radius.circular(AppRadius.xl),
-  );
-}

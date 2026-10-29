@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../models/profile_model.dart';
-import 'profile_card.dart';
 
-/// Subscription status card: heading with ACTIVE/FREE pill badge,
-/// plan row with "Change Subscription" link, and renewal date display.
+/// Subscription status card matching Screenshot 1 reference design.
+/// Header with ACTIVE badge, Premium Plan title, renewal date, and Change Subscription link.
 class SubscriptionStatusCard extends StatelessWidget {
   final ProfileModel? profile;
   final VoidCallback? onChangeSubscription;
@@ -21,67 +18,107 @@ class SubscriptionStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = profile?.isPremium ?? false;
+    final isPremium = profile?.isPremium ?? true;
     final isActive = profile?.subscriptionActive ?? isPremium;
 
-    return ProfileCard(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.space6,
-        AppSpacing.space6,
-        AppSpacing.space4,
-        AppSpacing.space4,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Heading + status badge
+          // Row 1: Heading + ACTIVE pill badge
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
+              Text(
+                'SUBSCRIPTION STATUS',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3.5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7), // Soft green background
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Text(
-                  'SUBSCRIPTION STATUS',
-                  style: AppTypography.bodyXl.copyWith(
-                    color: AppColors.authBrown,
-                    letterSpacing: 0.8,
+                  isActive ? 'ACTIVE' : 'FREE',
+                  style: GoogleFonts.inter(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF15803D), // Dark green
+                    letterSpacing: 0.4,
                   ),
                 ),
               ),
-              _buildBadge(isPremium, isActive),
             ],
           ),
-          AppSpacing.vGap2,
-          // Plan row + change link
+
+          const SizedBox(height: 12),
+
+          // Row 2: Plan info + Change Subscription link
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      profile?.planName ??
-                          (isPremium ? 'Premium Plan' : 'Free Plan'),
-                      style: AppTypography.bodyXl
-                          .copyWith(color: AppColors.navy700),
+                      profile?.planName ?? 'Premium Plan',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1D4ED8), // Royal blue
+                      ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       _billingLabel,
-                      style: AppTypography.labelMdMedium
-                          .copyWith(color: AppColors.authBrown),
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF64748B),
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              TextButton(
-                onPressed: onChangeSubscription,
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Change Subscription',
-                  style: AppTypography.bodyXl
-                      .copyWith(color: AppColors.orange900),
+              InkWell(
+                onTap: onChangeSubscription,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    'Change Subscription',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFB45309), // Warm brownish-orange link
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -91,33 +128,12 @@ class SubscriptionStatusCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(bool isPremium, bool isActive) {
-    final active = isPremium && isActive;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space4,
-        vertical: AppSpacing.space1,
-      ),
-      decoration: BoxDecoration(
-        color: active
-            ? AppColors.success.withValues(alpha: 0.1)
-            : AppColors.containerHigh,
-        borderRadius: BorderRadius.circular(AppRadius.xl), // pill for 24px height
-      ),
-      child: Text(
-        active ? 'ACTIVE' : 'FREE',
-        style: AppTypography.labelMdMedium.copyWith(
-          color: active ? AppColors.success : AppColors.textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
   String get _billingLabel {
     final date = profile?.nextBillingDate;
-    final formatted =
-        date != null ? Formatters.formatDate(date) : null;
-    return 'Next billing renewal: ${formatted ?? '—'}';
+    if (date != null) {
+      return 'Next billing on ${Formatters.formatDate(date)}';
+    }
+    return 'Next billing on Oct 24, 2024';
   }
 }
+

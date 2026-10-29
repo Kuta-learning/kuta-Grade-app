@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_typography.dart';
-
-/// Action buttons row: Edit Profile (outlined navy) and
-/// Manage Subscription (filled orange CTA).
+/// Action buttons row: Edit Profile (outlined blue) and
+/// Manage Subscription (filled orange CTA) matching Screenshot 1.
 class ProfileActionButtons extends StatelessWidget {
   final VoidCallback? onEditProfile;
   final VoidCallback? onManageSubscription;
@@ -20,51 +17,84 @@ class ProfileActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Left: Edit Profile
         Expanded(
-          child: OutlinedButton(
-            onPressed: onEditProfile,
-            style: OutlinedButton.styleFrom(
-              backgroundColor: AppColors.surfaceWhite,
-              foregroundColor: AppColors.navy700,
-              side: const BorderSide(color: AppColors.navy700),
-              shape: const RoundedRectangleBorder(
-                borderRadius: AppRadius.roundedLg,
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onEditProfile,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF1E5BB0),
+                    width: 1.4,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: Color(0xFF1E5BB0),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Edit Profile',
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E5BB0),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.space4,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.edit_outlined, size: 18),
-                AppSpacing.hGap2,
-                Text('Edit Profile', style: AppTypography.bodyXl),
-              ],
             ),
           ),
         ),
-        AppSpacing.hGap4,
+
+        const SizedBox(width: 12),
+
+        // Right: Manage Subscription
         Expanded(
-          child: ElevatedButton(
-            onPressed: onManageSubscription,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange500,
-              foregroundColor: AppColors.surfaceWhite,
-              shape: const RoundedRectangleBorder(
-                borderRadius: AppRadius.roundedLg,
+          child: Material(
+            color: const Color(0xFFFF6A00),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onManageSubscription,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_offer_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Manage Subscription',
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.space4,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.sell_outlined, size: 18),
-                AppSpacing.hGap2,
-                Text('Manage Subscription', style: AppTypography.bodyXl),
-              ],
             ),
           ),
         ),
@@ -72,3 +102,4 @@ class ProfileActionButtons extends StatelessWidget {
     );
   }
 }
+

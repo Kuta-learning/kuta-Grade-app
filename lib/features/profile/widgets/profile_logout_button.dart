@@ -1,41 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_typography.dart';
 import '../../authentication/bloc/auth_bloc.dart';
-import 'profile_card.dart';
 
-/// Outlined logout card. Delegates session clearing exclusively to [AuthBloc]'s
-/// `LogoutRequested` event (single source of truth), whose handler invokes
-/// `authService.logout()` and emits `AuthUnauthenticated` — the screen-level
-/// listener then resets this module and navigates to the Login screen.
+/// Red outlined logout button matching Screenshot 1 reference design.
 class ProfileLogoutButton extends StatelessWidget {
   const ProfileLogoutButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ProfileCard(
-      padding: EdgeInsets.zero,
-      onTap: () => context.read<AuthBloc>().add(const LogoutRequested()),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.logout, color: AppColors.error, size: 20),
-            AppSpacing.hGap2,
-            Text(
-              'Logout',
-              style: AppTypography.bodyXl.copyWith(
-                color: AppColors.error,
-                fontWeight: FontWeight.w600,
-              ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.read<AuthBloc>().add(const LogoutRequested()),
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFDC2626).withValues(alpha: 0.7),
+              width: 1.2,
             ),
-          ],
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFFDC2626),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Logout',
+                style: GoogleFonts.inter(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFDC2626),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
