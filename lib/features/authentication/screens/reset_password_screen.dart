@@ -9,6 +9,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../services/auth_service.dart';
+import '../widgets/animated_auth_background.dart';
 
 /// Screen allowing the user to enter and confirm their new password
 /// after successfully verifying their OTP.
@@ -84,20 +85,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF1E8), // Warm soft peach / cream
-              Color(0xFFEFF5FC), // Soft sky blue
-            ],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: AppColors.surfaceApp,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const AnimatedAuthBackground(),
+          SafeArea(
           child: Center(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
@@ -292,8 +285,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  );
   }
 
   Widget _buildLabel(String text) {

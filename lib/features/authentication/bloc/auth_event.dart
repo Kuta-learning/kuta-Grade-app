@@ -29,10 +29,12 @@ final class RegisterRequested extends AuthEvent {
 final class AcademicProfileUpdated extends AuthEvent {
   final GradeLevel gradeLevel;
   final AcademicStream? stream;
+  final UserModel? user;
 
   const AcademicProfileUpdated({
     required this.gradeLevel,
     this.stream,
+    this.user,
   });
 }
 

@@ -41,13 +41,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _handleSignUp() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    // Input sanitization: collapse internal whitespace for name, lowercase email
+    final sanitizedName = _nameController.text.trim().replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
+    final sanitizedEmail = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+
     context.read<AuthBloc>().add(
-          RegisterRequested(
-            name: _nameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          ),
-        );
+      RegisterRequested(
+        name: sanitizedName,
+        email: sanitizedEmail,
+        password: password,
+      ),
+    );
   }
 
   @override
@@ -57,10 +65,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthRegisterSuccess) {
           AppSnackBar.showSuccess(
             context,
-            'Welcome, ${state.userName}! Please log in to continue.',
+            'Welcome, ${state.userName}! Please select your grade level to continue.',
             title: 'Account Created',
           );
-          context.go(RouteNames.login);
+          // Flow: Registration -> Onboarding (Grade & Stream Selection) -> Login
+          context.go(RouteNames.gradeSelection);
         } else if (state is AuthFailure) {
           AppSnackBar.showError(context, state.message);
         }
@@ -69,231 +78,245 @@ class _RegisterScreenState extends State<RegisterScreen> {
         builder: (context, authState) {
           final isLoading = authState is AuthLoading;
           return Scaffold(
-      backgroundColor: AppColors.surfaceApp,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ==========================================
-          // 1. ATMOSPHERIC BACKGROUND GLOWS (ANIMATED)
-          // ==========================================
-          const AnimatedAuthBackground(),
+            backgroundColor: AppColors.surfaceApp,
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ==========================================
+                // 1. ATMOSPHERIC BACKGROUND GLOWS (ANIMATED)
+                // ==========================================
+                const AnimatedAuthBackground(),
 
-          // ==========================================
-          // 2. MAIN REGISTRATION CONTENT
-          // ==========================================
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.space4,
-                  vertical: AppSpacing.space8 + AppSpacing.space4, // 48px
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 358),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(24.0),
-                      border: Border.all(color: AppColors.borderVariant),
-                      boxShadow: AppElevation.elevationLg,
-                    ),
-                    padding: AppSpacing.p6, // 24px padding
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // --- Header Section ---
-                          Text(
-                            'Create your account',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.headlineLg.copyWith(
-                              color: AppColors.textPrimary,
+                // ==========================================
+                // 2. MAIN REGISTRATION CONTENT
+                // ==========================================
+                SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space4,
+                        vertical: AppSpacing.space8 + AppSpacing.space4, // 48px
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 358),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceWhite.withValues(
+                              alpha: 0.95,
                             ),
+                            borderRadius: BorderRadius.circular(24.0),
+                            border: Border.all(color: AppColors.borderVariant),
+                            boxShadow: AppElevation.elevationLg,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Continue your journey to mastery',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodyLg.copyWith(
-                              color: AppColors.authBrown,
-                            ),
-                          ),
+                          padding: AppSpacing.p6, // 24px padding
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // --- Header Section ---
+                                Text(
+                                  'Create your account',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.headlineLg.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Continue your journey to mastery',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.bodyLg.copyWith(
+                                    color: AppColors.authBrown,
+                                  ),
+                                ),
 
-                          AppSpacing.vGap6, // 24px gap
-                          // --- Field 1: Full Name ---
-                          _buildLabel('Full Name'),
-                          const SizedBox(height: 4),
-                          _buildTextInput(
-                            controller: _nameController,
-                            hintText: 'John Doe',
-                            prefixIcon: AppIcons.person,
-                            keyboardType: TextInputType.name,
-                             validator: (val) {
-                               if (val == null || val.trim().isEmpty) {
-                                 return 'Please enter your full name';
-                               }
-                               final trimmed = val.trim();
-                               if (trimmed.length < 2) {
-                                 return 'Name must be at least 2 characters';
-                               }
-                               if (trimmed.length > 60) {
-                                 return 'Name must be 60 characters or fewer';
-                               }
-                               return null;
-                             },
-                          ),
+                                AppSpacing.vGap6, // 24px gap
+                                // --- Field 1: Full Name ---
+                                _buildLabel('Full Name'),
+                                const SizedBox(height: 4),
+                                _buildTextInput(
+                                  controller: _nameController,
+                                  hintText: 'John Doe',
+                                  prefixIcon: AppIcons.person,
+                                  keyboardType: TextInputType.name,
+                                  validator: (val) {
+                                    if (val == null || val.trim().isEmpty) {
+                                      return 'Please enter your full name';
+                                    }
+                                    final trimmed = val.trim();
+                                    if (trimmed.length < 2) {
+                                      return 'Name must be at least 2 characters';
+                                    }
+                                    if (trimmed.length > 50) {
+                                      return 'Name must be 50 characters or fewer';
+                                    }
+                                    final nameRegex = RegExp(
+                                      r"^[a-zA-Z\s\-'.]+$",
+                                    );
+                                    if (!nameRegex.hasMatch(trimmed)) {
+                                      return 'Name should only contain letters and spaces';
+                                    }
+                                    return null;
+                                  },
+                                ),
 
-                          AppSpacing.vGap4, // 16px gap
-                          // --- Field 2: Email Address ---
-                          _buildLabel('Email Address'),
-                          const SizedBox(height: 4),
-                          _buildTextInput(
-                            controller: _emailController,
-                            hintText: 'student@example.com',
-                            prefixIcon: AppIcons.email,
-                            keyboardType: TextInputType.emailAddress,
-                             validator: (val) {
-                               if (val == null || val.trim().isEmpty) {
-                                 return 'Please enter your email';
-                               }
-                               final emailRegex = RegExp(
-                                 r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
-                               );
-                               if (!emailRegex.hasMatch(val.trim())) {
-                                 return 'Please enter a valid email address';
-                               }
-                               return null;
-                             },
-                          ),
+                                AppSpacing.vGap4, // 16px gap
+                                // --- Field 2: Email Address ---
+                                _buildLabel('Email Address'),
+                                const SizedBox(height: 4),
+                                _buildTextInput(
+                                  controller: _emailController,
+                                  hintText: 'student@example.com',
+                                  prefixIcon: AppIcons.email,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (val) {
+                                    if (val == null || val.trim().isEmpty) {
+                                      return 'Please enter your email';
+                                    }
+                                    final emailRegex = RegExp(
+                                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                                    );
+                                    if (!emailRegex.hasMatch(val.trim())) {
+                                      return 'Please enter a valid email address';
+                                    }
+                                    return null;
+                                  },
+                                ),
 
-                          AppSpacing.vGap4, // 16px gap
-                          // --- Field 4: Password ---
-                          _buildLabel('Password'),
-                          const SizedBox(height: 4),
-                          _buildPasswordInput(),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.space1,
-                            ),
-                            child: Text(
-                              'Minimum 8 characters with a mix of letters and numbers.',
-                              style: AppTypography.captionSm,
-                            ),
-                          ),
+                                AppSpacing.vGap4, // 16px gap
+                                // --- Field 4: Password ---
+                                _buildLabel('Password'),
+                                const SizedBox(height: 4),
+                                _buildPasswordInput(),
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.space1,
+                                  ),
+                                  child: Text(
+                                    'Minimum 8 characters with a mix of letters and numbers.',
+                                    style: AppTypography.captionSm,
+                                  ),
+                                ),
 
-                          const SizedBox(height: 28),
+                                const SizedBox(height: 28),
 
-                          // --- CTA: Sign Up Button ---
-                          _buildSignUpButton(isLoading: isLoading),
+                                // --- CTA: Sign Up Button ---
+                                _buildSignUpButton(isLoading: isLoading),
 
-                          const SizedBox(height: 16),
+                                const SizedBox(height: 16),
 
-                          // --- Divider between Sign Up and Google ---
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Divider(
+                                // --- Divider between Sign Up and Google ---
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Divider(
+                                        color: AppColors.borderVariant,
+                                        height: 1,
+                                        thickness: 1,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.space4,
+                                      ),
+                                      child: Text(
+                                        'or',
+                                        style: AppTypography.labelMdMedium
+                                            .copyWith(
+                                              color: AppColors.inputPlaceholder,
+                                            ),
+                                      ),
+                                    ),
+                                    const Expanded(
+                                      child: Divider(
+                                        color: AppColors.borderVariant,
+                                        height: 1,
+                                        thickness: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // --- Sign Up with Google Button ---
+                                _buildGoogleSignUpButton(),
+
+                                AppSpacing.vGap6, // 24px gap
+                                // --- Footer: Divider, Login Link & Trust Badge ---
+                                const Divider(
                                   color: AppColors.borderVariant,
                                   height: 1,
                                   thickness: 1,
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.space4,
+
+                                AppSpacing.vGap6, // 24px gap
+                                // Already have an account? Login Screen
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Already have an account? ',
+                                      style: AppTypography.labelMdMedium
+                                          .copyWith(color: AppColors.authBrown),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () =>
+                                          context.push(RouteNames.login),
+                                      child: Text(
+                                        'Login',
+                                        style: AppTypography.labelMdSemiBold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  'or',
-                                  style: AppTypography.labelMdMedium.copyWith(
-                                    color: AppColors.inputPlaceholder,
-                                  ),
+
+                                AppSpacing.vGap4, // 16px gap
+                                // SAFE & SECURE Badge
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Container(
+                                        width: 32,
+                                        height: 1,
+                                        color: AppColors.borderVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'SAFE & SECURE',
+                                      style: AppTypography.captionBold.copyWith(
+                                        color: AppColors.authBrown.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Flexible(
+                                      child: Container(
+                                        width: 32,
+                                        height: 1,
+                                        color: AppColors.borderVariant,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const Expanded(
-                                child: Divider(
-                                  color: AppColors.borderVariant,
-                                  height: 1,
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          // --- Sign Up with Google Button ---
-                          _buildGoogleSignUpButton(),
-
-                          AppSpacing.vGap6, // 24px gap
-                          // --- Footer: Divider, Login Link & Trust Badge ---
-                          const Divider(
-                            color: AppColors.borderVariant,
-                            height: 1,
-                            thickness: 1,
-                          ),
-
-                          AppSpacing.vGap6, // 24px gap
-                          // Already have an account? Login Screen
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Already have an account? ',
-                                style: AppTypography.labelMdMedium.copyWith(
-                                  color: AppColors.authBrown,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => context.push(RouteNames.login),
-                                child: Text(
-                                  'Login',
-                                  style: AppTypography.labelMdSemiBold,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          AppSpacing.vGap4, // 16px gap
-                          // SAFE & SECURE Badge
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 1,
-                                color: AppColors.borderVariant,
-                              ),
-                              const SizedBox(width: 16),
-                              Text(
-                                'SAFE & SECURE',
-                                style: AppTypography.captionBold.copyWith(
-                                  color: AppColors.authBrown.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Container(
-                                width: 32,
-                                height: 1,
-                                color: AppColors.borderVariant,
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
         },
       ),
     );

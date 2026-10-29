@@ -59,7 +59,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         gradeLevel: event.gradeLevel,
       );
       final user = await _authService.register(request);
-      emit(AuthRegisterSuccess(user.name));
+      emit(AuthRegisterSuccess(user.name, email: user.email));
     } on AuthException catch (e) {
       emit(AuthFailure(e.message));
     } catch (_) {
@@ -73,10 +73,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      final updated = await _authService.updateAcademicProfile(
-        gradeLevel: event.gradeLevel,
-        stream: event.stream,
-      );
+      final updated = event.user ??
+          await _authService.updateAcademicProfile(
+            gradeLevel: event.gradeLevel,
+            stream: event.stream,
+          );
       emit(AuthAuthenticated(updated));
     } catch (_) {
       // Keep existing state on error

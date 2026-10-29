@@ -42,7 +42,15 @@ class AppRouter {
       GoRoute(
         path: RouteNames.login,
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) {
+          final prefillEmail = state.uri.queryParameters['email'];
+          final isRegistered =
+              state.uri.queryParameters['registered'] == 'true';
+          return LoginScreen(
+            prefillEmail: prefillEmail,
+            isJustRegistered: isRegistered,
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.register,

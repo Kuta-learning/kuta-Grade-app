@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kuta_learning_app/core/constants/app_colors.dart';
-import 'package:kuta_learning_app/core/router/route_names.dart';
-import 'package:kuta_learning_app/core/widgets/rive_loading_widget.dart';
+import 'package:kuta_grade/core/constants/app_colors.dart';
+import 'package:kuta_grade/core/router/route_names.dart';
+import 'package:kuta_grade/core/widgets/rive_loading_widget.dart';
 
 /// Ultra high-performance preview screen for Kuta Loading animation.
 ///

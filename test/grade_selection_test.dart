@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kuta_learning_app/core/constants/academic_stream.dart';
-import 'package:kuta_learning_app/core/constants/grade_level.dart';
-import 'package:kuta_learning_app/features/authentication/bloc/academic_selection/academic_selection_bloc.dart';
-import 'package:kuta_learning_app/features/authentication/models/register_request.dart';
-import 'package:kuta_learning_app/features/authentication/models/user_model.dart';
-import 'package:kuta_learning_app/features/authentication/screens/grade_selection_screen.dart';
-import 'package:kuta_learning_app/features/authentication/services/auth_service.dart';
+import 'package:kuta_grade/core/constants/academic_stream.dart';
+import 'package:kuta_grade/core/constants/grade_level.dart';
+import 'package:kuta_grade/features/authentication/bloc/academic_selection/academic_selection_bloc.dart';
+import 'package:kuta_grade/features/authentication/models/register_request.dart';
+import 'package:kuta_grade/features/authentication/models/user_model.dart';
+import 'package:kuta_grade/features/authentication/screens/grade_selection_screen.dart';
+import 'package:kuta_grade/features/authentication/services/auth_service.dart';
 
 class _FakeAuthService implements AuthService {
   @override
@@ -54,8 +54,10 @@ class _FakeAuthService implements AuthService {
   Future<void> requestPasswordReset(String email) async {}
 
   @override
-  Future<String> verifyOtp({required String email, required String otp}) async =>
-      'fake-reset-token';
+  Future<String> verifyOtp({
+    required String email,
+    required String otp,
+  }) async => 'fake-reset-token';
 
   @override
   Future<void> resetPassword({
@@ -72,16 +74,15 @@ void main() {
   Widget buildTestableWidget() {
     return MaterialApp(
       home: BlocProvider<AcademicSelectionBloc>(
-        create: (_) => AcademicSelectionBloc(
-          authService: _FakeAuthService(),
-        ),
+        create: (_) => AcademicSelectionBloc(authService: _FakeAuthService()),
         child: const GradeSelectionScreen(),
       ),
     );
   }
 
-  testWidgets('GradeSelectionScreen renders Step 1 with default Grade 12',
-      (WidgetTester tester) async {
+  testWidgets('GradeSelectionScreen renders Step 1 with default Grade 12', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
@@ -106,57 +107,59 @@ void main() {
   });
 
   testWidgets(
-      'Selecting Grade 6 dynamically updates to STEP 1 OF 1, 100% completed, and Enter Dashboard',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(buildTestableWidget());
-    await tester.pumpAndSettle();
+    'Selecting Grade 6 dynamically updates to STEP 1 OF 1, 100% completed, and Enter Dashboard',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestableWidget());
+      await tester.pumpAndSettle();
 
-    // Tap Grade 6
-    await tester.tap(find.text('Grade 6'));
-    await tester.pumpAndSettle();
+      // Tap Grade 6
+      await tester.tap(find.text('Grade 6'));
+      await tester.pumpAndSettle();
 
-    // Progression should dynamically update to 1 of 1 and 100% completed
-    expect(find.text('STEP 1 OF 1'), findsOneWidget);
-    expect(find.text('100% completed'), findsOneWidget);
+      // Progression should dynamically update to 1 of 1 and 100% completed
+      expect(find.text('STEP 1 OF 1'), findsOneWidget);
+      expect(find.text('100% completed'), findsOneWidget);
 
-    // CTA button should dynamically switch to Enter Dashboard
-    expect(find.text('Enter Dashboard'), findsOneWidget);
-    expect(find.text('Continue'), findsNothing);
-  });
+      // CTA button should dynamically switch to Enter Dashboard
+      expect(find.text('Enter Dashboard'), findsOneWidget);
+      expect(find.text('Continue'), findsNothing);
+    },
+  );
 
   testWidgets(
-      'Transitioning to Step 2 for Grade 12 displays stream selection and back button',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(buildTestableWidget());
-    await tester.pumpAndSettle();
+    'Transitioning to Step 2 for Grade 12 displays stream selection and back button',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestableWidget());
+      await tester.pumpAndSettle();
 
-    // Grade 12 is selected by default, tap Continue
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+      // Grade 12 is selected by default, tap Continue
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
 
-    // Verify Step 2 header
-    expect(find.text('STEP 2 OF 2'), findsOneWidget);
-    expect(find.text('100% completed'), findsOneWidget);
-    expect(find.text('Select your stream'), findsOneWidget);
-    expect(find.text('Grade 12 academic track'), findsOneWidget);
+      // Verify Step 2 header
+      expect(find.text('STEP 2 OF 2'), findsOneWidget);
+      expect(find.text('100% completed'), findsOneWidget);
+      expect(find.text('Select your stream'), findsOneWidget);
+      expect(find.text('Grade 12 academic track'), findsOneWidget);
 
-    // Verify Stream options and subject chips
-    expect(find.text('Natural Science'), findsOneWidget);
-    expect(find.text('Social Science'), findsOneWidget);
-    expect(find.text('Mathematics (Natural)'), findsOneWidget);
-    expect(find.text('Physics'), findsOneWidget);
+      // Verify Stream options and subject chips
+      expect(find.text('Natural Science'), findsOneWidget);
+      expect(find.text('Social Science'), findsOneWidget);
+      expect(find.text('Mathematics (Natural)'), findsOneWidget);
+      expect(find.text('Physics'), findsOneWidget);
 
-    // Verify CTA button on Step 2 says Enter Dashboard
-    expect(find.text('Enter Dashboard'), findsOneWidget);
+      // Verify CTA button on Step 2 says Enter Dashboard
+      expect(find.text('Enter Dashboard'), findsOneWidget);
 
-    // Verify back button is present and works
-    final backButton = find.byIcon(Icons.arrow_back_rounded);
-    expect(backButton, findsOneWidget);
+      // Verify back button is present and works
+      final backButton = find.byIcon(Icons.arrow_back_rounded);
+      expect(backButton, findsOneWidget);
 
-    await tester.tap(backButton);
-    await tester.pumpAndSettle();
+      await tester.tap(backButton);
+      await tester.pumpAndSettle();
 
-    // Returns to Step 1
-    expect(find.text('Which grade are you in?'), findsOneWidget);
-  });
+      // Returns to Step 1
+      expect(find.text('Which grade are you in?'), findsOneWidget);
+    },
+  );
 }

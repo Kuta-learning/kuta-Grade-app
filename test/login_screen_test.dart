@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kuta_learning_app/core/constants/academic_stream.dart';
-import 'package:kuta_learning_app/core/constants/grade_level.dart';
-import 'package:kuta_learning_app/features/authentication/bloc/auth_bloc.dart';
-import 'package:kuta_learning_app/features/authentication/models/register_request.dart';
-import 'package:kuta_learning_app/features/authentication/models/user_model.dart';
-import 'package:kuta_learning_app/features/authentication/screens/login_screen.dart';
-import 'package:kuta_learning_app/features/authentication/services/auth_service.dart';
+import 'package:kuta_grade/core/constants/academic_stream.dart';
+import 'package:kuta_grade/core/constants/grade_level.dart';
+import 'package:kuta_grade/features/authentication/bloc/auth_bloc.dart';
+import 'package:kuta_grade/features/authentication/models/register_request.dart';
+import 'package:kuta_grade/features/authentication/models/user_model.dart';
+import 'package:kuta_grade/features/authentication/screens/login_screen.dart';
+import 'package:kuta_grade/features/authentication/services/auth_service.dart';
 
 class _FakeAuthService implements AuthService {
   @override
@@ -54,8 +54,10 @@ class _FakeAuthService implements AuthService {
   Future<void> requestPasswordReset(String email) async {}
 
   @override
-  Future<String> verifyOtp({required String email, required String otp}) async =>
-      'fake-reset-token';
+  Future<String> verifyOtp({
+    required String email,
+    required String otp,
+  }) async => 'fake-reset-token';
 
   @override
   Future<void> resetPassword({
@@ -78,8 +80,9 @@ void main() {
     );
   }
 
-  testWidgets('LoginScreen renders all visual elements matching design',
-      (WidgetTester tester) async {
+  testWidgets('LoginScreen renders all visual elements matching design', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
@@ -110,8 +113,9 @@ void main() {
     expect(find.text('Sign up for free'), findsOneWidget);
   });
 
-  testWidgets('LoginScreen shows validation errors for empty fields',
-      (WidgetTester tester) async {
+  testWidgets('LoginScreen shows validation errors for empty fields', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
@@ -123,8 +127,9 @@ void main() {
     expect(find.text('Please enter your password'), findsOneWidget);
   });
 
-  testWidgets('LoginScreen toggles password visibility',
-      (WidgetTester tester) async {
+  testWidgets('LoginScreen toggles password visibility', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 

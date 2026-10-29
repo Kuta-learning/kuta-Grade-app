@@ -58,6 +58,7 @@ class _GradeSelectionView extends StatelessWidget {
   const _GradeSelectionView();
 
   void _onCtaPressed(BuildContext context, AcademicSelectionState state) {
+    if (state.status == AcademicSelectionStatus.submitting) return;
     if (state.currentStep == 1 && state.isGrade12) {
       // Advance to Step 2 for Grade 12 Stream Selection
       context.read<AcademicSelectionBloc>().add(const ChangeStep(2));
@@ -76,15 +77,33 @@ class _GradeSelectionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AcademicSelectionBloc, AcademicSelectionState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.status == AcademicSelectionStatus.success) {
-          // Route user according to selected grade level per routing architecture
-          final grade = state.selectedGrade;
-          if (grade == GradeLevel.kg) {
-            context.go(RouteNames.kgHome);
-          } else {
-            context.go(RouteNames.grade12MatricExam);
+          // Flow: Registration -> Onboarding (Grade & Stream Selection) -> Login
+          final email = state.updatedUser?.email ?? '';
+
+          AuthBloc? authBloc;
+          try {
+            authBloc = context.read<AuthBloc>();
+          } catch (_) {}
+
+          final bloc = authBloc;
+          if (bloc != null) {
+            // Clear temporary onboarding session so student logs in fresh
+            await bloc.authService.logout();
+            bloc.add(const LogoutRequested());
           }
+
+          if (!context.mounted) return;
+          AppSnackBar.showSuccess(
+            context,
+            'Account setup completed! Please log in with your credentials.',
+            title: 'Welcome to Kuta',
+          );
+          final loginUri = email.isNotEmpty
+              ? '${RouteNames.login}?registered=true&email=${Uri.encodeComponent(email)}'
+              : '${RouteNames.login}?registered=true';
+          context.go(loginUri);
         } else if (state.status == AcademicSelectionStatus.failure &&
             state.errorMessage != null) {
           AppSnackBar.showError(context, state.errorMessage!);
