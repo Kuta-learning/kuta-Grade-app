@@ -1,4 +1,4 @@
-/// Models representing National Exam papers, attempts, questions, and grading results.
+// Models representing National Exam papers, attempts, questions, and grading results.
 
 enum ExamUserStatus {
   notStarted,
