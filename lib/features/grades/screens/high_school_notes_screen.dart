@@ -112,7 +112,7 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(52),
         child: Container(
-          color: AppColors.brandBlue,
+          color: AppColors.brandPrimary, // Match other bottom-nav tab headers
           child: SafeArea(
             bottom: false,
             child: GradeExamAppBar(
