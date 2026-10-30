@@ -45,7 +45,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       title: 'Bookmarks',
       streamTitle: 'NATURAL SCIENCE STREAM',
       subtitle: 'Saved Exam Papers & Important Questions',
-      showBottomNav: true,
+      showBottomNav: false,
       selectedNavIndex: 2,
       body: _bookmarkedItems.isEmpty
           ? Center(
@@ -192,7 +192,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                             const SizedBox(width: 12),
                             InkWell(
                               onTap: () {
-                                context.push(RouteNames.quiz);
+                                context.push(
+                                  '${RouteNames.quiz}'
+                                  '?quizId=${Uri.encodeComponent("bookmarked-${item['subject']?.toLowerCase() ?? 'exam'}")}'
+                                  '&title=${Uri.encodeComponent(item['title'] ?? "National Exam Simulator")}',
+                                );
                               },
                               borderRadius: BorderRadius.circular(20),
                               child: Container(

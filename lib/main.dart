@@ -6,6 +6,9 @@ import 'core/network/api_client.dart';
 import 'core/storage/shared_prefs_storage.dart';
 import 'features/authentication/services/api_auth_service.dart';
 import 'features/authentication/bloc/auth_bloc.dart';
+import 'features/grades/bloc/grades_bloc.dart';
+import 'features/grades/services/api_courses_service.dart';
+import 'features/grades/services/api_notes_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,11 +35,23 @@ void main() async {
 
   final apiClient = ApiClient();
   final authService = ApiAuthService(apiClient: apiClient, storage: storage);
-  debugPrint('[KUTA] Auth service ready – launching app');
+  final notesService = ApiNotesService(apiClient: apiClient);
+  final coursesService = ApiCoursesService(apiClient: apiClient);
+  debugPrint('[KUTA] Services ready – launching app');
 
   runApp(
-    BlocProvider<AuthBloc>(
-      create: (_) => AuthBloc(authService)..add(const AuthCheckRequested()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc(authService)..add(const AuthCheckRequested()),
+        ),
+        BlocProvider<NotesBloc>(
+          create: (_) => NotesBloc(notesService),
+        ),
+        BlocProvider<CoursesBloc>(
+          create: (_) => CoursesBloc(coursesService),
+        ),
+      ],
       child: const KutaApp(),
     ),
   );
