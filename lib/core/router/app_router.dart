@@ -20,6 +20,9 @@ import '../../features/grades/screens/subject_exams_screen.dart';
 import '../../features/grades/screens/bookmarks_screen.dart';
 import '../../features/grades/widgets/grade_screen_shell.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/grades/screens/high_school_notes_screen.dart';
+import '../../features/grades/screens/note_detail_screen.dart';
+import '../../features/grades/screens/lesson_detail_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -27,7 +30,7 @@ import 'route_names.dart';
 class AppRouter {
   static final GoRouter router = GoRouter(
     // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
-    // DEV TIP: Change to RouteNames.animationPreview to preview loading animation
+
     initialLocation: RouteNames.splash,
     routes: [
       GoRoute(
@@ -154,6 +157,11 @@ class AppRouter {
             builder: (context, state) => const BookmarksScreen(),
           ),
           GoRoute(
+            path: RouteNames.highSchoolNotes,
+            name: 'highSchoolNotes',
+            builder: (context, state) => const HighSchoolNotesScreen(),
+          ),
+          GoRoute(
             path: RouteNames.profile,
             name: 'profile',
             builder: (context, state) => const ProfileScreen(),
@@ -165,6 +173,46 @@ class AppRouter {
         path: RouteNames.animationPreview,
         name: 'animationPreview',
         builder: (context, state) => const AnimationPreviewScreen(),
+      ),
+
+      // ── Note detail screen ─────────────────────────────────────
+      GoRoute(
+        path: RouteNames.noteDetail,
+        name: 'noteDetail',
+        builder: (context, state) {
+          final subject = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          final gradeLevel =
+              state.uri.queryParameters['gradeLevel'] ?? 'Grade 12';
+          return NoteDetailScreen(
+            subjectTitle: subject,
+            gradeLevel: gradeLevel,
+          );
+        },
+      ),
+      // ── Lesson detail (reader) screen ──────────────────────────
+      GoRoute(
+        path: RouteNames.lessonDetail,
+        name: 'lessonDetail',
+        builder: (context, state) {
+          final subject =
+              state.uri.queryParameters['subject'] ?? 'Fractions';
+          final gradeLevel =
+              state.uri.queryParameters['gradeLevel'] ?? 'Grade 8 Math';
+          final chapterTitle =
+              state.uri.queryParameters['chapterTitle'] ??
+                  'Equivalence and Simplification';
+          final chapterNumber =
+              state.uri.queryParameters['chapterNumber'] ?? '4.2';
+          final chapterId =
+              state.uri.queryParameters['chapterId'] ?? '';
+          return LessonDetailScreen(
+            subject: subject,
+            gradeLevel: gradeLevel,
+            chapterTitle: chapterTitle,
+            chapterNumber: chapterNumber,
+            chapterId: chapterId,
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -238,7 +286,8 @@ class MainGradeAppShell extends StatelessWidget {
   });
 
   int _calculateIndex() {
-    if (location.startsWith(RouteNames.subjectDetail)) {
+    if (location.startsWith(RouteNames.highSchoolNotes) ||
+        location.startsWith(RouteNames.subjectDetail)) {
       return 1;
     }
     if (location.startsWith(RouteNames.quiz)) {
@@ -257,7 +306,7 @@ class MainGradeAppShell extends StatelessWidget {
         context.go(RouteNames.examSimulator);
         break;
       case 1:
-        context.push(RouteNames.subjectDetail);
+        context.go(RouteNames.highSchoolNotes);
         break;
       case 2:
         context.push(RouteNames.quiz);
@@ -279,4 +328,3 @@ class MainGradeAppShell extends StatelessWidget {
     );
   }
 }
-

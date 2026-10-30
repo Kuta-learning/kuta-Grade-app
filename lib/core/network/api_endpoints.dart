@@ -30,4 +30,15 @@ class ApiEndpoints {
       '/national-exams/attempts/$attemptId/submit';
   static String examAttemptResult(String attemptId) =>
       '/national-exams/attempts/$attemptId';
+
+  // ── Short Notes & Lessons ──────────────────────────────────────────────────
+  static const String shortNotesSubjects = '/short-notes/subjects';
+  static String shortNotesSubjectDetail(String subjectId) =>
+      '/short-notes/subjects/$subjectId';
+  static String chapterLessonDetail(String chapterId) =>
+      '/short-notes/chapters/$chapterId';
+  static String chapterReadingProgress(String chapterId) =>
+      '/short-notes/chapters/$chapterId/progress';
+  static String downloadChapterPdf(String chapterId) =>
+      '/short-notes/chapters/$chapterId/download';
 }

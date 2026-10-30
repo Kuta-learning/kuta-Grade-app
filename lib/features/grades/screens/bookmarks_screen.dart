@@ -45,7 +45,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       title: 'Bookmarks',
       streamTitle: 'NATURAL SCIENCE STREAM',
       subtitle: 'Saved Exam Papers & Important Questions',
-      showBottomNav: true,
+      showBottomNav: false,
       selectedNavIndex: 2,
       body: _bookmarkedItems.isEmpty
           ? Center(

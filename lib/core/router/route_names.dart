@@ -30,5 +30,14 @@ class RouteNames {
   // Dev preview route
   static const String animationPreview = '/animation-preview';
 
+  // High school notes screen
+  static const String highSchoolNotes = '/high-school-notes';
+
+  // Note detail screen
+  static const String noteDetail = '/note-detail';
+
+  // Lesson detail (reader) screen
+  static const String lessonDetail = '/lesson-detail';
+
   RouteNames._();
 }

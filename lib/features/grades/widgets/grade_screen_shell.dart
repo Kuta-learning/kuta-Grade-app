@@ -211,7 +211,7 @@ class GradeBottomNavBar extends StatelessWidget {
             if (index == 0) {
               context.go(RouteNames.examSimulator);
             } else if (index == 1) {
-              context.push(RouteNames.subjectDetail);
+              context.go(RouteNames.highSchoolNotes);
             } else if (index == 2) {
               context.push(RouteNames.quiz);
             } else if (index == 3) {
