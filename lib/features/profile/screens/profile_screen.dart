@@ -24,10 +24,7 @@ import '../widgets/subscription_status_card.dart';
 class ProfileScreen extends StatefulWidget {
   final bool showBottomNav;
 
-  const ProfileScreen({
-    super.key,
-    this.showBottomNav = false,
-  });
+  const ProfileScreen({super.key, this.showBottomNav = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -85,8 +82,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return switch (state) {
       ProfileLoaded(:final profile) => (profile, false, null),
       ProfileLoading(:final previous) => (previous, previous == null, null),
-      ProfileError(:final message, :final lastProfile) =>
-        (lastProfile, false, message),
+      ProfileError(:final message, :final lastProfile) => (
+        lastProfile,
+        false,
+        message,
+      ),
       ProfileInitial() => (null, true, null),
     };
   }
@@ -129,9 +129,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                onPressed: () => context
-                    .read<ProfileBloc>()
-                    .add(const ProfileLoadRequested()),
+                onPressed: () => context.read<ProfileBloc>().add(
+                  const ProfileLoadRequested(),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F4C97),
                   foregroundColor: Colors.white,
@@ -233,4 +233,3 @@ class _ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
