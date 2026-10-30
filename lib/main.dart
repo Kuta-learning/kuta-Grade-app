@@ -7,6 +7,7 @@ import 'core/storage/shared_prefs_storage.dart';
 import 'features/authentication/services/api_auth_service.dart';
 import 'features/authentication/bloc/auth_bloc.dart';
 import 'features/grades/bloc/grades_bloc.dart';
+import 'features/grades/services/api_courses_service.dart';
 import 'features/grades/services/api_notes_service.dart';
 
 void main() async {
@@ -35,6 +36,7 @@ void main() async {
   final apiClient = ApiClient();
   final authService = ApiAuthService(apiClient: apiClient, storage: storage);
   final notesService = ApiNotesService(apiClient: apiClient);
+  final coursesService = ApiCoursesService(apiClient: apiClient);
   debugPrint('[KUTA] Services ready – launching app');
 
   runApp(
@@ -45,6 +47,9 @@ void main() async {
         ),
         BlocProvider<NotesBloc>(
           create: (_) => NotesBloc(notesService),
+        ),
+        BlocProvider<CoursesBloc>(
+          create: (_) => CoursesBloc(coursesService),
         ),
       ],
       child: const KutaApp(),

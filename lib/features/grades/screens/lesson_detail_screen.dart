@@ -53,6 +53,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         } else {
           bloc.add(LoadChapterLessonDetail(widget.chapterId));
         }
+        // Send reading progress to backend: POST /short-notes/chapters/:chapterId/progress {"isRead": true}
+        bloc.add(UpdateChapterProgressEvent(widget.chapterId, isRead: true));
       } catch (_) {
         MockNotesService().getChapterNoteDetail(widget.chapterId).then((data) {
           if (mounted) setState(() => _fallbackLesson = data);
@@ -66,6 +68,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       context,
       'Downloading ${res.title} (${res.fileSize})...',
     );
+    try {
+      context.read<NotesBloc>().add(DownloadChapterPdfEvent(res.id));
+    } catch (_) {}
   }
 
   @override

@@ -93,7 +93,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     context.push(
       '${RouteNames.noteDetail}'
       '?subject=${Uri.encodeComponent(subject.name)}'
-      '&gradeLevel=${Uri.encodeComponent(gradeName)}',
+      '&gradeLevel=${Uri.encodeComponent(gradeName)}'
+      '&subjectId=${Uri.encodeComponent(subject.id)}',
     );
   }
 

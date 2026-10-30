@@ -19,11 +19,13 @@ import '../widgets/notes_loading_skeleton.dart';
 class NoteDetailScreen extends StatefulWidget {
   final String subjectTitle;
   final String gradeLevel;
+  final String? subjectId;
 
   const NoteDetailScreen({
     super.key,
     this.subjectTitle = 'Mathematics',
     this.gradeLevel = 'Grade 12',
+    this.subjectId,
   });
 
   @override
@@ -41,17 +43,21 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     _selectedGrade = widget.gradeLevel;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+          ? widget.subjectId!
+          : widget.subjectTitle;
       try {
         final bloc = context.read<NotesBloc>();
-        final cached = bloc.getCachedDetail(widget.subjectTitle);
+        final cached =
+            bloc.getCachedDetail(lookupId) ?? bloc.getCachedDetail(widget.subjectTitle);
         if (cached != null) {
           setState(() => _detail = cached);
         } else {
-          bloc.add(LoadSubjectNotesDetail(widget.subjectTitle));
+          bloc.add(LoadSubjectNotesDetail(lookupId));
         }
       } catch (_) {
         MockNotesService()
-            .getSubjectNotesDetails(widget.subjectTitle)
+            .getSubjectNotesDetails(lookupId)
             .then((data) {
           if (mounted) setState(() => _fallbackDetail = data);
         });
@@ -64,6 +70,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       context,
       'Downloading all $_selectedGrade ${widget.subjectTitle} notes...',
     );
+    final chapters = _detail?.chapters ?? [];
+    if (chapters.isNotEmpty) {
+      try {
+        final bloc = context.read<NotesBloc>();
+        for (final chap in chapters) {
+          bloc.add(DownloadChapterPdfEvent(chap.id));
+        }
+      } catch (_) {}
+    }
   }
 
   void _onReadChapter(ChapterNoteItem chapter) {
@@ -82,6 +97,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       context,
       'Downloading Chapter ${chapter.chapterNumber} (${chapter.fileSize})...',
     );
+    try {
+      context.read<NotesBloc>().add(DownloadChapterPdfEvent(chapter.id));
+    } catch (_) {}
   }
 
   @override
@@ -92,6 +110,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     } catch (_) {
       bloc = null;
     }
+
+    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+        ? widget.subjectId!
+        : widget.subjectTitle;
 
     return Scaffold(
       backgroundColor: AppColors.surfaceApp,
@@ -126,57 +148,65 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Breadcrumb trail
-                  Row(
-                    children: [
-                      Text(
-                        'Notes',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          '>',
+                  // Breadcrumb trail (wrapped in Expanded + Flexible to prevent overflow on long subject names)
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Notes',
                           style: GoogleFonts.inter(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
                           ),
                         ),
-                      ),
-                      Text(
-                        widget.subjectTitle,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          '>',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            '>',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        _selectedGrade,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.orange900,
+                        Flexible(
+                          child: Text(
+                            widget.subjectTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            '>',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _selectedGrade,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.orange900,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
 
                   // Grade Selector Pill
                   Container(
@@ -224,46 +254,76 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               const SizedBox(height: 12),
 
               // 2. Hero Subject Card
-              _SubjectHeroCard(
-                title: '${widget.subjectTitle} - $_selectedGrade',
-                subtitle: '14 Chapters Available • PDF & Interactive Reader',
-                onDownloadAll: _onDownloadAll,
+              Builder(
+                builder: (context) {
+                  final activeDetail = _detail ??
+                      bloc?.getCachedDetail(lookupId) ??
+                      bloc?.getCachedDetail(widget.subjectTitle) ??
+                      _fallbackDetail;
+                  final totalCount = activeDetail?.totalChapters ??
+                      activeDetail?.chapters.length ??
+                      0;
+                  final subtitle = totalCount > 0
+                      ? '$totalCount Chapters Available • PDF & Interactive Reader'
+                      : 'Study Guides & Interactive Reader';
+                  final sizeText = activeDetail?.totalFileSize ?? '24 MB';
+
+                  return _SubjectHeroCard(
+                    title: '${widget.subjectTitle} - $_selectedGrade',
+                    subtitle: subtitle,
+                    downloadButtonText: 'Download All Notes ($sizeText)',
+                    onDownloadAll: _onDownloadAll,
+                  );
+                },
               ),
               const SizedBox(height: 20),
 
               // 3. Section Title & Filter Icon Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Row(
+              Builder(
+                builder: (context) {
+                  final activeDetail = _detail ??
+                      bloc?.getCachedDetail(lookupId) ??
+                      bloc?.getCachedDetail(widget.subjectTitle) ??
+                      _fallbackDetail;
+                  final showing = activeDetail?.chapters.length ?? 0;
+                  final total = activeDetail?.totalChapters ?? showing;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        'Chapter Notes',
-                        style: GoogleFonts.inter(
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.headlineDark,
-                          letterSpacing: -0.2,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Chapter Notes',
+                            style: GoogleFonts.inter(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.headlineDark,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (showing > 0) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '(Showing $showing of $total)',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '(Showing 5 of 14)',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textSecondary,
-                        ),
+                      const Icon(
+                        Icons.tune_rounded,
+                        size: 18,
+                        color: AppColors.headlineDark,
                       ),
                     ],
-                  ),
-                  const Icon(
-                    Icons.tune_rounded,
-                    size: 18,
-                    color: AppColors.headlineDark,
-                  ),
-                ],
+                  );
+                },
               ),
               const SizedBox(height: 12),
 
@@ -273,20 +333,29 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   listener: (context, state) {
                     if (state is SubjectNotesDetailLoaded) {
                       setState(() => _detail = state.detail);
+                    } else if (state is NotesError) {
+                      // Graceful recovery: fetch subject fallback detail immediately
+                      MockNotesService().getSubjectNotesDetails(lookupId).then((data) {
+                        if (mounted) setState(() => _fallbackDetail = data);
+                      });
                     }
                   },
                   builder: (context, state) {
                     final detail = (state is SubjectNotesDetailLoaded)
                         ? state.detail
                         : (_detail ??
+                            bloc?.getCachedDetail(lookupId) ??
                             bloc?.getCachedDetail(widget.subjectTitle) ??
                             _fallbackDetail);
 
-                    if (detail != null) {
+                    if (detail != null && detail.chapters.isNotEmpty) {
                       return _buildChaptersList(detail.chapters);
                     }
-                    if (state is NotesLoading) {
+                    if (state is NotesLoading && _detail == null && _fallbackDetail == null) {
                       return const NotesLoadingSkeleton(itemCount: 4);
+                    }
+                    if (detail != null && detail.chapters.isEmpty) {
+                      return _buildEmptyState();
                     }
                     return const NotesLoadingSkeleton(itemCount: 4);
                   },
@@ -298,6 +367,41 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderVariant.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.menu_book_outlined, size: 40, color: Color(0xFF94A3B8)),
+          const SizedBox(height: 12),
+          Text(
+            'No notes uploaded yet for $_selectedGrade',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.headlineDark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Check back soon or choose another grade level.',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -324,16 +428,62 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 class _SubjectHeroCard extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String downloadButtonText;
   final VoidCallback onDownloadAll;
 
   const _SubjectHeroCard({
     required this.title,
     required this.subtitle,
+    this.downloadButtonText = 'Download All Notes (42 MB)',
     required this.onDownloadAll,
   });
 
   @override
   Widget build(BuildContext context) {
+    final norm = title.toLowerCase();
+    Widget? watermarkWidget;
+
+    if (norm.contains('math')) {
+      watermarkWidget = Text(
+        'Σ',
+        style: GoogleFonts.inter(
+          fontSize: 60,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFFFDE8DE),
+        ),
+      );
+    } else if (norm.contains('civic') || norm.contains('ethic')) {
+      watermarkWidget = const Icon(
+        Icons.balance_rounded,
+        size: 55,
+        color: Color(0xFFF2E6DF),
+      );
+    } else if (norm.contains('physic')) {
+      watermarkWidget = const Icon(
+        Icons.offline_bolt_outlined,
+        size: 55,
+        color: Color(0xFFE0EDFF),
+      );
+    } else if (norm.contains('chem')) {
+      watermarkWidget = const Icon(
+        Icons.science_outlined,
+        size: 55,
+        color: Color(0xFFD6F5E3),
+      );
+    } else if (norm.contains('bio')) {
+      watermarkWidget = const Icon(
+        Icons.psychology_outlined,
+        size: 55,
+        color: Color(0xFFFCECDD),
+      );
+    } else if (norm.contains('eng')) {
+      watermarkWidget = const Icon(
+        Icons.menu_book_rounded,
+        size: 55,
+        color: Color(0xFFE0EDFF),
+      );
+    }
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -365,19 +515,13 @@ class _SubjectHeroCard extends StatelessWidget {
             ),
           ),
 
-          // Faded math symbol watermark
-          Positioned(
-            right: 15,
-            top: 15,
-            child: Text(
-              'Σ',
-              style: GoogleFonts.inter(
-                fontSize: 60,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFFFDE8DE),
-              ),
+          // Dynamic subject watermark (symbol or icon)
+          if (watermarkWidget != null)
+            Positioned(
+              right: 15,
+              top: 15,
+              child: watermarkWidget,
             ),
-          ),
 
           // Content
           Padding(
@@ -427,7 +571,7 @@ class _SubjectHeroCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Download All Notes (42 MB)',
+                          downloadButtonText,
                           style: GoogleFonts.inter(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,

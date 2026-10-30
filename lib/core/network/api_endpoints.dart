@@ -41,4 +41,16 @@ class ApiEndpoints {
       '/short-notes/chapters/$chapterId/progress';
   static String downloadChapterPdf(String chapterId) =>
       '/short-notes/chapters/$chapterId/download';
+
+  // ── Grades Courses, Lessons & Quizzes ──────────────────────────────────────
+  static String coursesByGrade(dynamic gradeLevel) =>
+      '/courses?gradeLevel=$gradeLevel';
+  static String courseDetail(String courseId) => '/courses/$courseId';
+  static String lessonView(String lessonId) => '/lessons/$lessonId';
+  static String completeLesson(String lessonId) =>
+      '/progress/lessons/$lessonId/complete';
+  static String quizDetail(String quizId) => '/quizzes/$quizId';
+  static String submitQuiz(String quizId) => '/quizzes/$quizId/submit';
+  static String quizAttemptReview(String attemptId) =>
+      '/quizzes/attempts/$attemptId';
 }

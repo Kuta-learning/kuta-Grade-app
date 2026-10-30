@@ -206,10 +206,13 @@ class ChapterNoteItem {
     return ChapterNoteItem(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
       chapterNumber: json['chapterNumber']?.toString() ??
+          json['order']?.toString() ??
           json['chapterIndex']?.toString() ??
           '1',
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String? ?? '',
+      title: json['title'] as String? ?? json['name'] as String? ?? '',
+      description: json['description'] as String? ??
+          json['subtitle'] as String? ??
+          '',
       pageCount: json['pageCount']?.toString() != null
           ? (json['pageCount'].toString().contains('Pages')
               ? json['pageCount'].toString()
@@ -217,7 +220,9 @@ class ChapterNoteItem {
           : '12 Pages',
       fileSize: json['fileSize'] as String? ?? '2.4 MB',
       pdfUrl: json['pdfUrl'] as String?,
-      isCompleted: json['isCompleted'] as bool? ?? false,
+      isCompleted: json['isCompleted'] as bool? ??
+          json['isRead'] as bool? ??
+          false,
     );
   }
 
@@ -255,12 +260,33 @@ class SubjectNotesDetail {
 
   factory SubjectNotesDetail.fromJson(Map<String, dynamic> json) {
     final rawChapters = json['chapters'] as List<dynamic>? ?? [];
+    final subjectObj = json['subject'] as Map<String, dynamic>?;
+
+    final resolvedId = json['subjectId'] as String? ??
+        subjectObj?['id'] as String? ??
+        json['id'] as String? ??
+        '';
+
+    final resolvedTitle = json['subjectTitle'] as String? ??
+        subjectObj?['name'] as String? ??
+        json['name'] as String? ??
+        json['title'] as String? ??
+        'Subject Notes';
+
+    final resolvedGrade = json['gradeLevel']?.toString() ??
+        (json['selectedGrade'] != null ? 'Grade ${json['selectedGrade']}' : null) ??
+        'Grade 12';
+
+    final resolvedSize = json['totalFileSize'] as String? ??
+        json['downloadAllSize'] as String? ??
+        '24 MB';
+
     return SubjectNotesDetail(
-      subjectId: json['subjectId'] as String? ?? '',
-      subjectTitle: json['subjectTitle'] as String? ?? 'Mathematics',
-      gradeLevel: json['gradeLevel'] as String? ?? 'Grade 12',
+      subjectId: resolvedId,
+      subjectTitle: resolvedTitle,
+      gradeLevel: resolvedGrade,
       totalChapters: json['totalChapters'] as int? ?? rawChapters.length,
-      totalFileSize: json['totalFileSize'] as String? ?? '42 MB',
+      totalFileSize: resolvedSize,
       downloadAllUrl: json['downloadAllUrl'] as String? ?? '',
       chapters: rawChapters
           .map((c) => ChapterNoteItem.fromJson(c as Map<String, dynamic>))

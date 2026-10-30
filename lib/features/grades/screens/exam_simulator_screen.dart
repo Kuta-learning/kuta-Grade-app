@@ -292,9 +292,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                   onTap: (index) {
                     setState(() => _selectedBottomNavIndex = index);
                     if (index == 1) {
-                      context.push(RouteNames.subjectDetail);
+                      context.push(RouteNames.highSchoolNotes);
                     } else if (index == 2) {
-                      context.push(RouteNames.quiz);
+                      context.push(RouteNames.courses);
                     } else if (index == 3) {
                       context.push(RouteNames.profile);
                     }
@@ -515,7 +515,11 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               const SizedBox(width: 8),
               InkWell(
                 onTap: () {
-                  context.push(RouteNames.quiz);
+                  context.push(
+                    '${RouteNames.quiz}'
+                    '?quizId=quiz-exam-simulator'
+                    '&title=${Uri.encodeComponent(title)}',
+                  );
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(

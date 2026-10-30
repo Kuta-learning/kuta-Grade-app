@@ -213,7 +213,7 @@ class GradeBottomNavBar extends StatelessWidget {
             } else if (index == 1) {
               context.go(RouteNames.highSchoolNotes);
             } else if (index == 2) {
-              context.push(RouteNames.quiz);
+              context.go(RouteNames.courses);
             } else if (index == 3) {
               context.push(RouteNames.profile);
             }

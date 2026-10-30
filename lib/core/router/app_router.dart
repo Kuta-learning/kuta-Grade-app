@@ -23,6 +23,11 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/grades/screens/high_school_notes_screen.dart';
 import '../../features/grades/screens/note_detail_screen.dart';
 import '../../features/grades/screens/lesson_detail_screen.dart';
+import '../../features/grades/screens/courses_screen.dart';
+import '../../features/grades/screens/course_detail_screen.dart';
+import '../../features/grades/screens/chapter_study_screen.dart';
+import '../../features/grades/screens/quiz_screen.dart';
+import '../../features/grades/screens/quiz_result_screen.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -146,10 +151,13 @@ class AppRouter {
             },
           ),
           GoRoute(
-            path: RouteNames.quiz,
-            name: 'quiz',
-            builder: (context, state) =>
-                const Scaffold(body: Center(child: Text('Quiz Screen'))),
+            path: RouteNames.courses,
+            name: 'courses',
+            builder: (context, state) {
+              final gradeStr = state.uri.queryParameters['gradeLevel'];
+              final grade = gradeStr != null ? int.tryParse(gradeStr) : null;
+              return CoursesScreen(initialGradeLevel: grade);
+            },
           ),
           GoRoute(
             path: RouteNames.bookmarks,
@@ -183,9 +191,11 @@ class AppRouter {
           final subject = state.uri.queryParameters['subject'] ?? 'Mathematics';
           final gradeLevel =
               state.uri.queryParameters['gradeLevel'] ?? 'Grade 12';
+          final subjectId = state.uri.queryParameters['subjectId'];
           return NoteDetailScreen(
             subjectTitle: subject,
             gradeLevel: gradeLevel,
+            subjectId: subjectId,
           );
         },
       ),
@@ -211,6 +221,69 @@ class AppRouter {
             chapterTitle: chapterTitle,
             chapterNumber: chapterNumber,
             chapterId: chapterId,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.courseDetail,
+        name: 'courseDetail',
+        builder: (context, state) {
+          final courseId = state.uri.queryParameters['courseId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'Course Details';
+          final grade = int.tryParse(
+                  state.uri.queryParameters['gradeLevel'] ?? '12') ??
+              12;
+          return CourseDetailScreen(
+            courseId: courseId,
+            title: title,
+            gradeLevel: grade,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.chapterStudy,
+        name: 'chapterStudy',
+        builder: (context, state) {
+          final lessonId = state.uri.queryParameters['lessonId'];
+          final chapterId = state.uri.queryParameters['chapterId'];
+          final lessonTitle =
+              state.uri.queryParameters['lessonTitle'] ?? 'Lesson Study';
+          final chapterTitle =
+              state.uri.queryParameters['chapterTitle'] ?? 'Unit Overview';
+          final courseTitle =
+              state.uri.queryParameters['courseTitle'] ?? 'Course';
+          return ChapterStudyScreen(
+            lessonId: lessonId,
+            chapterId: chapterId,
+            lessonTitle: lessonTitle,
+            chapterTitle: chapterTitle,
+            courseTitle: courseTitle,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.quiz,
+        name: 'quiz',
+        builder: (context, state) {
+          final quizId =
+              state.uri.queryParameters['quizId'] ?? 'quiz-12-unit-1';
+          final title =
+              state.uri.queryParameters['title'] ?? 'National Exam Simulator';
+          return QuizScreen(quizId: quizId, title: title);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.quizResult,
+        name: 'quizResult',
+        builder: (context, state) {
+          final attemptId = state.uri.queryParameters['attemptId'] ?? '';
+          final quizId = state.uri.queryParameters['quizId'];
+          final title =
+              state.uri.queryParameters['title'] ?? 'Quiz Assessment';
+          return QuizResultScreen(
+            attemptId: attemptId,
+            quizId: quizId,
+            quizTitle: title,
           );
         },
       ),
@@ -287,10 +360,12 @@ class MainGradeAppShell extends StatelessWidget {
 
   int _calculateIndex() {
     if (location.startsWith(RouteNames.highSchoolNotes) ||
-        location.startsWith(RouteNames.subjectDetail)) {
+        location.startsWith(RouteNames.noteDetail)) {
       return 1;
     }
-    if (location.startsWith(RouteNames.quiz)) {
+    if (location.startsWith(RouteNames.courses) ||
+        location.startsWith(RouteNames.courseDetail) ||
+        location.startsWith(RouteNames.chapterStudy)) {
       return 2;
     }
     if (location.startsWith(RouteNames.profile)) {
@@ -309,7 +384,7 @@ class MainGradeAppShell extends StatelessWidget {
         context.go(RouteNames.highSchoolNotes);
         break;
       case 2:
-        context.push(RouteNames.quiz);
+        context.go(RouteNames.courses);
         break;
       case 3:
         context.push(RouteNames.profile);
