@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_typography.dart';
 
 import '../../authentication/bloc/auth_bloc.dart';
 
@@ -37,8 +37,7 @@ class ProfileLogoutButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Logout',
-                style: GoogleFonts.inter(
-                  fontSize: 14.5,
+                style: AppTypography.bodyMd.copyWith(
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFFDC2626),
                 ),

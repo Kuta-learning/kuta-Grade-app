@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_typography.dart';
 
 import '../models/profile_model.dart';
 import 'profile_avatar.dart';
@@ -48,9 +48,7 @@ class ProfileHeaderCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             _displayName,
-            style: GoogleFonts.inter(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+            style: AppTypography.headlineLg.copyWith(
               color: const Color(0xFF1E293B),
               letterSpacing: -0.3,
             ),
@@ -70,9 +68,7 @@ class ProfileHeaderCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   _subtitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: AppTypography.bodyMdMedium.copyWith(
                     color: const Color(0xFF475569),
                   ),
                   textAlign: TextAlign.center,

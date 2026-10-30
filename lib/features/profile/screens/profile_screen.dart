@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_typography.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/route_names.dart';
@@ -114,8 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 'Something went wrong',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
+                style: AppTypography.subtitleLg.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -123,8 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               Text(
                 errorMessage,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
+                style: AppTypography.bodyMd.copyWith(
                   color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
@@ -214,8 +212,7 @@ class _ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       title: Text(
         'Kuta Learning',
-        style: GoogleFonts.inter(
-          fontSize: 20,
+        style: AppTypography.headlineMd.copyWith(
           fontWeight: FontWeight.w700,
           color: Colors.white,
           letterSpacing: -0.2,

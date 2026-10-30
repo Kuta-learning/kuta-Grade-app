@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../../../core/constants/app_typography.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../models/profile_model.dart';
@@ -47,9 +48,8 @@ class ProfileStatCards extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   'TOTAL POINTS',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.labelSm.copyWith(
                     fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
                     color: const Color(0xFF854D0E),
                   ),
@@ -58,11 +58,10 @@ class ProfileStatCards extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _pointsValue,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.displayLg.copyWith(
                     fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF451A03),
                     letterSpacing: -0.5,
+                    color: const Color(0xFF451A03),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -100,9 +99,8 @@ class ProfileStatCards extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   'GLOBAL RANK',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.labelSm.copyWith(
                     fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
                     color: const Color(0xFF1E40AF),
                   ),
@@ -111,11 +109,10 @@ class ProfileStatCards extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _rankValue,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.displayLg.copyWith(
                     fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1E3A8A),
                     letterSpacing: -0.5,
+                    color: const Color(0xFF1E3A8A),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -137,4 +134,5 @@ class ProfileStatCards extends StatelessWidget {
     return rank != null ? '#$rank' : '#42';
   }
 }
+
 

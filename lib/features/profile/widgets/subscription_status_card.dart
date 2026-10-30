@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../../../core/constants/app_typography.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../models/profile_model.dart';
@@ -47,8 +48,7 @@ class SubscriptionStatusCard extends StatelessWidget {
             children: [
               Text(
                 'SUBSCRIPTION STATUS',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
+                style: AppTypography.labelMdMedium.copyWith(
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.8,
                   color: const Color(0xFF64748B),
@@ -65,9 +65,8 @@ class SubscriptionStatusCard extends StatelessWidget {
                 ),
                 child: Text(
                   isActive ? 'ACTIVE' : 'FREE',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.labelSm.copyWith(
                     fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF15803D), // Dark green
                     letterSpacing: 0.4,
                   ),
@@ -88,8 +87,7 @@ class SubscriptionStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       profile?.planName ?? 'Premium Plan',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
+                      style: AppTypography.bodyLg.copyWith(
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1D4ED8), // Royal blue
                       ),
@@ -97,8 +95,7 @@ class SubscriptionStatusCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       _billingLabel,
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
+                      style: AppTypography.labelMdMedium.copyWith(
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF64748B),
                       ),
@@ -113,9 +110,7 @@ class SubscriptionStatusCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     'Change Subscription',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                    style: AppTypography.bodyMdMedium.copyWith(
                       color: const Color(0xFFB45309), // Warm brownish-orange link
                     ),
                   ),
@@ -136,4 +131,5 @@ class SubscriptionStatusCard extends StatelessWidget {
     return 'Next billing on Oct 24, 2024';
   }
 }
+
 

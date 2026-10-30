@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_typography.dart';
 
 /// Action buttons row: Edit Profile (outlined blue) and
 /// Manage Subscription (filled orange CTA) matching Screenshot 1.
@@ -46,9 +46,7 @@ class ProfileActionButtons extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Edit Profile',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.labelMd.copyWith(
                         color: const Color(0xFF1E5BB0),
                       ),
                     ),
@@ -86,9 +84,7 @@ class ProfileActionButtons extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Manage Subscription',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.labelMd.copyWith(
                         color: Colors.white,
                       ),
                     ),

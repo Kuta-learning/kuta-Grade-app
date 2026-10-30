@@ -4,6 +4,7 @@ import 'app_colors.dart';
 
 /// Design system typography tokens extracted from the typography scale specifications.
 /// Supported Font Families:
+/// - Poppins (Titles & Headings)
 /// - Inter (Primary System Font - Adult / Admin)
 /// - Quicksand (Kids & Youth Modules - Ages 6-10)
 /// - JetBrains Mono (Data, Code & Timestamps)
@@ -14,6 +15,7 @@ class AppTypography {
   // ==========================================
   // FONT FAMILIES
   // ==========================================
+  static const String fontFamilyPoppins = 'Poppins';
   static const String fontFamilyInter = 'Inter';
   static const String fontFamilyQuicksand = 'Quicksand';
   static const String fontFamilyMono = 'JetBrains Mono';
@@ -23,23 +25,23 @@ class AppTypography {
   // ==========================================
 
   /// display-lg (Mobile: 28px / 36px line height, Bold 700)
-  static final TextStyle displayLg = GoogleFonts.inter(
+  static final TextStyle displayLg = GoogleFonts.poppins(
     fontSize: 28,
     height: 36 / 28,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
 
-  /// headline-md (Mobile: 22px / 28px line height, Medium 500) - Auth/Modal Headings
-  static final TextStyle headlineMd = GoogleFonts.inter(
+  /// headline-md (Mobile: 20px / 28px line height, Medium 500) - Auth/Modal Headings
+  static final TextStyle headlineMd = GoogleFonts.poppins(
     fontSize: 20,
     height: 28 / 22,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  /// headline-lg (Mobile: 20px / 28px line height, Bold 700)
-  static final TextStyle headlineLg = GoogleFonts.inter(
+  /// headline-lg (Mobile: 22px / 28px line height, Bold 700)
+  static final TextStyle headlineLg = GoogleFonts.poppins(
     fontSize: 22,
     height: 28 / 20,
     fontWeight: FontWeight.w700,
@@ -165,7 +167,7 @@ class AppTypography {
   // ==========================================
 
   /// display-lg (Desktop: 36px / 44px line height, Bold 700)
-  static final TextStyle displayLgDesktop = GoogleFonts.inter(
+  static final TextStyle displayLgDesktop = GoogleFonts.poppins(
     fontSize: 36,
     height: 44 / 36,
     fontWeight: FontWeight.w700,
@@ -173,7 +175,7 @@ class AppTypography {
   );
 
   /// headline-lg (Desktop: 24px / 32px line height, Bold 700)
-  static final TextStyle headlineLgDesktop = GoogleFonts.inter(
+  static final TextStyle headlineLgDesktop = GoogleFonts.poppins(
     fontSize: 24,
     height: 32 / 24,
     fontWeight: FontWeight.w700,
@@ -181,7 +183,7 @@ class AppTypography {
   );
 
   /// title-md (Desktop: 18px / 24px line height, SemiBold 600)
-  static final TextStyle titleMdDesktop = GoogleFonts.inter(
+  static final TextStyle titleMdDesktop = GoogleFonts.poppins(
     fontSize: 18,
     height: 24 / 18,
     fontWeight: FontWeight.w600,
@@ -264,3 +266,4 @@ class AppTypography {
   static final TextStyle body = bodyMd;
   static final TextStyle caption = labelSm;
 }
+

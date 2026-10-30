@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_typography.dart';
 
 import '../../../core/widgets/app_snackbar.dart';
 
@@ -95,9 +95,7 @@ class _MenuTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.title,
-                  style: GoogleFonts.inter(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w500,
+                  style: AppTypography.bodyMdMedium.copyWith(
                     color: const Color(0xFF1E293B),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_typography.dart';
 import '../models/profile_model.dart';
 /// Circular avatar with the orange brand ring, soft peach glow, and a
 /// bottom-right pencil edit badge — matching the Figma profile header.
@@ -121,10 +122,10 @@ class ProfileAvatar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: const TextStyle(
+        style: AppTypography.titleMdDesktop.copyWith(
           fontSize: 28,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0F4C97),
+          color: const Color(0xFF0F4C97),
         ),
       ),
     );
