@@ -117,13 +117,7 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
             bottom: false,
             child: GradeExamAppBar(
               title: 'Notes',
-              onBackPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go(RouteNames.examSimulator);
-                }
-              },
+              showBackButton: false, // Main tab screen: no back arrow
             ),
           ),
         ),

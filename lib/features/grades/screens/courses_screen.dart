@@ -101,6 +101,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       subtitle: 'Interactive Lessons, Chapter Topics & Quizzes',
       showBottomNav: false,
       selectedNavIndex: 2,
+      showBackButton: false, // Main tab screen: no back arrow
       body: RefreshIndicator(
         onRefresh: () async {
           _loadCoursesForCurrentGrade();

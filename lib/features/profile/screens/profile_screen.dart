@@ -196,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 /// Navy/Royal blue app bar matching Screenshot 1:
-/// Back arrow, "Kuta Learning" title, and notification bell.
+/// "Kuta Learning" title and notification bell (no back arrow on this main tab screen).
 class _ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onNotificationsPressed;
 
@@ -212,17 +212,6 @@ class _ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: false,
       automaticallyImplyLeading: false,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-        tooltip: 'Back',
-        onPressed: () {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go(RouteNames.examSimulator);
-          }
-        },
-      ),
       title: Text(
         'Kuta Learning',
         style: GoogleFonts.inter(

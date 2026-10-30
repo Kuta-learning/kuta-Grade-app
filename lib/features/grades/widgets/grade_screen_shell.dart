@@ -290,6 +290,7 @@ class GradeScreenShell extends StatelessWidget {
   final int selectedNavIndex;
   final ValueChanged<int>? onNavTap;
   final Color backgroundColor;
+  final bool showBackButton;
 
   const GradeScreenShell({
     super.key,
@@ -306,6 +307,7 @@ class GradeScreenShell extends StatelessWidget {
     this.selectedNavIndex = 0,
     this.onNavTap,
     this.backgroundColor = AppColors.surfaceApp,
+    this.showBackButton = true,
   });
 
   @override
@@ -337,6 +339,7 @@ class GradeScreenShell extends StatelessWidget {
                 children: [
                   GradeExamAppBar(
                     title: title,
+                    showBackButton: showBackButton,
                     onBackPressed: onBackPressed,
                     onBookmarkPressed: onBookmarkPressed,
                     onProfilePressed: onProfilePressed,
