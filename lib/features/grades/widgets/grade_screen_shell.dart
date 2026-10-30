@@ -210,19 +210,14 @@ class GradeBottomNavBar extends StatelessWidget {
         if (onTap != null) {
           onTap!(index);
         } else {
-          switch (index) {
-            case 0:
-              context.go(RouteNames.examSimulator);
-              break;
-            case 1:
-              context.push(RouteNames.subjectDetail);
-              break;
-            case 2:
-              context.push(RouteNames.quiz);
-              break;
-            case 3:
-              context.go(RouteNames.profile);
-              break;
+          if (index == 0) {
+            context.go(RouteNames.examSimulator);
+          } else if (index == 1) {
+            context.go(RouteNames.highSchoolNotes);
+          } else if (index == 2) {
+            context.go(RouteNames.courses);
+          } else if (index == 3) {
+            context.go(RouteNames.profile);
           }
         }
       },

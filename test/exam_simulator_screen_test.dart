@@ -25,6 +25,8 @@ void main() {
         subjectName: 'Physics',
         action: 'Resume Exam',
         timeRemainingSeconds: 2520, // 42 mins
+        answeredQuestions: 34,
+        totalQuestions: 100,
       ),
       subjectsCount: 6,
       subjects: [

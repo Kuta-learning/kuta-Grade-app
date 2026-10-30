@@ -435,7 +435,11 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
       case ExamPaperStatus.notStarted:
         return InkWell(
           onTap: () {
-            context.push(RouteNames.quiz);
+            context.push(
+              '${RouteNames.quiz}'
+              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
+              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
+            );
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
@@ -458,7 +462,11 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
       case ExamPaperStatus.inProgress:
         return InkWell(
           onTap: () {
-            context.push(RouteNames.quiz);
+            context.push(
+              '${RouteNames.quiz}'
+              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
+              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
+            );
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
@@ -481,7 +489,11 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
       case ExamPaperStatus.completed:
         return InkWell(
           onTap: () {
-            context.push(RouteNames.quiz);
+            context.push(
+              '${RouteNames.quiz}'
+              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
+              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
+            );
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(

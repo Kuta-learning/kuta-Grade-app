@@ -14,7 +14,11 @@ class RouteNames {
 
   // Shared Grade routes (Grade 6, 8, 12)
   static const String subjectDetail = '/subject-detail';
+  static const String courses = '/courses';
+  static const String courseDetail = '/course-detail';
+  static const String chapterStudy = '/chapter-study';
   static const String quiz = '/quiz';
+  static const String quizResult = '/quiz-result';
 
   // Grade 12 Matric Exam Simulator route
   static const String examSimulator = '/exam-simulator';
@@ -29,6 +33,15 @@ class RouteNames {
 
   // Dev preview route
   static const String animationPreview = '/animation-preview';
+
+  // High school notes screen
+  static const String highSchoolNotes = '/high-school-notes';
+
+  // Note detail screen
+  static const String noteDetail = '/note-detail';
+
+  // Lesson detail (reader) screen
+  static const String lessonDetail = '/lesson-detail';
 
   RouteNames._();
 }
