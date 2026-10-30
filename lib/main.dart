@@ -9,6 +9,8 @@ import 'features/authentication/bloc/auth_bloc.dart';
 import 'features/grades/bloc/grades_bloc.dart';
 import 'features/grades/services/api_courses_service.dart';
 import 'features/grades/services/api_notes_service.dart';
+import 'features/profile/bloc/profile_bloc.dart';
+import 'features/profile/services/api_profile_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +39,7 @@ void main() async {
   final authService = ApiAuthService(apiClient: apiClient, storage: storage);
   final notesService = ApiNotesService(apiClient: apiClient);
   final coursesService = ApiCoursesService(apiClient: apiClient);
+  final profileService = ApiProfileService(apiClient: apiClient, storage: storage);
   debugPrint('[KUTA] Services ready – launching app');
 
   runApp(
@@ -50,6 +53,10 @@ void main() async {
         ),
         BlocProvider<CoursesBloc>(
           create: (_) => CoursesBloc(coursesService),
+        ),
+        BlocProvider<ProfileBloc>(
+          // Lazy: no profile fetch until the Profile screen requests it.
+          create: (_) => ProfileBloc(profileService),
         ),
       ],
       child: const KutaApp(),

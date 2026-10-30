@@ -359,17 +359,20 @@ class MainGradeAppShell extends StatelessWidget {
   });
 
   int _calculateIndex() {
+    if (location.startsWith(RouteNames.profile)) {
+      return 3;
+    }
     if (location.startsWith(RouteNames.highSchoolNotes) ||
         location.startsWith(RouteNames.noteDetail)) {
+      return 1;
+    }
+    if (location.startsWith(RouteNames.subjectDetail)) {
       return 1;
     }
     if (location.startsWith(RouteNames.courses) ||
         location.startsWith(RouteNames.courseDetail) ||
         location.startsWith(RouteNames.chapterStudy)) {
       return 2;
-    }
-    if (location.startsWith(RouteNames.profile)) {
-      return 3;
     }
     // 0 is for exams (examSimulator, grade12MatricExam, subjectExams, bookmarks)
     return 0;
@@ -387,7 +390,7 @@ class MainGradeAppShell extends StatelessWidget {
         context.go(RouteNames.courses);
         break;
       case 3:
-        context.push(RouteNames.profile);
+        context.go(RouteNames.profile);
         break;
     }
   }

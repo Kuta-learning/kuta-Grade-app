@@ -112,18 +112,12 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(52),
         child: Container(
-          color: AppColors.brandBlue,
+          color: AppColors.brandPrimary, // Match other bottom-nav tab headers
           child: SafeArea(
             bottom: false,
             child: GradeExamAppBar(
               title: 'Notes',
-              onBackPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go(RouteNames.examSimulator);
-                }
-              },
+              showBackButton: false, // Main tab screen: no back arrow
             ),
           ),
         ),

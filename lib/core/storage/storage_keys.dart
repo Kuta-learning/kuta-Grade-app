@@ -24,6 +24,11 @@ abstract class StorageKeys {
   /// Cleared on logout so the user sees it again on next login.
   static const String hasSeenWelcomeSnackbar = 'has_seen_welcome_snackbar';
 
+  // ── Profile ───────────────────────────────────────────────────────────────
+  /// Serialized JSON cache of the user's [ProfileModel] for the Profile screen.
+  /// Cleared on logout via [ProfileBloc]'s reset flow.
+  static const String profileCache = 'profile_cache';
+
   // ── User Preferences ─────────────────────────────────────────────────────
   /// App locale code (e.g. "en", "am").
   static const String preferredLocale = 'preferred_locale';

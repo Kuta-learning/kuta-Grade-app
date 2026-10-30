@@ -149,12 +149,13 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     children: [
                       Container(
                         width: double.infinity,
-                        height: topPadding +
+                        height:
+                            topPadding +
                             (_isLoading && _dashboardData == null
                                 ? 145
                                 : hasBannerExam
-                                    ? 195
-                                    : 125),
+                                ? 195
+                                : 125),
                         color: _primaryBlue,
                       ),
                       Padding(
@@ -167,18 +168,19 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                             if (_isLoading && _dashboardData == null) ...[
                               const ExamHeaderSkeleton(),
                               const SizedBox(height: 10),
-                            ]
-                            else if (_dashboardData != null) ...[
+                            ] else if (_dashboardData != null) ...[
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: _buildWelcomeBanner(),
                               ),
                               if (hasBannerExam) ...[
                                 const SizedBox(height: 14),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
+                                    horizontal: 16,
+                                  ),
                                   child: _buildActiveExamCard(context),
                                 ),
                               ],
@@ -238,18 +240,32 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                   // BODY / SUBJECT CARDS / LOADING
                   // ==========================================
                   if (_isLoading && _dashboardData == null) ...[
-                    const SizedBox(height: 36),
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: KutaLoadingWidget(
-                          size: 140,
-                          label: 'Loading Exam Simulator...',
-                        ),
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final screenHeight = MediaQuery.of(context).size.height;
+                        final bottomNavHeight =
+                            kBottomNavigationBarHeight +
+                            MediaQuery.of(context).padding.bottom;
+                        // Approximate header height: topPadding + skeleton header (~145) + section header (~60)
+                        final headerHeight = topPadding + 145 + 60;
+                        final remainingHeight =
+                            screenHeight - headerHeight - bottomNavHeight;
+                        return SizedBox(
+                          height: remainingHeight > 200 ? remainingHeight : 200,
+                          child: const Padding(
+                            padding: EdgeInsets.only(bottom: 150),
+                            child: Center(
+                              child: KutaLoadingWidget(
+                                size: 140,
+                                label: 'Loading Exams...',
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 36),
-                  ] else if (_errorMessage != null && _dashboardData == null) ...[
+                  ] else if (_errorMessage != null &&
+                      _dashboardData == null) ...[
                     _buildErrorState(),
                   ] else if (_displaySubjects.isEmpty) ...[
                     Padding(
@@ -315,7 +331,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         context.push(RouteNames.bookmarks);
       },
       onProfilePressed: () {
-        context.push(RouteNames.profile);
+        context.go(RouteNames.profile);
       },
     );
   }
@@ -489,8 +505,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                 value: progress,
                 minHeight: 6,
                 backgroundColor: const Color(0xFFF1F5F9),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(_orangeAccent),
+                valueColor: const AlwaysStoppedAnimation<Color>(_orangeAccent),
               ),
             ),
           ],
@@ -528,7 +543,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     vertical: 7.5,
                   ),
                   decoration: BoxDecoration(
-                    color: _orangeAccent,
+                    color: const Color(0xFFFF6A00),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -603,11 +618,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     color: subject.iconBgColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    subject.icon,
-                    color: subject.iconColor,
-                    size: 23,
-                  ),
+                  child: Icon(subject.icon, color: subject.iconColor, size: 23),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -677,8 +688,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                 // History Badge with blue clock icon
                 Flexible(
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(8),
@@ -775,10 +788,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             Text(
               _errorMessage ?? 'Please check your connection and try again.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: _textSecondary,
-              ),
+              style: GoogleFonts.inter(fontSize: 13, color: _textSecondary),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -818,8 +828,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
       subtitle: model.subcategories.isNotEmpty
           ? model.subcategories
           : (model.stream == 'COMMON'
-              ? 'Common Track'
-              : '${model.stream} Science Track'),
+                ? 'Common Track'
+                : '${model.stream} Science Track'),
       progress: progressVal,
       progressText: '$pctInt%',
       progressColor: pctInt >= 50 ? _emeraldGreen : _orangeAccent,
