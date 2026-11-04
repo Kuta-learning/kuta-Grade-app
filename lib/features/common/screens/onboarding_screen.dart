@@ -17,10 +17,7 @@ import '../../../core/storage/storage_keys.dart';
 class OnboardingScreen extends StatefulWidget {
   final int initialPage;
 
-  const OnboardingScreen({
-    super.key,
-    this.initialPage = 0,
-  });
+  const OnboardingScreen({super.key, this.initialPage = 0});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -189,7 +186,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 // ── Top Navigation Row: Back Arrow (left) + Skip (right) ──
                 Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+                  padding: const EdgeInsets.only(
+                    top: 8.0,
+                    left: 4.0,
+                    right: 4.0,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -211,8 +212,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           padding: const EdgeInsets.all(8.0),
                         )
                       else
-                        const SizedBox(width: 48.0), // placeholder to keep Skip aligned
-
+                        const SizedBox(
+                          width: 48.0,
+                        ), // placeholder to keep Skip aligned
                       // Skip Button – hidden on last slide
                       if (_currentPage < _pages.length - 1)
                         TextButton(
@@ -227,17 +229,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Skip',
-                            style: TextStyle(
+                            style: AppTypography.labelMdSemiBold.copyWith(
                               fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
                               letterSpacing: 0.2,
+                              color: AppColors.orange900,
                             ),
                           ),
                         )
                       else
-                        const SizedBox(width: 48.0), // reserve space so layout is stable
+                        const SizedBox(
+                          width: 48.0,
+                        ), // reserve space so layout is stable
                     ],
                   ),
                 ),
@@ -270,8 +274,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 // Centered Landscape Illustration with Floating Badges
                                 _OnboardingCard(item: item),
 
-                                AppSpacing.vGap8, // 32px matching splash_screen exactly
-
+                                AppSpacing
+                                    .vGap8, // 32px matching splash_screen exactly
                                 // Heading Text
                                 Text(
                                   item.title,
@@ -283,8 +287,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   textAlign: TextAlign.center,
                                 ),
 
-                                AppSpacing.vGap2, // 8px matching splash_screen exactly
-
+                                AppSpacing
+                                    .vGap2, // 8px matching splash_screen exactly
                                 // Subtitle / Body Description
                                 ConstrainedBox(
                                   constraints: const BoxConstraints(
@@ -370,7 +374,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(29.0),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFF97316).withValues(alpha: 0.35),
+                            color: const Color(
+                              0xFFF97316,
+                            ).withValues(alpha: 0.35),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -389,9 +395,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(29.0),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24.0,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -400,10 +404,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               _currentPage < _pages.length - 1
                                   ? 'Next'
                                   : 'Get Started',
-                              style: const TextStyle(
+                              style: AppTypography.headlineLg.copyWith(
                                 color: Colors.white,
                                 fontSize: 17.5,
-                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -530,18 +533,10 @@ class _OnboardingCard extends StatelessWidget {
             ),
 
             // 4. Floating Top-Right Badge (positioned above the card top, indented from right)
-            Positioned(
-              top: -36.0,
-              right: 28.0,
-              child: item.topBadge,
-            ),
+            Positioned(top: -36.0, right: 28.0, child: item.topBadge),
 
             // 5. Floating Bottom-Left Badge (overlapping bottom-left corner)
-            Positioned(
-              bottom: -22.0,
-              left: 6.0,
-              child: item.bottomBadge,
-            ),
+            Positioned(bottom: -22.0, left: 6.0, child: item.bottomBadge),
           ],
         ),
       ),
