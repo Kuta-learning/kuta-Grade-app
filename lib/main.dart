@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rive/rive.dart';
@@ -14,6 +15,10 @@ import 'features/profile/services/api_profile_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Simulate different devices/screen sizes from Flutter DevTools.
+  // Enabled in debug/profile builds only; a no-op in release.
+  DevicePreview.enable();
   debugPrint('[KUTA] WidgetsBinding initialized');
 
   // Safely initialize Rive Native runtime with a timeout to prevent hangs

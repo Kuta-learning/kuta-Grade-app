@@ -51,6 +51,7 @@ dependencies:
 
   # ── Animation ──────────────────────────────────────
   rive: ^0.14.11
+  device_preview: ^3.0.0
 
 dev_dependencies:
   flutter_test:
