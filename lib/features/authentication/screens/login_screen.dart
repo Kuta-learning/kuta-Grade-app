@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   const SizedBox(height: 20),
 
                                   // --- Sign in with Google Button ---
-                                  _buildGoogleSignInButton(),
+                                  _buildGoogleSignInButton(isLoading: isLoading),
                                 ],
                               ),
                             ),
@@ -499,13 +499,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildGoogleSignInButton() {
+  Widget _buildGoogleSignInButton({required bool isLoading}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          AppSnackBar.showInfo(context, 'Google Sign-In initiated...');
-        },
+        onTap: isLoading
+            ? null
+            : () => context
+                  .read<AuthBloc>()
+                  .add(const GoogleSignInRequested()),
         borderRadius: BorderRadius.circular(9999),
         child: Ink(
           height: 52,

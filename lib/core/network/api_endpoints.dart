@@ -12,6 +12,7 @@ class ApiEndpoints {
   static const String me = '/auth/me';
   static const String onboarding = '/auth/onboarding';
   static const String profile = '/auth/profile';
+  static const String googleAuth = '/auth/google';
 
   // ── Password Management & OTP ─────────────────────────────────────────────
   static const String forgotPassword = '/auth/forgot-password';
