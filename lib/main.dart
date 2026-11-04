@@ -14,10 +14,10 @@ import 'features/profile/bloc/profile_bloc.dart';
 import 'features/profile/services/api_profile_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Simulate different devices/screen sizes from Flutter DevTools.
-  // Enabled in debug/profile builds only; a no-op in release.
+  // DevicePreview installs its own WidgetsBinding (a drop-in replacement for
+  // WidgetsFlutterBinding) so it must run BEFORE ensureInitialized. Calling
+  // both throws "Binding is already initialized" and leaves the app stuck
+  // behind the native splash screen.
   DevicePreview.enable();
   debugPrint('[KUTA] WidgetsBinding initialized');
 
@@ -44,7 +44,10 @@ void main() async {
   final authService = ApiAuthService(apiClient: apiClient, storage: storage);
   final notesService = ApiNotesService(apiClient: apiClient);
   final coursesService = ApiCoursesService(apiClient: apiClient);
-  final profileService = ApiProfileService(apiClient: apiClient, storage: storage);
+  final profileService = ApiProfileService(
+    apiClient: apiClient,
+    storage: storage,
+  );
   debugPrint('[KUTA] Services ready – launching app');
 
   runApp(
@@ -53,12 +56,8 @@ void main() async {
         BlocProvider<AuthBloc>(
           create: (_) => AuthBloc(authService)..add(const AuthCheckRequested()),
         ),
-        BlocProvider<NotesBloc>(
-          create: (_) => NotesBloc(notesService),
-        ),
-        BlocProvider<CoursesBloc>(
-          create: (_) => CoursesBloc(coursesService),
-        ),
+        BlocProvider<NotesBloc>(create: (_) => NotesBloc(notesService)),
+        BlocProvider<CoursesBloc>(create: (_) => CoursesBloc(coursesService)),
         BlocProvider<ProfileBloc>(
           // Lazy: no profile fetch until the Profile screen requests it.
           create: (_) => ProfileBloc(profileService),
