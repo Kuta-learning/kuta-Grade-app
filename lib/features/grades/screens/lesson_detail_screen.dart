@@ -9,7 +9,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
-import '../services/mock_notes_service.dart';
+
 import '../widgets/learning_objectives_card.dart';
 import '../widgets/lesson_resource_card.dart';
 import '../widgets/lesson_step_card.dart';
@@ -39,7 +39,6 @@ class LessonDetailScreen extends StatefulWidget {
 
 class _LessonDetailScreenState extends State<LessonDetailScreen> {
   LessonDetail? _lesson;
-  LessonDetail? _fallbackLesson;
 
   @override
   void initState() {
@@ -56,9 +55,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         // Send reading progress to backend: POST /short-notes/chapters/:chapterId/progress {"isRead": true}
         bloc.add(UpdateChapterProgressEvent(widget.chapterId, isRead: true));
       } catch (_) {
-        MockNotesService().getChapterNoteDetail(widget.chapterId).then((data) {
-          if (mounted) setState(() => _fallbackLesson = data);
-        });
+        // BlocProvider unavailable — error shown via NotesError state
       }
     });
   }
@@ -150,9 +147,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 builder: (context, state) {
                   final lesson = (state is LessonDetailLoaded)
                       ? state.lesson
-                      : (_lesson ??
-                          bloc?.getCachedLesson(widget.chapterId) ??
-                          _fallbackLesson);
+                      : (_lesson ?? bloc?.getCachedLesson(widget.chapterId));
 
                   if (lesson != null) {
                     return _buildContent(lesson);
@@ -169,8 +164,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   );
                 },
               )
-            : (_lesson != null || _fallbackLesson != null
-                ? _buildContent((_lesson ?? _fallbackLesson)!)
+            : (_lesson != null
+                ? _buildContent(_lesson!)
                 : const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: NotesLoadingSkeleton(itemCount: 3),

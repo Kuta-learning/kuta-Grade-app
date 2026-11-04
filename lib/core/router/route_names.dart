@@ -26,6 +26,8 @@ class RouteNames {
 
   // Grade 12 Subject national exam papers list
   static const String subjectExams = '/subject-exams';
+  static const String nationalExamAttempt = '/national-exam-attempt';
+  static const String nationalExamResult = '/national-exam-result';
 
   // Profile and Bookmarks routes
   static const String profile = '/profile';

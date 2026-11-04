@@ -9,7 +9,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
-import '../services/mock_notes_service.dart';
+
 import '../widgets/grade_screen_shell.dart';
 import '../widgets/note_chapter_card.dart';
 import '../widgets/notes_loading_skeleton.dart';
@@ -35,7 +35,6 @@ class NoteDetailScreen extends StatefulWidget {
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late String _selectedGrade;
   SubjectNotesDetail? _detail;
-  SubjectNotesDetail? _fallbackDetail;
 
   @override
   void initState() {
@@ -56,11 +55,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           bloc.add(LoadSubjectNotesDetail(lookupId));
         }
       } catch (_) {
-        MockNotesService()
-            .getSubjectNotesDetails(lookupId)
-            .then((data) {
-          if (mounted) setState(() => _fallbackDetail = data);
-        });
+        // BlocProvider unavailable — error shown via NotesError state
       }
     });
   }
@@ -81,8 +76,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     }
   }
 
-  void _onReadChapter(ChapterNoteItem chapter) {
-    context.push(
+  Future<void> _onReadChapter(ChapterNoteItem chapter) async {
+    await context.push(
       '${RouteNames.lessonDetail}'
       '?subject=${Uri.encodeComponent(widget.subjectTitle)}'
       '&gradeLevel=${Uri.encodeComponent(_selectedGrade)}'
@@ -90,6 +85,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       '&chapterNumber=${Uri.encodeComponent(chapter.chapterNumber)}'
       '&chapterId=${Uri.encodeComponent(chapter.id)}',
     );
+    if (!mounted) return;
+    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+        ? widget.subjectId!
+        : widget.subjectTitle;
+    try {
+      context.read<NotesBloc>().add(LoadSubjectNotesDetail(lookupId));
+    } catch (_) {}
   }
 
   void _onDownloadChapter(ChapterNoteItem chapter) {
@@ -258,8 +260,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 builder: (context) {
                   final activeDetail = _detail ??
                       bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle) ??
-                      _fallbackDetail;
+                      bloc?.getCachedDetail(widget.subjectTitle);
                   final totalCount = activeDetail?.totalChapters ??
                       activeDetail?.chapters.length ??
                       0;
@@ -283,8 +284,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 builder: (context) {
                   final activeDetail = _detail ??
                       bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle) ??
-                      _fallbackDetail;
+                      bloc?.getCachedDetail(widget.subjectTitle);
                   final showing = activeDetail?.chapters.length ?? 0;
                   final total = activeDetail?.totalChapters ?? showing;
 
@@ -327,17 +327,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               ),
               const SizedBox(height: 12),
 
-              // 4. Chapter Notes List (from Bloc or Fallback)
+              // 4. Chapter Notes List (from Bloc)
               if (bloc != null)
                 BlocConsumer<NotesBloc, NotesState>(
                   listener: (context, state) {
                     if (state is SubjectNotesDetailLoaded) {
                       setState(() => _detail = state.detail);
-                    } else if (state is NotesError) {
-                      // Graceful recovery: fetch subject fallback detail immediately
-                      MockNotesService().getSubjectNotesDetails(lookupId).then((data) {
-                        if (mounted) setState(() => _fallbackDetail = data);
-                      });
                     }
                   },
                   builder: (context, state) {
@@ -345,13 +340,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         ? state.detail
                         : (_detail ??
                             bloc?.getCachedDetail(lookupId) ??
-                            bloc?.getCachedDetail(widget.subjectTitle) ??
-                            _fallbackDetail);
+                            bloc?.getCachedDetail(widget.subjectTitle));
 
                     if (detail != null && detail.chapters.isNotEmpty) {
                       return _buildChaptersList(detail.chapters);
                     }
-                    if (state is NotesLoading && _detail == null && _fallbackDetail == null) {
+                    if (state is NotesLoading && _detail == null) {
                       return const NotesLoadingSkeleton(itemCount: 4);
                     }
                     if (detail != null && detail.chapters.isEmpty) {
@@ -360,8 +354,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     return const NotesLoadingSkeleton(itemCount: 4);
                   },
                 )
-              else if (_fallbackDetail != null || _detail != null)
-                _buildChaptersList((_detail ?? _fallbackDetail)!.chapters)
+              else if (_detail != null)
+                _buildChaptersList(_detail!.chapters)
               else
                 const NotesLoadingSkeleton(itemCount: 4),
             ],
@@ -590,4 +584,3 @@ class _SubjectHeroCard extends StatelessWidget {
     );
   }
 }
-
