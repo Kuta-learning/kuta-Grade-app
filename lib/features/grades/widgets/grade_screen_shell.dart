@@ -98,11 +98,7 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
                   shape: BoxShape.circle,
                   color: AppColors.secondAccent,
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.person, color: Colors.white, size: 20),
               ),
               splashRadius: 22,
               padding: EdgeInsets.zero,
@@ -131,11 +127,7 @@ class GradeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
-  const GradeBottomNavBar({
-    super.key,
-    this.currentIndex = 0,
-    this.onTap,
-  });
+  const GradeBottomNavBar({super.key, this.currentIndex = 0, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +218,10 @@ class GradeBottomNavBar extends StatelessWidget {
         child: Center(
           child: isSelected
               ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6A00),
                     borderRadius: BorderRadius.circular(28),
@@ -249,16 +244,15 @@ class GradeBottomNavBar extends StatelessWidget {
                   ),
                 )
               : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        icon,
-                        color: const Color(0xFF374151),
-                        size: 22,
-                      ),
+                      Icon(icon, color: const Color(0xFF374151), size: 22),
                       const SizedBox(height: 3),
                       Text(
                         label,
@@ -317,7 +311,8 @@ class GradeScreenShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
-    final hasSubheader = (streamTitle != null && streamTitle!.isNotEmpty) ||
+    final hasSubheader =
+        (streamTitle != null && streamTitle!.isNotEmpty) ||
         (subtitle != null && subtitle!.isNotEmpty);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -398,17 +393,15 @@ class GradeScreenShell extends StatelessWidget {
             ),
 
             // Scrollable / primary content area
-            Expanded(
-              child: body,
-            ),
+            Expanded(child: body),
           ],
         ),
         bottomNavigationBar: showBottomNav
             ? (bottomNavigationBar ??
-                GradeBottomNavBar(
-                  currentIndex: selectedNavIndex,
-                  onTap: onNavTap,
-                ))
+                  GradeBottomNavBar(
+                    currentIndex: selectedNavIndex,
+                    onTap: onNavTap,
+                  ))
             : null,
       ),
     );
