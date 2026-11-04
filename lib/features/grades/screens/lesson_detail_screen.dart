@@ -66,7 +66,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       'Downloading ${res.title} (${res.fileSize})...',
     );
     try {
-      context.read<NotesBloc>().add(DownloadChapterPdfEvent(res.id));
+      context.read<NotesBloc>().add(DownloadChapterPdfEvent(widget.chapterId));
+    } catch (_) {}
+  }
+
+  void _retry() {
+    try {
+      context.read<NotesBloc>().add(LoadChapterLessonDetail(widget.chapterId));
     } catch (_) {}
   }
 
@@ -152,11 +158,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   if (lesson != null) {
                     return _buildContent(lesson);
                   }
-                  if (state is NotesLoading) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: NotesLoadingSkeleton(itemCount: 3),
-                    );
+                  if (state is NotesError) {
+                    return _buildErrorState(state.message);
                   }
                   return const Padding(
                     padding: EdgeInsets.all(16.0),
@@ -165,126 +168,163 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 },
               )
             : (_lesson != null
-                ? _buildContent(_lesson!)
-                : const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: NotesLoadingSkeleton(itemCount: 3),
-                  )),
+                  ? _buildContent(_lesson!)
+                  : const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: NotesLoadingSkeleton(itemCount: 3),
+                    )),
       ),
     );
   }
 
+  String _formatContent(String raw) {
+    var text = raw.replaceAll('\r\n', '\n');
+    text = text.replaceAll(RegExp(r'^#{1,6}\s*', multiLine: true), '');
+    text = text.replaceAll('**', '');
+    text = text.replaceAllMapped(
+      RegExp(r'\$([^$]+)\$'),
+      (match) => match.group(1) ?? '',
+    );
+    return text.trim();
+  }
+
   Widget _buildContent(LessonDetail lesson) {
+    final content = _formatContent(lesson.bodyText);
+    final heading = lesson.sectionHeading.isNotEmpty
+        ? lesson.sectionHeading
+        : 'Chapter Content';
+    final progress = lesson.progressPercent.clamp(0.0, 1.0).toDouble();
+    final resourceCount = lesson.resources.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Hero Card
-        const _LessonHeroCard(),
+        _ChapterHeaderCard(lesson: lesson),
 
-        // 2. Learning Objectives Card (Target icon, orange heading, outlined checks)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
-          child: LearningObjectivesCard(
-            objectives: lesson.learningObjectives,
-          ),
-        ),
-
-        // 3. Middle Section: Section Heading + Body Text + Diagram Cards
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 20, 14, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionHeading(text: lesson.sectionHeading),
-              const SizedBox(height: 10),
-              Text(
-                lesson.bodyText,
-                style: GoogleFonts.inter(
-                  fontSize: 13.5,
-                  height: 1.55,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+        if (content.isEmpty && lesson.diagrams.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.borderVariant.withValues(alpha: 0.6),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Diagram Cards matching screenshot
-              for (final diagram in lesson.diagrams) ...[
-                _DiagramCard(diagram: diagram),
-                const SizedBox(height: 14),
-              ],
-            ],
+              child: Text(
+                'No note content is available for this chapter yet.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-        ),
 
-        // 4. Lower Section: Steps to Simplify + Lesson Resources + Progress Bar
+        if (lesson.learningObjectives.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
+            child: LearningObjectivesCard(
+              objectives: lesson.learningObjectives,
+            ),
+          ),
+
+        if (content.isNotEmpty || lesson.diagrams.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 20, 14, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeading(text: heading),
+                if (content.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    content,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.5,
+                      height: 1.55,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+                if (lesson.diagrams.isNotEmpty) const SizedBox(height: 16),
+                for (final diagram in lesson.diagrams) ...[
+                  _DiagramCard(diagram: diagram),
+                  const SizedBox(height: 14),
+                ],
+              ],
+            ),
+          ),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Steps Heading with horizontal line matching screenshot
-              Text(
-                'Steps to Simplify',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E5B94),
-                  letterSpacing: -0.2,
+              if (lesson.steps.isNotEmpty) ...[
+                Text(
+                  'Steps to Simplify',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E5B94),
+                    letterSpacing: -0.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 1,
-                width: double.infinity,
-                color: const Color(0xFFFFD8C2).withValues(alpha: 0.8),
-              ),
-              const SizedBox(height: 16),
-
-              // Step Cards matching screenshot
-              for (final step in lesson.steps) ...[
-                LessonStepCard(step: step),
-                const SizedBox(height: 12),
-              ],
-              const SizedBox(height: 20),
-
-              // Lesson Resources Heading Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Lesson Resources',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.headlineDark,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  Text(
-                    '3 Files',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.orange900,
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 1,
+                  width: double.infinity,
+                  color: const Color(0xFFFFD8C2).withValues(alpha: 0.8),
+                ),
+                const SizedBox(height: 16),
+                for (final step in lesson.steps) ...[
+                  LessonStepCard(step: step),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              const SizedBox(height: 14),
-
-              // Resources List matching screenshot
-              for (final res in lesson.resources) ...[
-                LessonResourceCard(
-                  resource: res,
-                  onDownload: () => _onDownloadResource(res),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
               ],
-              const SizedBox(height: 24),
 
-              // Lesson Progress Row
+              if (resourceCount > 0) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Lesson Resources',
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.headlineDark,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    Text(
+                      '$resourceCount ${resourceCount == 1 ? 'File' : 'Files'}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.orange900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                for (final res in lesson.resources) ...[
+                  LessonResourceCard(
+                    resource: res,
+                    onDownload: () => _onDownloadResource(res),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 24),
+              ],
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -297,7 +337,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                   ),
                   Text(
-                    '100% Read',
+                    '${(progress * 100).round()}% Read',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -307,16 +347,16 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Solid Green Progress Bar matching screenshot
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: Container(
                   height: 6,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00C853),
-                    borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFFE2E8F0),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progress,
+                    child: Container(color: const Color(0xFF00C853)),
                   ),
                 ),
               ),
@@ -326,29 +366,180 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       ],
     );
   }
+
+  Widget _buildErrorState(String message) {
+    final cleanMessage = message.replaceFirst('Exception: ', '');
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.borderVariant.withValues(alpha: 0.6),
+          ),
+          boxShadow: AppElevation.cardLow,
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 40,
+              color: Color(0xFF94A3B8),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Unable to load this chapter',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.headlineDark,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              cleanMessage,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _retry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange500,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-/// Hero card displaying the fraction illustration matching the screenshot.
-class _LessonHeroCard extends StatelessWidget {
-  const _LessonHeroCard();
+/// Header card showing the chapter title, number, subject and grade from the API.
+class _ChapterHeaderCard extends StatelessWidget {
+  final LessonDetail lesson;
+
+  const _ChapterHeaderCard({required this.lesson});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderVariant, width: 1),
         boxShadow: AppElevation.cardLow,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: AspectRatio(
-          aspectRatio: 269 / 193,
-          child: Image.asset(
-            'assets/images/fraction_lesson_hero.png',
-            fit: BoxFit.cover,
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 120,
+              height: 100,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(topRight: Radius.circular(20)),
+                gradient: RadialGradient(
+                  center: Alignment.topRight,
+                  radius: 1.2,
+                  colors: [Color(0x33FFB68D), Color(0x00FFB68D)],
+                ),
+              ),
+            ),
           ),
-        ),
+          const Positioned(
+            right: 16,
+            top: 18,
+            child: Icon(
+              Icons.menu_book_rounded,
+              size: 42,
+              color: Color(0xFFFDE8DE),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (lesson.chapterNumber.isNotEmpty ||
+                    lesson.gradeLevel.isNotEmpty)
+                  Row(
+                    children: [
+                      if (lesson.chapterNumber.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEDE4),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Chapter ${lesson.chapterNumber}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.orange900,
+                            ),
+                          ),
+                        ),
+                      if (lesson.chapterNumber.isNotEmpty &&
+                          lesson.gradeLevel.isNotEmpty)
+                        const SizedBox(width: 8),
+                      if (lesson.gradeLevel.isNotEmpty)
+                        Text(
+                          lesson.gradeLevel,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  lesson.chapterTitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.headlineDark,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                if (lesson.chapterSubtitle.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    lesson.chapterSubtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
