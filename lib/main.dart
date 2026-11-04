@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:rive/rive.dart';
 import 'app.dart';
 import 'core/network/api_client.dart';
@@ -15,6 +16,16 @@ import 'features/profile/services/api_profile_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('[KUTA] WidgetsBinding initialized');
+
+  // Load environment configuration (API base URL, OAuth client IDs, …).
+  try {
+    await dotenv.load(fileName: '.env');
+    debugPrint('[KUTA] Environment configuration loaded');
+  } catch (e) {
+    debugPrint(
+      '[KUTA] Failed to load .env ($e). Copy .env.example to .env and retry.',
+    );
+  }
 
   // Safely initialize Rive Native runtime with a timeout to prevent hangs
   try {
