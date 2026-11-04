@@ -51,6 +51,7 @@ dependencies:
 
   # ── Animation ──────────────────────────────────────
   rive: ^0.14.11
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
