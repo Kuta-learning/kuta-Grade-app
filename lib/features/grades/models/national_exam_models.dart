@@ -21,9 +21,9 @@ enum ExamUserStatus {
 class ExamPaperItem {
   final String id;
   final String title;
-  final int year;
-  final int durationMinutes;
-  final int totalQuestions;
+  final int? year;
+  final int? durationMinutes;
+  final int? totalQuestions;
   final ExamUserStatus userStatus;
   final int? latestScore;
   final String? attemptId;
@@ -42,10 +42,10 @@ class ExamPaperItem {
   factory ExamPaperItem.fromJson(Map<String, dynamic> json) {
     return ExamPaperItem(
       id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? 'National Exam',
-      year: json['year'] as int? ?? 2023,
-      durationMinutes: json['durationMinutes'] as int? ?? 150,
-      totalQuestions: json['totalQuestions'] as int? ?? 100,
+      title: json['title'] as String? ?? '',
+      year: json['year'] as int?,
+      durationMinutes: json['durationMinutes'] as int?,
+      totalQuestions: json['totalQuestions'] as int?,
       userStatus: ExamUserStatus.fromString(json['userStatus'] as String?),
       latestScore: json['latestScore'] as int?,
       attemptId: json['attemptId'] as String?,
@@ -58,11 +58,7 @@ class ExamOption {
   final String text;
   final String? label; // A, B, C, D
 
-  const ExamOption({
-    required this.id,
-    required this.text,
-    this.label,
-  });
+  const ExamOption({required this.id, required this.text, this.label});
 
   factory ExamOption.fromJson(Map<String, dynamic> json) {
     return ExamOption(
@@ -75,7 +71,7 @@ class ExamOption {
 
 class ExamQuestion {
   final String id;
-  final int order;
+  final int? order;
   final String text;
   final String? imageUrl;
   final List<ExamOption> options;
@@ -95,7 +91,7 @@ class ExamQuestion {
   factory ExamQuestion.fromJson(Map<String, dynamic> json) {
     return ExamQuestion(
       id: json['id'] as String? ?? '',
-      order: json['order'] as int? ?? 1,
+      order: json['order'] as int?,
       text: json['text'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
       options: ((json['options'] as List<dynamic>?) ?? [])
@@ -124,7 +120,7 @@ class ExamAttempt {
     return ExamAttempt(
       attemptId: json['attemptId'] as String? ?? json['id'] as String? ?? '',
       examId: json['examId'] as String? ?? '',
-      timeRemainingSeconds: json['timeRemainingSeconds'] as int? ?? 5400,
+      timeRemainingSeconds: json['timeRemainingSeconds'] as int? ?? 0,
       questions: ((json['questions'] as List<dynamic>?) ?? [])
           .map((q) => ExamQuestion.fromJson(q as Map<String, dynamic>))
           .toList(),
@@ -134,20 +130,29 @@ class ExamAttempt {
 
 class ExamAnswerSubmission {
   final String questionId;
-  final String? selectedOptionId;
+  final String selectedOptionId;
   final bool isFlagged;
 
   const ExamAnswerSubmission({
     required this.questionId,
-    this.selectedOptionId,
+    required this.selectedOptionId,
     this.isFlagged = false,
   });
 
-  Map<String, dynamic> toJson() => {
-        'questionId': questionId,
-        if (selectedOptionId != null) 'selectedOptionId': selectedOptionId,
-        'isFlagged': isFlagged,
-      };
+  /// Payload used only by PUT /national-exams/attempts/{attemptId}/save-progress.
+  Map<String, dynamic> toSaveProgressJson() => {
+    'questionId': questionId,
+    'selectedOptionId': selectedOptionId,
+    'isFlagged': isFlagged,
+  };
+
+  /// Payload used only by POST /national-exams/attempts/{attemptId}/submit.
+  /// The Postman contract for submission intentionally does not include
+  /// progress-only fields such as `isFlagged`.
+  Map<String, dynamic> toSubmitJson() => {
+    'questionId': questionId,
+    'selectedOptionId': selectedOptionId,
+  };
 }
 
 class ExamResultReview {
@@ -169,7 +174,7 @@ class ExamResultReview {
     return ExamResultReview(
       attemptId: json['attemptId'] as String? ?? json['id'] as String? ?? '',
       score: json['score'] as int? ?? 0,
-      totalQuestions: json['totalQuestions'] as int? ?? 100,
+      totalQuestions: json['totalQuestions'] as int? ?? 0,
       accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
       timeSpentSeconds: json['timeSpentSeconds'] as int? ?? 0,
     );

@@ -170,12 +170,14 @@ class MockCoursesService implements CoursesService {
   Future<CourseModel> getCourseDetails(String courseId) async {
     await Future.delayed(const Duration(milliseconds: 150));
     final chapters = _getMockChaptersForCourse(courseId);
+    final match = RegExp(r'-(\d+)$').firstMatch(courseId);
+    final grade = match != null ? (int.tryParse(match.group(1)!) ?? 12) : 12;
     return CourseModel(
       id: courseId,
-      title: 'Mathematics Grade 12',
+      title: 'Mathematics Grade $grade',
       description:
-          'In-depth study of advanced functions, calculus, vectors, and discrete probability distributions.',
-      gradeLevel: 12,
+          'In-depth study of curriculum concepts, exercises, and problem sets for Grade $grade.',
+      gradeLevel: grade,
       subject: 'Mathematics',
       icon: 'functions_rounded',
       totalChapters: chapters.length,

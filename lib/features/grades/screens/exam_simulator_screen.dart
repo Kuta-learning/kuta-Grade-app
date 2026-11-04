@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
+import '../../authentication/bloc/auth_bloc.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../services/national_exam_service.dart';
 import '../widgets/exam_header_skeleton.dart';
@@ -73,6 +75,16 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     try {
       final service = NationalExamService();
       final data = await service.getDashboard();
+      final authenticatedGrade = _authenticatedGradeLevel();
+      if (!_supportsNationalExams(data.student.gradeLevel)) {
+        throw Exception(
+          'National exams are available for Grades 6, 8, and 12 only.',
+        );
+      }
+      if (authenticatedGrade != null &&
+          data.student.gradeLevel != authenticatedGrade) {
+        throw Exception('The exam content does not match your selected grade.');
+      }
       if (mounted) {
         setState(() {
           _dashboardData = data;
@@ -89,6 +101,21 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
       }
     }
   }
+
+  int? _authenticatedGradeLevel() {
+    try {
+      final state = context.read<AuthBloc>().state;
+      if (state is AuthAuthenticated) {
+        return state.user.gradeLevel?.numericValue;
+      }
+    } catch (_) {
+      // Widget tests and preview screens may not provide an AuthBloc.
+    }
+    return null;
+  }
+
+  bool _supportsNationalExams(int gradeLevel) =>
+      gradeLevel == 6 || gradeLevel == 8 || gradeLevel == 12;
 
   void _showWelcomeSnackbarOnce() async {
     final storage = SharedPrefsStorage.instanceOrNull;
@@ -529,13 +556,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               ),
               const SizedBox(width: 8),
               InkWell(
-                onTap: () {
-                  context.push(
-                    '${RouteNames.quiz}'
-                    '?quizId=quiz-exam-simulator'
-                    '&title=${Uri.encodeComponent(title)}',
-                  );
-                },
+                onTap: () => _openBannerExam(banner, title),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -571,6 +592,33 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _openBannerExam(BannerExamInfo banner, String title) {
+    if (banner.status?.toUpperCase() == 'SUBMITTED' &&
+        banner.attemptId != null &&
+        banner.attemptId!.isNotEmpty) {
+      context.push(
+        '${RouteNames.nationalExamResult}'
+        '?attemptId=${Uri.encodeComponent(banner.attemptId!)}'
+        '&title=${Uri.encodeComponent(title)}',
+      );
+      return;
+    }
+
+    if (banner.examId == null || banner.examId!.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'This exam is unavailable. Please refresh and try again.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamAttempt}'
+      '?examId=${Uri.encodeComponent(banner.examId!)}'
+      '&title=${Uri.encodeComponent(title)}',
     );
   }
 
