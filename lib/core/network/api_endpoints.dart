@@ -1,9 +1,15 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// API endpoint constants for Kuta Learning backend services.
+///
+/// Sensitive/environment-specific values (like the base URL) are injected at
+/// startup from the local `.env` file — see `.env.example`.
 class ApiEndpoints {
   ApiEndpoints._();
 
-  /// Production backend hosted on Render.
-  static const String baseUrl = 'https://kuta-learning.onrender.com/api';
+  /// Backend base URL, loaded from the `API_BASE_URL` environment entry.
+  static String get baseUrl =>
+      dotenv.maybeGet('API_BASE_URL', fallback: '') ?? '';
 
   // ── Authentication ────────────────────────────────────────────────────────
   static const String register = '/auth/register';
@@ -12,6 +18,7 @@ class ApiEndpoints {
   static const String me = '/auth/me';
   static const String onboarding = '/auth/onboarding';
   static const String profile = '/auth/profile';
+  static const String googleAuth = '/auth/google';
 
   // ── Password Management & OTP ─────────────────────────────────────────────
   static const String forgotPassword = '/auth/forgot-password';

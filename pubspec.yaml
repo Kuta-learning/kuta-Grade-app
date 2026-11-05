@@ -51,6 +51,8 @@ dependencies:
 
   # ── Animation ──────────────────────────────────────
   rive: ^0.14.11
+  google_sign_in: ^7.2.0
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,7 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/animation/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

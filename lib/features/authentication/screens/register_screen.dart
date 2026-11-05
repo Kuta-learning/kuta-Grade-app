@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/auth_bloc.dart';
@@ -61,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthRegisterSuccess) {
           AppSnackBar.showSuccess(
             context,
@@ -70,6 +71,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
           // Flow: Registration -> Onboarding (Grade & Stream Selection) -> Login
           context.go(RouteNames.gradeSelection);
+        } else if (state is AuthAuthenticated) {
+          // Google Sign-Up signs the user in immediately and routes based on
+          // whether their academic onboarding is already complete.
+          final destination = await AppRouter.resolveInitialRoute();
+          if (context.mounted) {
+            context.go(destination);
+          }
         } else if (state is AuthFailure) {
           AppSnackBar.showError(context, state.message);
         }
@@ -243,7 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(height: 16),
 
                                 // --- Sign Up with Google Button ---
-                                _buildGoogleSignUpButton(),
+                                _buildGoogleSignUpButton(isLoading: isLoading),
 
                                 AppSpacing.vGap6, // 24px gap
                                 // --- Footer: Divider, Login Link & Trust Badge ---
@@ -510,13 +518,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildGoogleSignUpButton() {
+  Widget _buildGoogleSignUpButton({required bool isLoading}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          AppSnackBar.showInfo(context, 'Google Sign-In initiated...');
-        },
+        onTap: isLoading
+            ? null
+            : () => context
+                  .read<AuthBloc>()
+                  .add(const GoogleSignInRequested()),
         borderRadius: BorderRadius.circular(9999),
         child: Ink(
           height: 52,

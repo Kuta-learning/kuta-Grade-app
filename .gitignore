@@ -122,3 +122,6 @@ app.*.symbols
 
 # DevTools local options
 devtools_options.yaml
+
+# Local environment secrets (never commit)
+.env

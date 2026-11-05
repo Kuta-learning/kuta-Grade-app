@@ -91,6 +91,27 @@ class MockAuthService implements AuthService {
   }
 
   @override
+  Future<UserModel> signInWithGoogle() async {
+    // Simulate OAuth + backend round-trip
+    await Future.delayed(const Duration(seconds: 1));
+
+    final user = UserModel(
+      id: 'mock-google-user-001',
+      email: 'google.student@kuta.app',
+      name: 'Google Student',
+      gradeLevel: GradeLevel.grade12,
+    );
+
+    await _storage.setString(StorageKeys.authUser, user.toJsonString());
+    await _storage.setString(StorageKeys.authToken, 'mock-google-token-abc123');
+
+    // Treat mock Google users as returning users with onboarding complete
+    await _storage.setBool(StorageKeys.hasSelectedGrade, value: true);
+
+    return user;
+  }
+
+  @override
   Future<UserModel> updateAcademicProfile({
     required GradeLevel gradeLevel,
     AcademicStream? stream,

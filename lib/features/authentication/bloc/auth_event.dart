@@ -38,6 +38,11 @@ final class AcademicProfileUpdated extends AuthEvent {
   });
 }
 
+/// Dispatched when the user taps a "Continue with Google" button.
+final class GoogleSignInRequested extends AuthEvent {
+  const GoogleSignInRequested();
+}
+
 /// Dispatched when the user submits the login form.
 final class LoginRequested extends AuthEvent {
   final String email;

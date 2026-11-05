@@ -19,6 +19,13 @@ abstract class AuthService {
   /// Throws [AuthException] on failure.
   Future<UserModel> register(RegisterRequest request);
 
+  /// Authenticates the user with Google Sign-In.
+  ///
+  /// Obtains a Google ID token on-device and exchanges it with the backend
+  /// (`POST /auth/google`) for the app's own JWT session.
+  /// Throws [AuthException] on failure (including user cancellation).
+  Future<UserModel> signInWithGoogle();
+
   /// Updates the academic profile (grade level and optional stream) of the current user.
   Future<UserModel> updateAcademicProfile({
     required GradeLevel gradeLevel,
