@@ -98,11 +98,7 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
                   shape: BoxShape.circle,
                   color: AppColors.secondAccent,
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.person, color: Colors.white, size: 20),
               ),
               splashRadius: 22,
               padding: EdgeInsets.zero,
@@ -131,11 +127,7 @@ class GradeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
-  const GradeBottomNavBar({
-    super.key,
-    this.currentIndex = 0,
-    this.onTap,
-  });
+  const GradeBottomNavBar({super.key, this.currentIndex = 0, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -205,70 +197,76 @@ class GradeBottomNavBar extends StatelessWidget {
   }) {
     final isSelected = currentIndex == index;
 
-    return InkWell(
-      onTap: () {
-        if (onTap != null) {
-          onTap!(index);
-        } else {
-          if (index == 0) {
-            context.go(RouteNames.examSimulator);
-          } else if (index == 1) {
-            context.go(RouteNames.highSchoolNotes);
-          } else if (index == 2) {
-            context.go(RouteNames.courses);
-          } else if (index == 3) {
-            context.go(RouteNames.profile);
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          if (onTap != null) {
+            onTap!(index);
+          } else {
+            if (index == 0) {
+              context.go(RouteNames.examSimulator);
+            } else if (index == 1) {
+              context.go(RouteNames.highSchoolNotes);
+            } else if (index == 2) {
+              context.go(RouteNames.courses);
+            } else if (index == 3) {
+              context.go(RouteNames.profile);
+            }
           }
-        }
-      },
-      borderRadius: BorderRadius.circular(28),
-      child: isSelected
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF6A00),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(activeIcon, color: Colors.white, size: 21),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+        },
+        borderRadius: BorderRadius.circular(28),
+        child: Center(
+          child: isSelected
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 7,
                   ),
-                ],
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: const Color(0xFF374151),
-                    size: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6A00),
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF374151),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(activeIcon, color: Colors.white, size: 21),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, color: const Color(0xFF374151), size: 22),
+                      const SizedBox(height: 3),
+                      Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF374151),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
@@ -313,7 +311,8 @@ class GradeScreenShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
-    final hasSubheader = (streamTitle != null && streamTitle!.isNotEmpty) ||
+    final hasSubheader =
+        (streamTitle != null && streamTitle!.isNotEmpty) ||
         (subtitle != null && subtitle!.isNotEmpty);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -394,17 +393,15 @@ class GradeScreenShell extends StatelessWidget {
             ),
 
             // Scrollable / primary content area
-            Expanded(
-              child: body,
-            ),
+            Expanded(child: body),
           ],
         ),
         bottomNavigationBar: showBottomNav
             ? (bottomNavigationBar ??
-                GradeBottomNavBar(
-                  currentIndex: selectedNavIndex,
-                  onTap: onNavTap,
-                ))
+                  GradeBottomNavBar(
+                    currentIndex: selectedNavIndex,
+                    onTap: onNavTap,
+                  ))
             : null,
       ),
     );

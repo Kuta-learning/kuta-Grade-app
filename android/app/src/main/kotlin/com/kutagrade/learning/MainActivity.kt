@@ -1,4 +1,4 @@
-package com.example.kuta_learning_app
+package com.kutagrade.learning
 
 import io.flutter.embedding.android.FlutterActivity
 

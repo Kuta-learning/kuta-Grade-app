@@ -29,21 +29,54 @@ class NoteChapterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Chapter number badge (Orange pill/circle)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.orange500,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              chapter.chapterNumber,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          // Header row: Chapter number badge + optional Read Completed badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.orange500,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  chapter.chapterNumber,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
+              if (chapter.isCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF81C784)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 13,
+                        color: Color(0xFF2E7D32),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Read',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
 
@@ -110,7 +143,7 @@ class NoteChapterCard extends StatelessWidget {
           // Action buttons row (Read & Download)
           Row(
             children: [
-              // Read button (Orange pill)
+              // Read button (Orange if unread, Green if completed)
               Expanded(
                 child: InkWell(
                   onTap: onRead,
@@ -118,20 +151,20 @@ class NoteChapterCard extends StatelessWidget {
                   child: Container(
                     height: 35,
                     decoration: BoxDecoration(
-                      color: AppColors.orange500,
+                      color: chapter.isCompleted ? const Color(0xFF2E7D32) : AppColors.orange500,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.menu_book_outlined,
+                        Icon(
+                          chapter.isCompleted ? Icons.check_circle_outline : Icons.menu_book_outlined,
                           size: 14,
                           color: Colors.white,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Read',
+                          chapter.isCompleted ? 'Completed' : 'Read',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

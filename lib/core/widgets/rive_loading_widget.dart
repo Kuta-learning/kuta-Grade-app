@@ -48,20 +48,29 @@ class KutaLoadingWidget extends StatefulWidget {
 }
 
 class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
-  late final FileLoader _fileLoader;
+  FileLoader? _fileLoader;
 
   @override
   void initState() {
     super.initState();
-    _fileLoader = FileLoader.fromAsset(
-      'assets/animation/progress_of_loading_hand.riv',
-      riveFactory: Factory.rive,
-    );
+    // Headless test environments lack native dynamic libraries (rive_native.dll)
+    final isTesting =
+        WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    if (!isTesting) {
+      try {
+        _fileLoader = FileLoader.fromAsset(
+          'assets/animation/progress_of_loading_hand.riv',
+          riveFactory: Factory.rive,
+        );
+      } catch (_) {
+        _fileLoader = null;
+      }
+    }
   }
 
   @override
   void dispose() {
-    _fileLoader.dispose();
+    _fileLoader?.dispose();
     super.dispose();
   }
 
@@ -69,27 +78,58 @@ class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    if (_fileLoader == null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: const Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          if (widget.label != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              widget.label!,
+              style: widget.labelStyle ??
+                  theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    letterSpacing: 0.3,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      );
+    }
+
     Widget riveChild = RiveWidgetBuilder(
-      fileLoader: _fileLoader,
+      fileLoader: _fileLoader!,
       builder: (context, state) => switch (state) {
         RiveLoading() => const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-        ),
         RiveFailed() => const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-        ),
         RiveLoaded() => RiveWidget(
-          controller: state.controller,
-          fit: Fit.contain,
-        ),
+            controller: state.controller,
+            fit: Fit.contain,
+          ),
       },
     );
 
@@ -108,8 +148,7 @@ class _KutaLoadingWidgetState extends State<KutaLoadingWidget> {
           const SizedBox(height: 12),
           Text(
             widget.label!,
-            style:
-                widget.labelStyle ??
+            style: widget.labelStyle ??
                 theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   letterSpacing: 0.3,

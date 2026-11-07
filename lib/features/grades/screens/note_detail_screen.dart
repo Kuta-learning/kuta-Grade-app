@@ -9,7 +9,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
-import '../services/mock_notes_service.dart';
+
 import '../widgets/grade_screen_shell.dart';
 import '../widgets/note_chapter_card.dart';
 import '../widgets/notes_loading_skeleton.dart';
@@ -35,7 +35,6 @@ class NoteDetailScreen extends StatefulWidget {
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late String _selectedGrade;
   SubjectNotesDetail? _detail;
-  SubjectNotesDetail? _fallbackDetail;
 
   @override
   void initState() {
@@ -49,18 +48,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       try {
         final bloc = context.read<NotesBloc>();
         final cached =
-            bloc.getCachedDetail(lookupId) ?? bloc.getCachedDetail(widget.subjectTitle);
+            bloc.getCachedDetail(lookupId) ??
+            bloc.getCachedDetail(widget.subjectTitle);
         if (cached != null) {
           setState(() => _detail = cached);
         } else {
           bloc.add(LoadSubjectNotesDetail(lookupId));
         }
       } catch (_) {
-        MockNotesService()
-            .getSubjectNotesDetails(lookupId)
-            .then((data) {
-          if (mounted) setState(() => _fallbackDetail = data);
-        });
+        // BlocProvider unavailable — error shown via NotesError state
       }
     });
   }
@@ -81,8 +77,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     }
   }
 
-  void _onReadChapter(ChapterNoteItem chapter) {
-    context.push(
+  Future<void> _onReadChapter(ChapterNoteItem chapter) async {
+    await context.push(
       '${RouteNames.lessonDetail}'
       '?subject=${Uri.encodeComponent(widget.subjectTitle)}'
       '&gradeLevel=${Uri.encodeComponent(_selectedGrade)}'
@@ -90,6 +86,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       '&chapterNumber=${Uri.encodeComponent(chapter.chapterNumber)}'
       '&chapterId=${Uri.encodeComponent(chapter.id)}',
     );
+    if (!mounted) return;
+    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+        ? widget.subjectId!
+        : widget.subjectTitle;
+    try {
+      context.read<NotesBloc>().add(LoadSubjectNotesDetail(lookupId));
+    } catch (_) {}
   }
 
   void _onDownloadChapter(ChapterNoteItem chapter) {
@@ -99,6 +102,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
     try {
       context.read<NotesBloc>().add(DownloadChapterPdfEvent(chapter.id));
+    } catch (_) {}
+  }
+
+  void _retry() {
+    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+        ? widget.subjectId!
+        : widget.subjectTitle;
+    try {
+      context.read<NotesBloc>().add(LoadSubjectNotesDetail(lookupId));
     } catch (_) {}
   }
 
@@ -210,8 +222,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
                   // Grade Selector Pill
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.inputFill,
                       borderRadius: BorderRadius.circular(14),
@@ -256,11 +270,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               // 2. Hero Subject Card
               Builder(
                 builder: (context) {
-                  final activeDetail = _detail ??
+                  final activeDetail =
+                      _detail ??
                       bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle) ??
-                      _fallbackDetail;
-                  final totalCount = activeDetail?.totalChapters ??
+                      bloc?.getCachedDetail(widget.subjectTitle);
+                  final totalCount =
+                      activeDetail?.totalChapters ??
                       activeDetail?.chapters.length ??
                       0;
                   final subtitle = totalCount > 0
@@ -281,10 +296,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               // 3. Section Title & Filter Icon Row
               Builder(
                 builder: (context) {
-                  final activeDetail = _detail ??
+                  final activeDetail =
+                      _detail ??
                       bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle) ??
-                      _fallbackDetail;
+                      bloc?.getCachedDetail(widget.subjectTitle);
                   final showing = activeDetail?.chapters.length ?? 0;
                   final total = activeDetail?.totalChapters ?? showing;
 
@@ -327,31 +342,28 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               ),
               const SizedBox(height: 12),
 
-              // 4. Chapter Notes List (from Bloc or Fallback)
+              // 4. Chapter Notes List (from Bloc)
               if (bloc != null)
                 BlocConsumer<NotesBloc, NotesState>(
                   listener: (context, state) {
                     if (state is SubjectNotesDetailLoaded) {
                       setState(() => _detail = state.detail);
-                    } else if (state is NotesError) {
-                      // Graceful recovery: fetch subject fallback detail immediately
-                      MockNotesService().getSubjectNotesDetails(lookupId).then((data) {
-                        if (mounted) setState(() => _fallbackDetail = data);
-                      });
                     }
                   },
                   builder: (context, state) {
                     final detail = (state is SubjectNotesDetailLoaded)
                         ? state.detail
                         : (_detail ??
-                            bloc?.getCachedDetail(lookupId) ??
-                            bloc?.getCachedDetail(widget.subjectTitle) ??
-                            _fallbackDetail);
+                              bloc?.getCachedDetail(lookupId) ??
+                              bloc?.getCachedDetail(widget.subjectTitle));
 
                     if (detail != null && detail.chapters.isNotEmpty) {
                       return _buildChaptersList(detail.chapters);
                     }
-                    if (state is NotesLoading && _detail == null && _fallbackDetail == null) {
+                    if (state is NotesError && detail == null) {
+                      return _buildErrorState(state.message);
+                    }
+                    if (state is NotesLoading && _detail == null) {
                       return const NotesLoadingSkeleton(itemCount: 4);
                     }
                     if (detail != null && detail.chapters.isEmpty) {
@@ -360,8 +372,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     return const NotesLoadingSkeleton(itemCount: 4);
                   },
                 )
-              else if (_fallbackDetail != null || _detail != null)
-                _buildChaptersList((_detail ?? _fallbackDetail)!.chapters)
+              else if (_detail != null)
+                _buildChaptersList(_detail!.chapters)
               else
                 const NotesLoadingSkeleton(itemCount: 4),
             ],
@@ -378,11 +390,17 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: AppColors.borderVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Column(
         children: [
-          const Icon(Icons.menu_book_outlined, size: 40, color: Color(0xFF94A3B8)),
+          const Icon(
+            Icons.menu_book_outlined,
+            size: 40,
+            color: Color(0xFF94A3B8),
+          ),
           const SizedBox(height: 12),
           Text(
             'No notes uploaded yet for $_selectedGrade',
@@ -400,6 +418,64 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    final cleanMessage = message.replaceFirst('Exception: ', '');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: AppElevation.cardLow,
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 40,
+            color: Color(0xFF94A3B8),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Unable to load notes',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.headlineDark,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            cleanMessage,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _retry,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange500,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
           ),
         ],
       ),
@@ -506,10 +582,7 @@ class _SubjectHeroCard extends StatelessWidget {
                 gradient: RadialGradient(
                   center: Alignment.topRight,
                   radius: 1.2,
-                  colors: [
-                    Color(0x33FFB68D),
-                    Color(0x00FFB68D),
-                  ],
+                  colors: [Color(0x33FFB68D), Color(0x00FFB68D)],
                 ),
               ),
             ),
@@ -517,11 +590,7 @@ class _SubjectHeroCard extends StatelessWidget {
 
           // Dynamic subject watermark (symbol or icon)
           if (watermarkWidget != null)
-            Positioned(
-              right: 15,
-              top: 15,
-              child: watermarkWidget,
-            ),
+            Positioned(right: 15, top: 15, child: watermarkWidget),
 
           // Content
           Padding(
@@ -590,4 +659,3 @@ class _SubjectHeroCard extends StatelessWidget {
     );
   }
 }
-

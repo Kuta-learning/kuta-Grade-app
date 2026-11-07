@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
 import '../services/national_exam_service.dart';
@@ -85,10 +86,14 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
   }
 
   _ExamPaperModel _fromBackendPaper(ExamPaperItem paper) {
-    final hours = paper.durationMinutes ~/ 60;
-    final minutes = paper.durationMinutes % 60;
-    final durationStr =
-        minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+    final duration = paper.durationMinutes;
+    final hours = duration == null ? 0 : duration ~/ 60;
+    final minutes = duration == null ? 0 : duration % 60;
+    final durationStr = duration == null
+        ? ''
+        : minutes > 0
+        ? '${hours}h ${minutes}m'
+        : '${hours}h';
 
     ExamPaperStatus status;
     switch (paper.userStatus) {
@@ -103,22 +108,59 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
         break;
     }
 
-    final isFourDigits = paper.year > 0;
-    final displayTitle = isFourDigits
+    final displayTitle = paper.title.isNotEmpty
+        ? paper.title
+        : paper.year != null
         ? '${paper.year} National Exam'
-        : '${paper.title} National Exam';
+        : 'National Exam';
 
     return _ExamPaperModel(
       id: paper.id,
-      year: paper.year.toString(),
       displayTitle: displayTitle,
       duration: durationStr,
-      questionsCount: '${paper.totalQuestions} Qs',
+      questionsCount: paper.totalQuestions == null
+          ? ''
+          : '${paper.totalQuestions} Qs',
       status: status,
-      timeLeft: status == ExamPaperStatus.inProgress ? '1:42m left' : null,
+      attemptId: paper.attemptId,
       score: paper.latestScore != null
-          ? 'Score: ${paper.latestScore}/${paper.totalQuestions}'
+          ? paper.totalQuestions == null
+                ? 'Score: ${paper.latestScore}'
+                : 'Score: ${paper.latestScore}/${paper.totalQuestions}'
           : null,
+    );
+  }
+
+  void _openExamAttempt(_ExamPaperModel paper) {
+    if (paper.id.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'This exam is unavailable. Please refresh and try again.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamAttempt}'
+      '?examId=${Uri.encodeComponent(paper.id)}'
+      '&title=${Uri.encodeComponent(paper.displayTitle)}',
+    );
+  }
+
+  void _openExamReview(_ExamPaperModel paper) {
+    final attemptId = paper.attemptId;
+    if (attemptId == null || attemptId.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'The completed exam review is not available yet.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamResult}'
+      '?attemptId=${Uri.encodeComponent(attemptId)}'
+      '&title=${Uri.encodeComponent(paper.displayTitle)}',
     );
   }
 
@@ -126,8 +168,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
   Widget build(BuildContext context) {
     final effectiveSubtitle =
         (widget.subtitle.isEmpty || widget.subtitle == 'Natural Science Track')
-            ? 'Official National University Entrance Papers'
-            : widget.subtitle;
+        ? 'Official National University Entrance Papers'
+        : widget.subtitle;
 
     return GradeScreenShell(
       title: widget.subjectTitle,
@@ -149,10 +191,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     // Initial loading state with custom Rive animation
     if (_isLoading && _papers.isEmpty) {
       return const Center(
-        child: KutaLoadingWidget(
-          size: 140,
-          label: 'Loading Exam Papers...',
-        ),
+        child: KutaLoadingWidget(size: 140, label: 'Loading Exam Papers...'),
       );
     }
 
@@ -315,6 +354,11 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 
   /// Meta details row (Clock / Check + timing / score)
   Widget _buildPaperMeta(_ExamPaperModel paper) {
+    final details = [
+      paper.duration,
+      paper.questionsCount,
+    ].where((detail) => detail.isNotEmpty).join(' • ');
+
     switch (paper.status) {
       case ExamPaperStatus.notStarted:
         return Row(
@@ -331,7 +375,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                '${paper.duration} • ${paper.questionsCount}',
+                details,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -361,7 +405,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: '${paper.duration} • ${paper.questionsCount} • ',
+                      text: details.isEmpty ? '' : '$details • ',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -370,7 +414,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                       ),
                     ),
                     TextSpan(
-                      text: '${paper.timeLeft ?? ''} In Progress',
+                      text: 'In Progress',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -434,13 +478,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     switch (paper.status) {
       case ExamPaperStatus.notStarted:
         return InkWell(
-          onTap: () {
-            context.push(
-              '${RouteNames.quiz}'
-              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
-              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
-            );
-          },
+          onTap: () => _openExamAttempt(paper),
           borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
@@ -461,13 +499,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 
       case ExamPaperStatus.inProgress:
         return InkWell(
-          onTap: () {
-            context.push(
-              '${RouteNames.quiz}'
-              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
-              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
-            );
-          },
+          onTap: () => _openExamAttempt(paper),
           borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
@@ -488,13 +520,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 
       case ExamPaperStatus.completed:
         return InkWell(
-          onTap: () {
-            context.push(
-              '${RouteNames.quiz}'
-              '?quizId=${Uri.encodeComponent(paper.id.isNotEmpty ? paper.id : "exam-${paper.year}")}'
-              '&title=${Uri.encodeComponent("${paper.year} ${widget.subjectTitle} National Exam")}',
-            );
-          },
+          onTap: () => _openExamReview(paper),
           borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
@@ -519,22 +545,20 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 /// Model representation for an exam paper year
 class _ExamPaperModel {
   final String id;
-  final String year;
   final String displayTitle;
   final String duration;
   final String questionsCount;
   final ExamPaperStatus status;
-  final String? timeLeft;
+  final String? attemptId;
   final String? score;
 
   const _ExamPaperModel({
     required this.id,
-    required this.year,
     required this.displayTitle,
     required this.duration,
     required this.questionsCount,
     required this.status,
-    this.timeLeft,
+    this.attemptId,
     this.score,
   });
 }

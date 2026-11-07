@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,6 +11,7 @@ import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
+import '../../authentication/bloc/auth_bloc.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../services/national_exam_service.dart';
 import '../widgets/exam_header_skeleton.dart';
@@ -53,12 +56,12 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     if (widget.initialDashboardData != null) {
       _dashboardData = widget.initialDashboardData;
       _isLoading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showWelcomeSnackbarOnce();
+      });
     } else {
       _loadDashboardData();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _showWelcomeSnackbarOnce();
-    });
   }
 
   /// Loads dashboard data from backend service. Supports Pull-Down-to-Refresh.
@@ -73,12 +76,23 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     try {
       final service = NationalExamService();
       final data = await service.getDashboard();
+      final authenticatedGrade = _authenticatedGradeLevel();
+      if (!_supportsNationalExams(data.student.gradeLevel)) {
+        throw Exception(
+          'National exams are available for Grades 6, 8, and 12 only.',
+        );
+      }
+      if (authenticatedGrade != null &&
+          data.student.gradeLevel != authenticatedGrade) {
+        throw Exception('The exam content does not match your selected grade.');
+      }
       if (mounted) {
         setState(() {
           _dashboardData = data;
           _isLoading = false;
           _errorMessage = null;
         });
+        _showWelcomeSnackbarOnce();
       }
     } catch (e) {
       if (mounted) {
@@ -90,6 +104,21 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     }
   }
 
+  int? _authenticatedGradeLevel() {
+    try {
+      final state = context.read<AuthBloc>().state;
+      if (state is AuthAuthenticated) {
+        return state.user.gradeLevel?.numericValue;
+      }
+    } catch (_) {
+      // Widget tests and preview screens may not provide an AuthBloc.
+    }
+    return null;
+  }
+
+  bool _supportsNationalExams(int gradeLevel) =>
+      gradeLevel == 6 || gradeLevel == 8 || gradeLevel == 12;
+
   void _showWelcomeSnackbarOnce() async {
     final storage = SharedPrefsStorage.instanceOrNull;
     if (storage == null) return;
@@ -97,16 +126,49 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         await storage.getBool(StorageKeys.hasSeenWelcomeSnackbar) ?? false;
     if (alreadySeen || !mounted) return;
 
+    // Resolve student info: Priority 1 = loaded dashboard data, Priority 2 = AuthBloc authenticated user
+    String? resolvedName;
+    int? resolvedGrade;
+    String? resolvedStream;
+
+    final student = _dashboardData?.student;
+    if (student != null) {
+      if (student.name.trim().isNotEmpty) resolvedName = student.name.trim();
+      if (student.gradeLevel > 0) resolvedGrade = student.gradeLevel;
+      if (student.stream.trim().isNotEmpty) resolvedStream = student.stream.trim();
+    }
+
+    if (resolvedName == null || resolvedGrade == null) {
+      try {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthAuthenticated) {
+          if (resolvedName == null && authState.user.name.trim().isNotEmpty) {
+            resolvedName = authState.user.name.trim();
+          }
+          resolvedGrade ??= authState.user.gradeLevel?.numericValue;
+          resolvedStream ??= authState.user.academicStream?.name;
+        }
+      } catch (_) {}
+    }
+
+    // Do NOT trigger with hardcoded fallback if data hasn't finished loading yet
+    if (resolvedName == null && resolvedGrade == null && _dashboardData == null) {
+      return;
+    }
+
     await storage.setBool(StorageKeys.hasSeenWelcomeSnackbar, value: true);
     if (!mounted) return;
 
-    final student = _dashboardData?.student;
-    final name = student != null && student.name.trim().isNotEmpty
-        ? student.name.trim()
-        : 'Student';
-    final grade = student?.gradeLevel ?? 12;
-    final stream = student?.stream == 'SOCIAL' ? 'Social' : 'Natural';
-    final subtitle = 'Grade $grade • $stream Science';
+    final name = (resolvedName != null && resolvedName.isNotEmpty) ? resolvedName : 'Student';
+    final grade = resolvedGrade ?? 12;
+
+    final String subtitle;
+    if (grade == 12 && resolvedStream != null && resolvedStream.isNotEmpty) {
+      final streamName = resolvedStream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural';
+      subtitle = 'Grade 12 • $streamName Science';
+    } else {
+      subtitle = 'Grade $grade';
+    }
 
     AppSnackBar.showWelcome(context, name: name, subtitle: subtitle);
   }
@@ -339,13 +401,33 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   /// Welcome Banner Card inside the blue header
   Widget _buildWelcomeBanner() {
     final student = _dashboardData?.student;
-    final name = student != null && student.name.trim().isNotEmpty
-        ? student.name.trim()
-        : 'Student';
-    final gradeLevel = student?.gradeLevel ?? 12;
-    final streamDisplay = student != null
-        ? (student.stream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural')
-        : 'Natural';
+    String? resolvedName = student?.name.trim();
+    int? resolvedGrade = student != null && student.gradeLevel > 0 ? student.gradeLevel : null;
+    String? resolvedStream = student?.stream.trim();
+
+    if (resolvedName == null || resolvedName.isEmpty || resolvedGrade == null) {
+      try {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthAuthenticated) {
+          if (resolvedName == null || resolvedName.isEmpty) {
+            resolvedName = authState.user.name.trim();
+          }
+          resolvedGrade ??= authState.user.gradeLevel?.numericValue;
+          resolvedStream ??= authState.user.academicStream?.name;
+        }
+      } catch (_) {}
+    }
+
+    final name = resolvedName != null && resolvedName.isNotEmpty ? resolvedName : 'Student';
+    final gradeLevel = resolvedGrade ?? 12;
+
+    final String trackSubtitle;
+    if (gradeLevel == 12 && resolvedStream != null && resolvedStream.isNotEmpty) {
+      final streamDisplay = resolvedStream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural';
+      trackSubtitle = 'Grade 12 $streamDisplay Science';
+    } else {
+      trackSubtitle = 'Grade $gradeLevel';
+    }
 
     return Container(
       width: double.infinity,
@@ -372,7 +454,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           ),
           const SizedBox(height: 3),
           Text(
-            'Grade $gradeLevel $streamDisplay Science',
+            trackSubtitle,
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
@@ -529,13 +611,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               ),
               const SizedBox(width: 8),
               InkWell(
-                onTap: () {
-                  context.push(
-                    '${RouteNames.quiz}'
-                    '?quizId=quiz-exam-simulator'
-                    '&title=${Uri.encodeComponent(title)}',
-                  );
-                },
+                onTap: () => _openBannerExam(banner, title),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -571,6 +647,33 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _openBannerExam(BannerExamInfo banner, String title) {
+    if (banner.status?.toUpperCase() == 'SUBMITTED' &&
+        banner.attemptId != null &&
+        banner.attemptId!.isNotEmpty) {
+      context.push(
+        '${RouteNames.nationalExamResult}'
+        '?attemptId=${Uri.encodeComponent(banner.attemptId!)}'
+        '&title=${Uri.encodeComponent(title)}',
+      );
+      return;
+    }
+
+    if (banner.examId == null || banner.examId!.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'This exam is unavailable. Please refresh and try again.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamAttempt}'
+      '?examId=${Uri.encodeComponent(banner.examId!)}'
+      '&title=${Uri.encodeComponent(title)}',
     );
   }
 

@@ -19,15 +19,20 @@ class NationalExamDashboardModel {
       student: StudentInfo.fromJson(
         (json['student'] as Map<String, dynamic>?) ?? {},
       ),
-      bannerExam: json['bannerExam'] != null && json['bannerExam'] is Map<String, dynamic>
+      bannerExam:
+          json['bannerExam'] != null &&
+              json['bannerExam'] is Map<String, dynamic>
           ? BannerExamInfo.fromJson(json['bannerExam'] as Map<String, dynamic>)
           : null,
-      subjectsCount: json['subjectsCount'] as int? ??
+      subjectsCount:
+          json['subjectsCount'] as int? ??
           (json['subjects'] as List<dynamic>?)?.length ??
           0,
       subjects: ((json['subjects'] as List<dynamic>?) ?? [])
-          .map((item) =>
-              NationalExamSubjectModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                NationalExamSubjectModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList(),
     );
   }
@@ -49,7 +54,7 @@ class StudentInfo {
   factory StudentInfo.fromJson(Map<String, dynamic> json) {
     return StudentInfo(
       name: json['name'] as String? ?? 'Student',
-      gradeLevel: json['gradeLevel'] as int? ?? 12,
+      gradeLevel: json['gradeLevel'] as int? ?? 0,
       stream: json['stream'] as String? ?? 'NATURAL',
       isPremium: json['isPremium'] as bool? ?? false,
     );
@@ -89,10 +94,12 @@ class BannerExamInfo {
         ? rawProgress.toDouble()
         : double.tryParse(rawProgress?.toString() ?? '');
 
-    final answered = json['answeredQuestions'] as int? ??
+    final answered =
+        json['answeredQuestions'] as int? ??
         json['currentQuestion'] as int? ??
         json['answeredCount'] as int?;
-    final total = json['totalQuestions'] as int? ??
+    final total =
+        json['totalQuestions'] as int? ??
         json['questionsCount'] as int? ??
         json['totalCount'] as int?;
 

@@ -20,6 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterRequested>(_onRegisterRequested);
     on<AcademicProfileUpdated>(_onAcademicProfileUpdated);
     on<LoginRequested>(_onLoginRequested);
+    on<GoogleSignInRequested>(_onGoogleSignInRequested);
     on<LogoutRequested>(_onLogoutRequested);
   }
 
@@ -95,6 +96,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       );
+      emit(AuthAuthenticated(user));
+    } on AuthException catch (e) {
+      emit(AuthFailure(e.message));
+    } catch (_) {
+      emit(const AuthFailure('Something went wrong. Please try again.'));
+    }
+  }
+
+  // ── Google Sign-In ─────────────────────────────────────────────────────
+  Future<void> _onGoogleSignInRequested(
+    GoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    try {
+      final user = await _authService.signInWithGoogle();
       emit(AuthAuthenticated(user));
     } on AuthException catch (e) {
       emit(AuthFailure(e.message));

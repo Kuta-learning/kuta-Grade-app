@@ -8,7 +8,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/route_names.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
-import '../services/mock_notes_service.dart';
+
 import '../widgets/grade_screen_shell.dart';
 import '../widgets/notes_loading_skeleton.dart';
 
@@ -31,7 +31,6 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
   List<NoteSubjectItem>? _subjects;
   Set<int> _expandedIndices = {0}; // Mathematics expanded by default
   Map<int, String> _selectedGrades = {0: 'Grade 12'}; // Grade 12 selected by default
-  List<NoteSubjectItem>? _fallbackSubjects;
 
   @override
   void initState() {
@@ -50,15 +49,7 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
           bloc.add(const LoadNotesSubjects());
         }
       } catch (_) {
-        // Fallback for isolated widget testing without BlocProvider
-        MockNotesService().getShortNotesSubjects().then((data) {
-          if (mounted) {
-            setState(() {
-              _fallbackSubjects = data;
-              _subjects = data;
-            });
-          }
-        });
+        // BlocProvider unavailable — error shown via NotesError state
       }
     });
   }
@@ -182,9 +173,7 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                   builder: (context, state) {
                     final displaySubjects = (state is NotesSubjectsLoaded)
                         ? state.subjects
-                        : (_subjects ??
-                            bloc?.cachedSubjects ??
-                            _fallbackSubjects);
+                        : (_subjects ?? bloc?.cachedSubjects);
                     final displayExpanded = (state is NotesSubjectsLoaded)
                         ? state.expandedIndices
                         : (_expandedIndices.isNotEmpty
@@ -211,9 +200,9 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                     return const NotesLoadingSkeleton(itemCount: 4);
                   },
                 )
-              else if (_fallbackSubjects != null || _subjects != null)
+              else if (_subjects != null)
                 _buildSubjectList(
-                  _subjects ?? _fallbackSubjects!,
+                  _subjects!,
                   _expandedIndices,
                   _selectedGrades,
                   null,

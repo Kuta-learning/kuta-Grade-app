@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
+import '../../../core/constants/oauth_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
@@ -128,24 +130,9 @@ class ApiAuthService implements AuthService {
       final authResponse =
           AuthResponse.fromJson(response.data as Map<String, dynamic>);
 
-      // Persist access and refresh tokens
-      await _storage.setString(StorageKeys.authToken, authResponse.token);
-      if (authResponse.refreshToken != null) {
-        await _storage.setString(
-          StorageKeys.authRefreshToken,
-          authResponse.refreshToken!,
-        );
-      }
+      await _persistSession(authResponse);
 
-      // Persist user and sync grade onboarding state
-      final user = authResponse.user;
-      await _storage.setString(StorageKeys.authUser, user.toJsonString());
-      await _storage.setBool(
-        StorageKeys.hasSelectedGrade,
-        value: user.onboardingCompleted,
-      );
-
-      return user;
+      return authResponse.user;
     } on DioException catch (e) {
       final message =
           _extractErrorMessage(e) ?? 'Invalid email or password.';
@@ -155,6 +142,92 @@ class ApiAuthService implements AuthService {
         e is AuthException ? e.message : 'An unexpected error occurred.',
       );
     }
+  }
+
+  // ── Google Sign-In ─────────────────────────────────────────────────────
+
+  Future<void>? _googleSignInInitFuture;
+
+  /// Initializes the Google Sign-In SDK exactly once per app session.
+  Future<void> _ensureGoogleSignInInitialized() {
+    return _googleSignInInitFuture ??= GoogleSignIn.instance.initialize(
+      // No google-services.json is used; the backend's Web Client ID is passed
+      // as the server client so Google issues an ID token it can verify.
+      serverClientId: OAuthConfig.googleWebClientId,
+    );
+  }
+
+  @override
+  Future<UserModel> signInWithGoogle() async {
+    try {
+      await _ensureGoogleSignInInitialized();
+
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final idToken = googleUser.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw const AuthException(
+          'Google did not return an ID token. Please try again.',
+          code: 'google_missing_id_token',
+        );
+      }
+
+      final response = await _apiClient.client.post(
+        ApiEndpoints.googleAuth,
+        data: {'credential': idToken},
+      );
+
+      final authResponse =
+          AuthResponse.fromJson(response.data as Map<String, dynamic>);
+
+      await _persistSession(authResponse);
+
+      return authResponse.user;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const AuthException(
+          'Google sign-in was cancelled.',
+          code: 'google_canceled',
+        );
+      }
+      throw AuthException(
+        e.description ??
+            'Google sign-in failed. Please check your device configuration and try again.',
+        code: 'google_${e.code.name}',
+      );
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e) ??
+          'Google sign-in failed. Please try again.';
+      throw AuthException(message, code: 'google_auth_failed');
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException(
+        'Something went wrong during Google sign-in. Please try again.',
+        code: 'google_auth_error',
+      );
+    }
+  }
+
+  /// Persists the JWT session returned by any successful auth flow.
+  ///
+  /// Both `/auth/login` and `/auth/google` return the same payload shape, so
+  /// token storage and grade-onboarding flags must stay identical.
+  Future<void> _persistSession(AuthResponse authResponse) async {
+    await _storage.setString(StorageKeys.authToken, authResponse.token);
+    if (authResponse.refreshToken != null) {
+      await _storage.setString(
+        StorageKeys.authRefreshToken,
+        authResponse.refreshToken!,
+      );
+    }
+
+    final user = authResponse.user;
+    await _storage.setString(StorageKeys.authUser, user.toJsonString());
+    await _storage.setBool(
+      StorageKeys.hasSelectedGrade,
+      value: user.onboardingCompleted,
+    );
   }
 
   @override

@@ -15,7 +15,8 @@ class NoteGradeOption {
   factory NoteGradeOption.fromJson(Map<String, dynamic> json) {
     return NoteGradeOption(
       name: json['name'] as String? ?? 'Grade 12',
-      chapters: json['chapters'] as String? ??
+      chapters:
+          json['chapters'] as String? ??
           (json['chapterCount'] != null
               ? '${json['chapterCount']} Chapters'
               : '0 Chapters'),
@@ -24,10 +25,10 @@ class NoteGradeOption {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'chapters': chapters,
-        'gradeLevel': gradeLevel,
-      };
+    'name': name,
+    'chapters': chapters,
+    'gradeLevel': gradeLevel,
+  };
 }
 
 /// A subject item displayed on HighSchoolNotesScreen.
@@ -76,9 +77,21 @@ class NoteSubjectItem {
     String? defaultSymbol = json['symbol'] as String?;
     List<NoteGradeOption> defaultGrades = const [
       NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-      NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
-      NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
-      NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
+      NoteGradeOption(
+        name: 'Grade 10',
+        chapters: '10 Chapters',
+        gradeLevel: 10,
+      ),
+      NoteGradeOption(
+        name: 'Grade 11',
+        chapters: '12 Chapters',
+        gradeLevel: 11,
+      ),
+      NoteGradeOption(
+        name: 'Grade 12',
+        chapters: '14 Chapters',
+        gradeLevel: 12,
+      ),
     ];
 
     if (norm.contains('math')) {
@@ -88,9 +101,21 @@ class NoteSubjectItem {
       defaultSymbol = 'Σ';
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '10 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '12 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '14 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     } else if (norm.contains('physic')) {
       defaultBg = const Color(0xFFDBE9FF);
@@ -99,9 +124,21 @@ class NoteSubjectItem {
       defaultIsSymbol = false;
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '7 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '8 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '8 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '10 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '12 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     } else if (norm.contains('chem')) {
       defaultBg = const Color(0xFF6BFF8F);
@@ -110,9 +147,21 @@ class NoteSubjectItem {
       defaultIsSymbol = false;
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '6 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '8 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '8 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '10 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '12 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     } else if (norm.contains('bio')) {
       defaultBg = const Color(0xFFE8ECEF);
@@ -121,9 +170,21 @@ class NoteSubjectItem {
       defaultIsSymbol = false;
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '6 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '7 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '9 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '11 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '7 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '9 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '11 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     } else if (norm.contains('eng')) {
       defaultBg = const Color(0xFFDBE9FF);
@@ -132,9 +193,21 @@ class NoteSubjectItem {
       defaultIsSymbol = false;
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '9 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '9 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '10 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '12 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     } else if (norm.contains('civic') || norm.contains('ethic')) {
       defaultBg = const Color(0xFFE0C0B1);
@@ -143,17 +216,29 @@ class NoteSubjectItem {
       defaultIsSymbol = false;
       defaultGrades = const [
         NoteGradeOption(name: 'Grade 9', chapters: '5 Chapters', gradeLevel: 9),
-        NoteGradeOption(name: 'Grade 10', chapters: '6 Chapters', gradeLevel: 10),
-        NoteGradeOption(name: 'Grade 11', chapters: '8 Chapters', gradeLevel: 11),
-        NoteGradeOption(name: 'Grade 12', chapters: '10 Chapters', gradeLevel: 12),
+        NoteGradeOption(
+          name: 'Grade 10',
+          chapters: '6 Chapters',
+          gradeLevel: 10,
+        ),
+        NoteGradeOption(
+          name: 'Grade 11',
+          chapters: '8 Chapters',
+          gradeLevel: 11,
+        ),
+        NoteGradeOption(
+          name: 'Grade 12',
+          chapters: '10 Chapters',
+          gradeLevel: 12,
+        ),
       ];
     }
 
     final rawGrades = json['grades'] as List<dynamic>? ?? [];
     final grades = rawGrades.isNotEmpty
         ? rawGrades
-            .map((g) => NoteGradeOption.fromJson(g as Map<String, dynamic>))
-            .toList()
+              .map((g) => NoteGradeOption.fromJson(g as Map<String, dynamic>))
+              .toList()
         : defaultGrades;
 
     return NoteSubjectItem(
@@ -169,15 +254,15 @@ class NoteSubjectItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'iconBgColor': iconBgColor.toARGB32(),
-        'iconColor': iconColor.toARGB32(),
-        'iconDataName': iconDataName,
-        'isSymbol': isSymbol,
-        'symbol': symbol,
-        'grades': grades.map((g) => g.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'iconBgColor': iconBgColor.toARGB32(),
+    'iconColor': iconColor.toARGB32(),
+    'iconDataName': iconDataName,
+    'isSymbol': isSymbol,
+    'symbol': symbol,
+    'grades': grades.map((g) => g.toJson()).toList(),
+  };
 }
 
 /// Chapter note row item under NoteDetailScreen.
@@ -205,37 +290,36 @@ class ChapterNoteItem {
   factory ChapterNoteItem.fromJson(Map<String, dynamic> json) {
     return ChapterNoteItem(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
-      chapterNumber: json['chapterNumber']?.toString() ??
+      chapterNumber:
+          json['chapterNumber']?.toString() ??
           json['order']?.toString() ??
           json['chapterIndex']?.toString() ??
           '1',
       title: json['title'] as String? ?? json['name'] as String? ?? '',
-      description: json['description'] as String? ??
-          json['subtitle'] as String? ??
-          '',
+      description:
+          json['description'] as String? ?? json['subtitle'] as String? ?? '',
       pageCount: json['pageCount']?.toString() != null
           ? (json['pageCount'].toString().contains('Pages')
-              ? json['pageCount'].toString()
-              : '${json['pageCount']} Pages')
+                ? json['pageCount'].toString()
+                : '${json['pageCount']} Pages')
           : '12 Pages',
       fileSize: json['fileSize'] as String? ?? '2.4 MB',
       pdfUrl: json['pdfUrl'] as String?,
-      isCompleted: json['isCompleted'] as bool? ??
-          json['isRead'] as bool? ??
-          false,
+      isCompleted:
+          json['isCompleted'] as bool? ?? json['isRead'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'chapterNumber': chapterNumber,
-        'title': title,
-        'description': description,
-        'pageCount': pageCount,
-        'fileSize': fileSize,
-        'pdfUrl': pdfUrl,
-        'isCompleted': isCompleted,
-      };
+    'id': id,
+    'chapterNumber': chapterNumber,
+    'title': title,
+    'description': description,
+    'pageCount': pageCount,
+    'fileSize': fileSize,
+    'pdfUrl': pdfUrl,
+    'isCompleted': isCompleted,
+  };
 }
 
 /// Complete detail payload for a subject + grade in NoteDetailScreen.
@@ -262,22 +346,28 @@ class SubjectNotesDetail {
     final rawChapters = json['chapters'] as List<dynamic>? ?? [];
     final subjectObj = json['subject'] as Map<String, dynamic>?;
 
-    final resolvedId = json['subjectId'] as String? ??
+    final resolvedId =
+        json['subjectId'] as String? ??
         subjectObj?['id'] as String? ??
         json['id'] as String? ??
         '';
 
-    final resolvedTitle = json['subjectTitle'] as String? ??
+    final resolvedTitle =
+        json['subjectTitle'] as String? ??
         subjectObj?['name'] as String? ??
         json['name'] as String? ??
         json['title'] as String? ??
         'Subject Notes';
 
-    final resolvedGrade = json['gradeLevel']?.toString() ??
-        (json['selectedGrade'] != null ? 'Grade ${json['selectedGrade']}' : null) ??
+    final resolvedGrade =
+        json['gradeLevel']?.toString() ??
+        (json['selectedGrade'] != null
+            ? 'Grade ${json['selectedGrade']}'
+            : null) ??
         'Grade 12';
 
-    final resolvedSize = json['totalFileSize'] as String? ??
+    final resolvedSize =
+        json['totalFileSize'] as String? ??
         json['downloadAllSize'] as String? ??
         '24 MB';
 
@@ -295,14 +385,14 @@ class SubjectNotesDetail {
   }
 
   Map<String, dynamic> toJson() => {
-        'subjectId': subjectId,
-        'subjectTitle': subjectTitle,
-        'gradeLevel': gradeLevel,
-        'totalChapters': totalChapters,
-        'totalFileSize': totalFileSize,
-        'downloadAllUrl': downloadAllUrl,
-        'chapters': chapters.map((c) => c.toJson()).toList(),
-      };
+    'subjectId': subjectId,
+    'subjectTitle': subjectTitle,
+    'gradeLevel': gradeLevel,
+    'totalChapters': totalChapters,
+    'totalFileSize': totalFileSize,
+    'downloadAllUrl': downloadAllUrl,
+    'chapters': chapters.map((c) => c.toJson()).toList(),
+  };
 }
 
 /// Diagram card in lesson detail.
@@ -327,7 +417,8 @@ class LessonDiagram {
   factory LessonDiagram.fromJson(Map<String, dynamic> json) {
     return LessonDiagram(
       title: json['title'] as String? ?? '',
-      imageAssetOrUrl: json['imageAssetOrUrl'] as String? ??
+      imageAssetOrUrl:
+          json['imageAssetOrUrl'] as String? ??
           json['imageUrl'] as String? ??
           '',
       caption: json['caption'] as String? ?? '',
@@ -337,12 +428,12 @@ class LessonDiagram {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'imageAssetOrUrl': imageAssetOrUrl,
-        'caption': caption,
-        'label': label,
-        'subtitle': subtitle,
-      };
+    'title': title,
+    'imageAssetOrUrl': imageAssetOrUrl,
+    'caption': caption,
+    'label': label,
+    'subtitle': subtitle,
+  };
 }
 
 /// Numbered step card in lesson detail.
@@ -369,11 +460,11 @@ class LessonStep {
   }
 
   Map<String, dynamic> toJson() => {
-        'number': number,
-        'title': title,
-        'text': text,
-        'highlightText': highlightText,
-      };
+    'number': number,
+    'title': title,
+    'text': text,
+    'highlightText': highlightText,
+  };
 }
 
 /// Attached document or worksheet resource.
@@ -394,27 +485,33 @@ class LessonResource {
 
   factory LessonResource.fromJson(Map<String, dynamic> json) {
     return LessonResource(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      fileSize: json['fileSize'] as String? ?? '1.2 MB',
-      fileType: json['fileType'] as String? ?? 'PDF',
-      downloadUrl: json['downloadUrl'] as String? ?? '',
+      id:
+          json['id'] as String? ??
+          json['url'] as String? ??
+          json['name'] as String? ??
+          '',
+      title: json['title'] as String? ?? json['name'] as String? ?? '',
+      fileSize: json['fileSize'] as String? ?? json['size'] as String? ?? '',
+      fileType: json['fileType'] as String? ?? json['type'] as String? ?? 'PDF',
+      downloadUrl:
+          json['downloadUrl'] as String? ?? json['url'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'fileSize': fileSize,
-        'fileType': fileType,
-        'downloadUrl': downloadUrl,
-      };
+    'id': id,
+    'title': title,
+    'fileSize': fileSize,
+    'fileType': fileType,
+    'downloadUrl': downloadUrl,
+  };
 }
 
 /// Complete lesson reader payload for LessonDetailScreen.
 class LessonDetail {
   final String chapterId;
   final String chapterTitle;
+  final String chapterSubtitle;
   final String chapterNumber;
   final String subject;
   final String gradeLevel;
@@ -429,6 +526,7 @@ class LessonDetail {
   const LessonDetail({
     required this.chapterId,
     required this.chapterTitle,
+    this.chapterSubtitle = '',
     required this.chapterNumber,
     required this.subject,
     required this.gradeLevel,
@@ -447,15 +545,68 @@ class LessonDetail {
     final rawSteps = json['steps'] as List<dynamic>? ?? [];
     final rawResources = json['resources'] as List<dynamic>? ?? [];
 
+    final subtitle =
+        json['subtitle'] as String? ?? json['chapterSubtitle'] as String? ?? '';
+
+    final rawNumber = json['chapterNumber'] ?? json['order'];
+    String chapterNumber;
+    if (rawNumber != null) {
+      chapterNumber = rawNumber.toString();
+    } else {
+      final match = RegExp(
+        r'chapter\s*(\d+(?:\.\d+)?)',
+        caseSensitive: false,
+      ).firstMatch(subtitle);
+      chapterNumber = match?.group(1) ?? '';
+    }
+
+    final rawSubject = json['subject'];
+    String subject = '';
+    if (rawSubject is Map) {
+      subject = rawSubject['name']?.toString() ?? '';
+    } else if (rawSubject is String) {
+      subject = rawSubject;
+    }
+
+    final rawGrade = json['gradeLevel'];
+    String gradeLevel;
+    if (rawGrade is num) {
+      gradeLevel = 'Grade $rawGrade';
+    } else if (rawGrade is String) {
+      gradeLevel = rawGrade;
+    } else {
+      gradeLevel = '';
+    }
+
+    final rawProgress = json['progressPercent'];
+    final rawReadProgress = json['readProgress'];
+    double progressPercent;
+    if (rawProgress is num) {
+      progressPercent = rawProgress.toDouble();
+    } else if (rawReadProgress is Map &&
+        rawReadProgress['readPercentage'] is num) {
+      progressPercent =
+          (rawReadProgress['readPercentage'] as num).toDouble() / 100;
+    } else if (rawReadProgress is Map && rawReadProgress['isRead'] == true) {
+      progressPercent = 1.0;
+    } else {
+      progressPercent = 0.0;
+    }
+
     return LessonDetail(
-      chapterId: json['chapterId'] as String? ?? '',
-      chapterTitle: json['chapterTitle'] as String? ?? '',
-      chapterNumber: json['chapterNumber']?.toString() ?? '1',
-      subject: json['subject'] as String? ?? '',
-      gradeLevel: json['gradeLevel'] as String? ?? '',
+      chapterId: json['chapterId'] as String? ?? json['id'] as String? ?? '',
+      chapterTitle:
+          json['chapterTitle'] as String? ??
+          json['title'] as String? ??
+          json['name'] as String? ??
+          '',
+      chapterSubtitle: subtitle,
+      chapterNumber: chapterNumber,
+      subject: subject,
+      gradeLevel: gradeLevel,
       learningObjectives: rawObjectives.map((e) => e.toString()).toList(),
       sectionHeading: json['sectionHeading'] as String? ?? '',
-      bodyText: json['bodyText'] as String? ?? '',
+      bodyText: json['bodyText'] as String? ?? json['content'] as String? ?? '',
       diagrams: rawDiagrams
           .map((d) => LessonDiagram.fromJson(d as Map<String, dynamic>))
           .toList(),
@@ -465,24 +616,23 @@ class LessonDetail {
       resources: rawResources
           .map((r) => LessonResource.fromJson(r as Map<String, dynamic>))
           .toList(),
-      progressPercent:
-          (json['progressPercent'] as num?)?.toDouble() ?? 0.65,
+      progressPercent: progressPercent,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'chapterId': chapterId,
-        'chapterTitle': chapterTitle,
-        'chapterNumber': chapterNumber,
-        'subject': subject,
-        'gradeLevel': gradeLevel,
-        'learningObjectives': learningObjectives,
-        'sectionHeading': sectionHeading,
-        'bodyText': bodyText,
-        'diagrams': diagrams.map((d) => d.toJson()).toList(),
-        'steps': steps.map((s) => s.toJson()).toList(),
-        'resources': resources.map((r) => r.toJson()).toList(),
-        'progressPercent': progressPercent,
-      };
+    'chapterId': chapterId,
+    'chapterTitle': chapterTitle,
+    'chapterSubtitle': chapterSubtitle,
+    'chapterNumber': chapterNumber,
+    'subject': subject,
+    'gradeLevel': gradeLevel,
+    'learningObjectives': learningObjectives,
+    'sectionHeading': sectionHeading,
+    'bodyText': bodyText,
+    'diagrams': diagrams.map((d) => d.toJson()).toList(),
+    'steps': steps.map((s) => s.toJson()).toList(),
+    'resources': resources.map((r) => r.toJson()).toList(),
+    'progressPercent': progressPercent,
+  };
 }
-

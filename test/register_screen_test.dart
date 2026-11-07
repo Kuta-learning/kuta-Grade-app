@@ -12,6 +12,16 @@ import 'package:kuta_grade/features/authentication/screens/register_screen.dart'
 import 'package:kuta_grade/features/authentication/services/auth_service.dart';
 
 class _FakeAuthService implements AuthService {
+  @override
+  Future<UserModel> signInWithGoogle() async {
+    return UserModel(
+      id: 'google-test-123',
+      email: 'google@test.app',
+      name: 'Google Test Student',
+      gradeLevel: GradeLevel.grade6,
+    );
+  }
+
   RegisterRequest? lastRegisterRequest;
 
   @override

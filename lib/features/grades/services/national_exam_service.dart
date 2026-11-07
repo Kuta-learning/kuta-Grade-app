@@ -11,7 +11,7 @@ class NationalExamService {
   final ApiClient _apiClient;
 
   NationalExamService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   /// 1. GET /national-exams/dashboard
   /// Fetches the banner exam, student grade/stream, and subject cards with completion stats.
@@ -21,8 +21,7 @@ class NationalExamService {
         ApiEndpoints.nationalExamsDashboard,
       );
 
-      if (response.statusCode == 200 &&
-          response.data is Map<String, dynamic>) {
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         return NationalExamDashboardModel.fromJson(
           response.data as Map<String, dynamic>,
         );
@@ -46,8 +45,11 @@ class NationalExamService {
 
       if (response.statusCode == 200 && response.data is List) {
         return (response.data as List)
-            .map((item) =>
-                NationalExamSubjectModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => NationalExamSubjectModel.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
             .toList();
       }
       return [];
@@ -123,7 +125,7 @@ class NationalExamService {
     try {
       final payload = {
         'timeRemainingSeconds': timeRemainingSeconds,
-        'answers': answers.map((a) => a.toJson()).toList(),
+        'answers': answers.map((a) => a.toSaveProgressJson()).toList(),
       };
       final response = await _apiClient.client.put(
         ApiEndpoints.saveExamProgress(attemptId),
@@ -143,15 +145,14 @@ class NationalExamService {
   }) async {
     try {
       final payload = {
-        'answers': answers.map((a) => a.toJson()).toList(),
+        'answers': answers.map((a) => a.toSubmitJson()).toList(),
       };
       final response = await _apiClient.client.post(
         ApiEndpoints.submitExam(attemptId),
         data: payload,
       );
 
-      if (response.statusCode == 200 &&
-          response.data is Map<String, dynamic>) {
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         return ExamResultReview.fromJson(response.data as Map<String, dynamic>);
       }
       throw Exception('Failed to submit exam attempt');
@@ -171,8 +172,7 @@ class NationalExamService {
         ApiEndpoints.examAttemptResult(attemptId),
       );
 
-      if (response.statusCode == 200 &&
-          response.data is Map<String, dynamic>) {
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         return ExamResultReview.fromJson(response.data as Map<String, dynamic>);
       }
       throw Exception('Failed to fetch exam results');

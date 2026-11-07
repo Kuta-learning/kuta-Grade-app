@@ -16,6 +16,8 @@ import '../../features/authentication/screens/register_screen.dart';
 import '../../features/common/screens/splash_screen.dart';
 import '../../features/kg/screens/kg_home_screen.dart';
 import '../../features/grades/screens/exam_simulator_screen.dart';
+import '../../features/grades/screens/national_exam_attempt_screen.dart';
+import '../../features/grades/screens/national_exam_result_screen.dart';
 import '../../features/grades/screens/subject_exams_screen.dart';
 import '../../features/grades/screens/bookmarks_screen.dart';
 import '../../features/grades/widgets/grade_screen_shell.dart';
@@ -35,7 +37,6 @@ import 'route_names.dart';
 class AppRouter {
   static final GoRouter router = GoRouter(
     // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
-
     initialLocation: RouteNames.splash,
     routes: [
       GoRoute(
@@ -105,10 +106,7 @@ class AppRouter {
       // ── Grade Module with Persistent Bottom Navigation Shell ─────
       ShellRoute(
         builder: (context, state, child) {
-          return MainGradeAppShell(
-            location: state.uri.path,
-            child: child,
-          );
+          return MainGradeAppShell(location: state.uri.path, child: child);
         },
         routes: [
           GoRoute(
@@ -140,7 +138,8 @@ class AppRouter {
             builder: (context, state) {
               final subject =
                   state.uri.queryParameters['subject'] ?? 'Mathematics';
-              final subtitle = state.uri.queryParameters['subtitle'] ??
+              final subtitle =
+                  state.uri.queryParameters['subtitle'] ??
                   'Official National University Entrance Papers';
               final subjectId = state.uri.queryParameters['subjectId'];
               return SubjectExamsScreen(
@@ -204,17 +203,15 @@ class AppRouter {
         path: RouteNames.lessonDetail,
         name: 'lessonDetail',
         builder: (context, state) {
-          final subject =
-              state.uri.queryParameters['subject'] ?? 'Fractions';
+          final subject = state.uri.queryParameters['subject'] ?? 'Fractions';
           final gradeLevel =
               state.uri.queryParameters['gradeLevel'] ?? 'Grade 8 Math';
           final chapterTitle =
               state.uri.queryParameters['chapterTitle'] ??
-                  'Equivalence and Simplification';
+              'Equivalence and Simplification';
           final chapterNumber =
               state.uri.queryParameters['chapterNumber'] ?? '4.2';
-          final chapterId =
-              state.uri.queryParameters['chapterId'] ?? '';
+          final chapterId = state.uri.queryParameters['chapterId'] ?? '';
           return LessonDetailScreen(
             subject: subject,
             gradeLevel: gradeLevel,
@@ -230,8 +227,8 @@ class AppRouter {
         builder: (context, state) {
           final courseId = state.uri.queryParameters['courseId'] ?? '';
           final title = state.uri.queryParameters['title'] ?? 'Course Details';
-          final grade = int.tryParse(
-                  state.uri.queryParameters['gradeLevel'] ?? '12') ??
+          final grade =
+              int.tryParse(state.uri.queryParameters['gradeLevel'] ?? '12') ??
               12;
           return CourseDetailScreen(
             courseId: courseId,
@@ -278,13 +275,30 @@ class AppRouter {
         builder: (context, state) {
           final attemptId = state.uri.queryParameters['attemptId'] ?? '';
           final quizId = state.uri.queryParameters['quizId'];
-          final title =
-              state.uri.queryParameters['title'] ?? 'Quiz Assessment';
+          final title = state.uri.queryParameters['title'] ?? 'Quiz Assessment';
           return QuizResultScreen(
             attemptId: attemptId,
             quizId: quizId,
             quizTitle: title,
           );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.nationalExamAttempt,
+        name: 'nationalExamAttempt',
+        builder: (context, state) {
+          final examId = state.uri.queryParameters['examId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'National Exam';
+          return NationalExamAttemptScreen(examId: examId, title: title);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.nationalExamResult,
+        name: 'nationalExamResult',
+        builder: (context, state) {
+          final attemptId = state.uri.queryParameters['attemptId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'National Exam';
+          return NationalExamResultScreen(attemptId: attemptId, title: title);
         },
       ),
     ],
