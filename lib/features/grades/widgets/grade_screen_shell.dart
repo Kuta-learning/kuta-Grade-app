@@ -146,6 +146,8 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
   late Animation<double> _animation;
   double _fromIndex = 0.0;
   double _toIndex = 0.0;
+  int _lastActiveIndex = 0;
+  int _targetIndex = 0;
 
   static const List<({IconData icon, IconData activeIcon, String label, String route})> _items = [
     (
@@ -179,6 +181,8 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
     super.initState();
     _fromIndex = widget.currentIndex.toDouble();
     _toIndex = widget.currentIndex.toDouble();
+    _lastActiveIndex = widget.currentIndex;
+    _targetIndex = widget.currentIndex;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -187,13 +191,22 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
       parent: _controller,
       curve: Curves.easeOutBack,
     );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _lastActiveIndex = _targetIndex;
+        });
+      }
+    });
   }
 
   @override
   void didUpdateWidget(GradeBottomNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.currentIndex != _toIndex.round()) {
+    if (widget.currentIndex != _targetIndex) {
       _fromIndex = _currentPosition;
+      _lastActiveIndex = _targetIndex;
+      _targetIndex = widget.currentIndex;
       _toIndex = widget.currentIndex.toDouble();
       _controller.forward(from: 0.0);
     }
@@ -220,11 +233,31 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
       context.go(route);
     }
 
-    if (index != _toIndex.round() || !_controller.isCompleted) {
+    if (index != _targetIndex || !_controller.isCompleted) {
       _fromIndex = _currentPosition;
+      _lastActiveIndex = _targetIndex;
+      _targetIndex = index;
       _toIndex = index.toDouble();
       _controller.forward(from: 0.0);
     }
+  }
+
+  double _getElevation(int index) {
+    if (!_controller.isAnimating && _controller.isCompleted) {
+      return index == _targetIndex ? 1.0 : 0.0;
+    }
+    if (_lastActiveIndex == _targetIndex) {
+      return index == _targetIndex ? 1.0 : 0.0;
+    }
+
+    final t = _controller.value.clamp(0.0, 1.0);
+
+    if (index == _targetIndex) {
+      return Curves.easeOutCubic.transform(t);
+    } else if (index == _lastActiveIndex) {
+      return 1.0 - Curves.easeOutCubic.transform(t);
+    }
+    return 0.0;
   }
 
   @override
@@ -246,9 +279,6 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
           builder: (context, child) {
             final pos = _currentPosition;
             final circleCenterX = (pos + 0.5) * slotWidth;
-
-            final activeItemIndex = _toIndex.round().clamp(0, _items.length - 1);
-            final activeIcon = _items[activeItemIndex].activeIcon;
 
             return SizedBox(
               height: totalHeight + bottomPadding,
@@ -275,98 +305,77 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
                     ),
                   ),
 
-                  // 2. Inactive Icons Row
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: floatOverhead,
-                    height: barHeight,
-                    child: Row(
-                      children: List.generate(_items.length, (index) {
-                        final dist = (index - pos).abs();
-                        final opacity = (dist * 2.2).clamp(0.0, 1.0);
-
-                        return Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _handleTap(index),
-                            child: Center(
-                              child: Opacity(
-                                opacity: opacity,
-                                child: Icon(
-                                  _items[index].icon,
-                                  color: const Color(0xFF64748B),
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-
-                  // 3. Floating Orange Circle Indicator
+                  // 2. Floating Orange Circle Pill (BACKGROUND ONLY, NO ORANGE SHADOW)
                   Positioned(
                     left: circleCenterX - circleRadius,
                     top: 6.0,
                     width: circleDiameter,
                     height: circleDiameter,
-                    child: GestureDetector(
-                      onTap: () => _handleTap(activeItemIndex),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFFF851B),
-                              Color(0xFFFF6A00),
-                              Color(0xFFFF4800),
-                            ],
-                            stops: [0.0, 0.5, 1.0],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF6A00).withValues(alpha: 0.38),
-                              blurRadius: 16,
-                              spreadRadius: 1,
-                              offset: const Offset(0, 7),
-                            ),
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.10),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFFF851B),
+                            Color(0xFFFF6A00),
+                            Color(0xFFFF4800),
                           ],
+                          stops: [0.0, 0.5, 1.0],
                         ),
-                        child: Center(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            transitionBuilder: (child, animation) {
-                              return ScaleTransition(
-                                scale: Tween<double>(begin: 0.70, end: 1.0).animate(
-                                  CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack,
+                        boxShadow: [
+                          // Subtle dark contact shadow only — NO orange shadow
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // 3. Interactive Icons Layer (ALL 4 ICONS MOVE VERTICALLY IN THEIR FIXED COLUMNS)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: totalHeight,
+                    child: Row(
+                      children: List.generate(_items.length, (index) {
+                        final elevation = _getElevation(index);
+                        final iconY = 44.0 - (25.0 * elevation);
+                        final iconSize = 24.0 + (2.0 * elevation);
+                        final iconColor = Color.lerp(
+                          const Color(0xFF64748B),
+                          Colors.white,
+                          elevation,
+                        )!;
+                        final iconData = elevation > 0.4
+                            ? _items[index].activeIcon
+                            : _items[index].icon;
+
+                        return Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _handleTap(index),
+                            child: Stack(
+                              alignment: Alignment.topCenter,
+                              children: [
+                                Positioned(
+                                  top: iconY,
+                                  child: Icon(
+                                    iconData,
+                                    color: iconColor,
+                                    size: iconSize,
                                   ),
                                 ),
-                                child: FadeTransition(
-                                  opacity: animation,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: Icon(
-                              activeIcon,
-                              key: ValueKey<IconData>(activeIcon),
-                              color: Colors.white,
-                              size: 26,
+                              ],
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   ),
                 ],
