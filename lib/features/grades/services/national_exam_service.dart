@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+import '../../../../core/cache/cache_manager.dart';
+import '../../../../core/cache/cache_response.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/storage/shared_prefs_storage.dart';
 import '../../../../core/storage/storage_keys.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../models/national_exam_models.dart';
@@ -11,62 +12,41 @@ import '../models/national_exam_models.dart';
 /// Submitting, and Attempt Review.
 class NationalExamService {
   final ApiClient _apiClient;
-  final SharedPrefsStorage? _customStorage;
+  final CacheManager? _customCacheManager;
 
   /// Default TTL for the exam dashboard cache: 5 minutes.
   static const Duration defaultDashboardTtl = Duration(minutes: 5);
 
   NationalExamService({
     ApiClient? apiClient,
-    SharedPrefsStorage? storage,
+    CacheManager? cacheManager,
   })  : _apiClient = apiClient ?? ApiClient(),
-        _customStorage = storage;
+        _customCacheManager = cacheManager;
 
-  Future<SharedPrefsStorage> _getStorage() async {
-    if (_customStorage != null) return _customStorage;
-    final inst = SharedPrefsStorage.instanceOrNull;
-    if (inst != null) return inst;
-    return await SharedPrefsStorage.getInstance();
-  }
+  CacheManager get _cache => _customCacheManager ?? CacheManager.instance;
 
-  /// Reads cached dashboard model from local disk storage.
-  Future<NationalExamDashboardModel?> getCachedDashboard() async {
-    final storage = await _getStorage();
-    final raw = await storage.getString(StorageKeys.examDashboardCache);
-    return NationalExamDashboardModel.fromJsonString(raw);
-  }
-
-  /// Returns the DateTime when the exam dashboard cache was last saved, or null.
-  Future<DateTime?> getCachedDashboardTimestamp() async {
-    final storage = await _getStorage();
-    final raw = await storage.getString(StorageKeys.examDashboardCacheTime);
-    if (raw == null || raw.isEmpty) return null;
-    return DateTime.tryParse(raw);
-  }
-
-  /// Persists the exam dashboard to local storage with current timestamp.
-  Future<void> saveCachedDashboard(NationalExamDashboardModel data) async {
-    final storage = await _getStorage();
-    await storage.setString(
-      StorageKeys.examDashboardCache,
-      data.toJsonString(),
-    );
-    await storage.setString(
-      StorageKeys.examDashboardCacheTime,
-      DateTime.now().toIso8601String(),
+  /// Streams the cached dashboard and revalidates in the background using [CacheManager].
+  Stream<CacheResponse<NationalExamDashboardModel>> watchDashboard({
+    Duration ttl = defaultDashboardTtl,
+    bool forceRefresh = false,
+  }) {
+    return _cache.watch<NationalExamDashboardModel>(
+      key: StorageKeys.examDashboardCache,
+      ttl: ttl,
+      networkFetch: getDashboard,
+      fromJson: (raw) => NationalExamDashboardModel.fromJsonString(raw)!,
+      toJson: (model) => model.toJsonString(),
+      forceRefresh: forceRefresh,
     );
   }
 
-  /// Clears the local exam dashboard cache.
-  Future<void> clearDashboardCache() async {
-    final storage = await _getStorage();
-    await storage.remove(StorageKeys.examDashboardCache);
-    await storage.remove(StorageKeys.examDashboardCacheTime);
+  /// Invalidates the local exam dashboard cache.
+  Future<void> invalidateDashboardCache() {
+    return _cache.invalidate(StorageKeys.examDashboardCache);
   }
 
   /// 1. GET /national-exams/dashboard
   /// Fetches the banner exam, student grade/stream, and subject cards with completion stats.
-  /// Automatically persists successful responses to local cache.
   Future<NationalExamDashboardModel> getDashboard() async {
     try {
       final response = await _apiClient.client.get(
@@ -74,12 +54,9 @@ class NationalExamService {
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        final model = NationalExamDashboardModel.fromJson(
+        return NationalExamDashboardModel.fromJson(
           response.data as Map<String, dynamic>,
         );
-        // Persist to local disk cache asynchronously
-        await saveCachedDashboard(model);
-        return model;
       }
       throw Exception('Unexpected response format from exam dashboard');
     } on DioException catch (e) {

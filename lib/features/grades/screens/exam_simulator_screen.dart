@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/cache/cache_response.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/router/route_names.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
+import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../../authentication/bloc/auth_bloc.dart';
@@ -54,6 +56,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   late final NationalExamService _examService =
       widget.examService ?? NationalExamService();
 
+  StreamSubscription<CacheResponse<NationalExamDashboardModel>>?
+      _dashboardSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -68,87 +73,49 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     }
   }
 
-  /// Entry point for loading dashboard data using Stale-While-Revalidate caching.
-  Future<void> _loadDashboardWithCache() async {
-    // 1. Check local disk cache first
-    final cached = await _examService.getCachedDashboard();
-    final timestamp = await _examService.getCachedDashboardTimestamp();
+  @override
+  void dispose() {
+    _dashboardSubscription?.cancel();
+    super.dispose();
+  }
 
-    if (cached != null && mounted) {
-      final age = timestamp != null
-          ? DateTime.now().difference(timestamp)
-          : const Duration(hours: 1);
-      final isStale = age > NationalExamService.defaultDashboardTtl;
-
-      debugPrint(
-        '📦 [ExamCache] Disk cache HIT (cached ${age.inSeconds}s ago, TTL: ${NationalExamService.defaultDashboardTtl.inSeconds}s).',
-      );
-
-      // Render cached data immediately (0ms visual load!)
+  /// Loads dashboard data using the centralized CacheManager via NationalExamService.
+  void _loadDashboardWithCache({bool isPullToRefresh = false}) {
+    if (_dashboardData == null && !isPullToRefresh) {
       setState(() {
-        _dashboardData = cached;
-        _isLoading = false;
+        _isLoading = true;
         _errorMessage = null;
       });
-      _showWelcomeSnackbarOnce();
-
-      if (!isStale) {
-        debugPrint(
-          '✅ [ExamCache] Cache is FRESH (< 5m). Rendering instantly from local storage (0ms network).',
-        );
-        return; // Fresh cache: no network request needed!
-      } else {
-        debugPrint(
-          '⏳ [ExamCache] Cache is STALE (${age.inMinutes}m old > 5m TTL). Rendering cached data & triggering SILENT background re-fetch...',
-        );
-        // Stale cache: trigger silent background revalidation without showing a spinner
-        await _fetchFromNetwork(isSilentBackground: true);
-        return;
-      }
     }
 
-    // 2. Cache is completely empty (first-time launch or cleared cache)
-    debugPrint(
-      '🚀 [ExamCache] Cache is EMPTY (first run). Showing loading indicator & fetching from network...',
-    );
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    await _fetchFromNetwork(isSilentBackground: false);
-  }
+    _dashboardSubscription?.cancel();
+    _dashboardSubscription = _examService
+        .watchDashboard(forceRefresh: isPullToRefresh)
+        .listen(
+      (response) {
+        if (!mounted) return;
+        final data = response.data;
+        final authenticatedGrade = _authenticatedGradeLevel();
 
-  /// Backward-compatible alias for Pull-to-Refresh and error retry
-  Future<void> _loadDashboardData({bool isPullToRefresh = false}) async {
-    await _fetchFromNetwork(isPullToRefresh: isPullToRefresh);
-  }
+        if (!_supportsNationalExams(data.student.gradeLevel)) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                'National exams are available for Grades 6, 8, and 12 only.';
+          });
+          return;
+        }
 
-  /// Fetches live dashboard data from the network.
-  /// If [isSilentBackground] is true, errors are logged without disturbing the visible cached UI.
-  /// If [isPullToRefresh] is true, existing UI stays visible under the refresh spinner.
-  Future<void> _fetchFromNetwork({
-    bool isSilentBackground = false,
-    bool isPullToRefresh = false,
-  }) async {
-    if (isPullToRefresh) {
-      debugPrint(
-        '🔄 [ExamCache] Pull-to-refresh: Bypassing TTL, fetching fresh data from backend while preserving UI...',
-      );
-    }
+        if (authenticatedGrade != null &&
+            data.student.gradeLevel != authenticatedGrade) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                'The exam content does not match your selected grade.';
+          });
+          return;
+        }
 
-    try {
-      final data = await _examService.getDashboard();
-      final authenticatedGrade = _authenticatedGradeLevel();
-      if (!_supportsNationalExams(data.student.gradeLevel)) {
-        throw Exception(
-          'National exams are available for Grades 6, 8, and 12 only.',
-        );
-      }
-      if (authenticatedGrade != null &&
-          data.student.gradeLevel != authenticatedGrade) {
-        throw Exception('The exam content does not match your selected grade.');
-      }
-      if (mounted) {
         setState(() {
           _dashboardData = data;
           _isLoading = false;
@@ -156,49 +123,33 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         });
         _showWelcomeSnackbarOnce();
 
-        if (isSilentBackground) {
-          debugPrint(
-            '🔄 [ExamCache] Silent background re-fetch SUCCEEDED. Updated disk cache & UI smoothly.',
-          );
-        } else if (isPullToRefresh) {
-          debugPrint(
-            '✅ [ExamCache] Pull-to-refresh SUCCEEDED. UI updated with fresh backend data.',
-          );
-        } else {
-          debugPrint(
-            '✅ [ExamCache] Initial network fetch SUCCEEDED and persisted to local cache.',
-          );
-        }
-      }
-    } catch (e) {
-      final errorMsg = e.toString().replaceFirst('Exception: ', '');
-
-      if (isSilentBackground) {
-        debugPrint(
-          '⚠️ [ExamCache] Silent background re-fetch FAILED: $errorMsg. Gracefully kept existing cached data visible.',
-        );
-      } else if (isPullToRefresh) {
-        debugPrint(
-          '⚠️ [ExamCache] Pull-to-refresh FAILED: $errorMsg. Kept existing cached data visible on screen.',
-        );
-        if (mounted) {
+        if (response.backgroundError != null && isPullToRefresh) {
           AppSnackBar.showError(
             context,
             'Could not refresh live exam data. Showing cached offline data.',
           );
         }
-      } else {
-        debugPrint(
-          '❌ [ExamCache] Network fetch FAILED: $errorMsg.',
-        );
-        if (mounted && _dashboardData == null) {
+      },
+      onError: (e) {
+        if (!mounted) return;
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
+        if (isPullToRefresh) {
+          AppSnackBar.showError(
+            context,
+            'Could not refresh live exam data. Showing cached offline data.',
+          );
+        } else if (_dashboardData == null) {
           setState(() {
             _isLoading = false;
             _errorMessage = errorMsg;
           });
         }
-      }
-    }
+      },
+    );
+  }
+
+  Future<void> _loadDashboardData({bool isPullToRefresh = false}) async {
+    _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
   }
 
   int? _authenticatedGradeLevel() {
