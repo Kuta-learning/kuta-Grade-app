@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import '../../../../core/cache/cache_manager.dart';
+import '../../../../core/cache/cache_response.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/storage/storage_keys.dart';
 import '../models/national_exam_dashboard_model.dart';
 import '../models/national_exam_models.dart';
 
@@ -9,9 +12,38 @@ import '../models/national_exam_models.dart';
 /// Submitting, and Attempt Review.
 class NationalExamService {
   final ApiClient _apiClient;
+  final CacheManager? _customCacheManager;
 
-  NationalExamService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  /// Default TTL for the exam dashboard cache: 5 minutes.
+  static const Duration defaultDashboardTtl = Duration(minutes: 5);
+
+  NationalExamService({
+    ApiClient? apiClient,
+    CacheManager? cacheManager,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _customCacheManager = cacheManager;
+
+  CacheManager get _cache => _customCacheManager ?? CacheManager.instance;
+
+  /// Streams the cached dashboard and revalidates in the background using [CacheManager].
+  Stream<CacheResponse<NationalExamDashboardModel>> watchDashboard({
+    Duration ttl = defaultDashboardTtl,
+    bool forceRefresh = false,
+  }) {
+    return _cache.watch<NationalExamDashboardModel>(
+      key: StorageKeys.examDashboardCache,
+      ttl: ttl,
+      networkFetch: getDashboard,
+      fromJson: (raw) => NationalExamDashboardModel.fromJsonString(raw)!,
+      toJson: (model) => model.toJsonString(),
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  /// Invalidates the local exam dashboard cache.
+  Future<void> invalidateDashboardCache() {
+    return _cache.invalidate(StorageKeys.examDashboardCache);
+  }
 
   /// 1. GET /national-exams/dashboard
   /// Fetches the banner exam, student grade/stream, and subject cards with completion stats.
