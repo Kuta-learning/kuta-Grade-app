@@ -280,10 +280,12 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
             final pos = _currentPosition;
             final circleCenterX = (pos + 0.5) * slotWidth;
 
-            return SizedBox(
-              height: totalHeight + bottomPadding,
-              child: Stack(
-                clipBehavior: Clip.none,
+            return ColoredBox(
+              color: Colors.transparent,
+              child: SizedBox(
+                height: totalHeight + bottomPadding,
+                child: Stack(
+                  clipBehavior: Clip.none,
                 children: [
                   // 1. White Scooped Navbar Background
                   Positioned(
@@ -379,6 +381,7 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
                     ),
                   ),
                 ],
+                ),
               ),
             );
           },
