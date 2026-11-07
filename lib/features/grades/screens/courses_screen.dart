@@ -214,7 +214,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 108),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

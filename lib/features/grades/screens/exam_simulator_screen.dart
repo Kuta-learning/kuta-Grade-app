@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -192,6 +191,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           statusBarBrightness: Brightness.dark,
         ),
         child: Scaffold(
+          extendBody: true,
           backgroundColor: _pageBackground,
           body: RefreshIndicator(
             color: _primaryBlue,
@@ -359,7 +359,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 108),
                 ],
               ),
             ),

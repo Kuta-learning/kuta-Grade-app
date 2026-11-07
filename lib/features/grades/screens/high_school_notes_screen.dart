@@ -99,6 +99,7 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     }
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: AppColors.surfaceApp,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(52),
@@ -115,8 +116,9 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
       ),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 108),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

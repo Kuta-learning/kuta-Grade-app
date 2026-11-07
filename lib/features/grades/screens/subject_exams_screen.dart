@@ -289,7 +289,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 108),
         itemCount: _papers.length,
         itemBuilder: (context, index) {
           final paper = _papers[index];
