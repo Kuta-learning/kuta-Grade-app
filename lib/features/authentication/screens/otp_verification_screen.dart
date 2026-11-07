@@ -286,9 +286,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               text: widget.email.isNotEmpty
                                   ? widget.email
                                   : 'your email address',
-                              style: const TextStyle(
+                              style: AppTypography.bodyLg.copyWith(
+                                fontSize: 14.5,
+                                height: 1.45,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF2563EB),
+                                color: const Color(0xFF2563EB),
                               ),
                             ),
                             const TextSpan(
