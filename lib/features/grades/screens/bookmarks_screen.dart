@@ -79,7 +79,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             )
           : ListView.builder(
               physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 108),
               itemCount: _bookmarkedItems.length,
               itemBuilder: (context, index) {
                 final item = _bookmarkedItems[index];

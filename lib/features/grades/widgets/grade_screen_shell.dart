@@ -123,157 +123,427 @@ class GradeExamAppBar extends StatelessWidget implements PreferredSizeWidget {
 /// Displays the 4 app tabs: Exams, Notes, Practice, Profile.
 /// Active item is highlighted with a vibrant orange capsule pill (#FF6A00),
 /// with white icon and white label.
-class GradeBottomNavBar extends StatelessWidget {
+/// Animated floating-circle bottom navigation bar with continuous concave scooped background.
+/// Features a floating active circular indicator in Kuta orange, smooth Bézier concave notch,
+/// spring-based horizontal transitions, and clean icon-only layout.
+class GradeBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
   const GradeBottomNavBar({super.key, this.currentIndex = 0, this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: const Border(
-          top: BorderSide(color: Color(0xFFF1F5F9), width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 68,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                context: context,
-                index: 0,
-                icon: Icons.dashboard_outlined,
-                activeIcon: Icons.dashboard_rounded,
-                label: 'Exams',
-              ),
-              _buildNavItem(
-                context: context,
-                index: 1,
-                icon: Icons.menu_book_outlined,
-                activeIcon: Icons.menu_book_rounded,
-                label: 'Notes',
-              ),
-              _buildNavItem(
-                context: context,
-                index: 2,
-                icon: Icons.edit_note_rounded,
-                activeIcon: Icons.edit_note_rounded,
-                label: 'Practice',
-              ),
-              _buildNavItem(
-                context: context,
-                index: 3,
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
-                label: 'Profile',
-              ),
-            ],
-          ),
-        ),
-      ),
+  State<GradeBottomNavBar> createState() => _GradeBottomNavBarState();
+}
+
+class _GradeBottomNavBarState extends State<GradeBottomNavBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  double _fromIndex = 0.0;
+  double _toIndex = 0.0;
+  int _lastActiveIndex = 0;
+  int _targetIndex = 0;
+
+  static const List<
+    ({IconData icon, IconData activeIcon, String label, String route})
+  >
+  _items = [
+    (
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard_rounded,
+      label: 'Exams',
+      route: RouteNames.examSimulator,
+    ),
+    (
+      icon: Icons.menu_book_outlined,
+      activeIcon: Icons.menu_book_rounded,
+      label: 'Notes',
+      route: RouteNames.highSchoolNotes,
+    ),
+    (
+      icon: Icons.edit_note_rounded,
+      activeIcon: Icons.edit_note_rounded,
+      label: 'Practice',
+      route: RouteNames.courses,
+    ),
+    (
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+      route: RouteNames.profile,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fromIndex = widget.currentIndex.toDouble();
+    _toIndex = widget.currentIndex.toDouble();
+    _lastActiveIndex = widget.currentIndex;
+    _targetIndex = widget.currentIndex;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
     );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _lastActiveIndex = _targetIndex;
+        });
+      }
+    });
   }
 
-  Widget _buildNavItem({
-    required BuildContext context,
-    required int index,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-  }) {
-    final isSelected = currentIndex == index;
+  @override
+  void didUpdateWidget(GradeBottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != _targetIndex) {
+      _fromIndex = _currentPosition;
+      _lastActiveIndex = _targetIndex;
+      _targetIndex = widget.currentIndex;
+      _toIndex = widget.currentIndex.toDouble();
+      _controller.forward(from: 0.0);
+    }
+  }
 
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          if (onTap != null) {
-            onTap!(index);
-          } else {
-            if (index == 0) {
-              context.go(RouteNames.examSimulator);
-            } else if (index == 1) {
-              context.go(RouteNames.highSchoolNotes);
-            } else if (index == 2) {
-              context.go(RouteNames.courses);
-            } else if (index == 3) {
-              context.go(RouteNames.profile);
-            }
-          }
-        },
-        borderRadius: BorderRadius.circular(28),
-        child: Center(
-          child: isSelected
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF6A00),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(activeIcon, color: Colors.white, size: 21),
-                      const SizedBox(height: 2),
-                      Text(
-                        label,
-                        style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double get _currentPosition {
+    if (!_controller.isAnimating && _controller.isCompleted) {
+      return _toIndex;
+    }
+    return _fromIndex + (_toIndex - _fromIndex) * _animation.value;
+  }
+
+  void _handleTap(int index) {
+    if (widget.onTap != null) {
+      widget.onTap!(index);
+    } else {
+      final route = _items[index].route;
+      context.go(route);
+    }
+
+    if (index != _targetIndex || !_controller.isCompleted) {
+      _fromIndex = _currentPosition;
+      _lastActiveIndex = _targetIndex;
+      _targetIndex = index;
+      _toIndex = index.toDouble();
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  double _getElevation(int index) {
+    if (!_controller.isAnimating && _controller.isCompleted) {
+      return index == _targetIndex ? 1.0 : 0.0;
+    }
+    if (_lastActiveIndex == _targetIndex) {
+      return index == _targetIndex ? 1.0 : 0.0;
+    }
+
+    final t = _controller.value.clamp(0.0, 1.0);
+
+    if (index == _targetIndex) {
+      return Curves.easeInOutCubic.transform(t);
+    } else if (index == _lastActiveIndex) {
+      return 1.0 - Curves.easeInOutCubic.transform(t);
+    }
+    return 0.0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    const double barHeight = 64.0;
+    const double circleDiameter = 52.0;
+    const double circleRadius = circleDiameter / 2;
+    const double floatOverhead = 24.0;
+    const double totalHeight = barHeight + floatOverhead;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final slotWidth = width / _items.length;
+
+        return AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            final pos = _currentPosition;
+            final circleCenterX = (pos + 0.5) * slotWidth;
+
+            return RepaintBoundary(
+              child: ColoredBox(
+                color: Colors.transparent,
+                child: SizedBox(
+                height: totalHeight + bottomPadding,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 1. White Scooped Navbar Background
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: floatOverhead,
+                      height: barHeight + bottomPadding,
+                      child: CustomPaint(
+                        size: Size(width, barHeight + bottomPadding),
+                        painter: _CurvedNavBarPainter(
+                          normalizedPosition: pos,
+                          itemCount: _items.length,
+                          scoopDepth: 42.0,
+                          scoopHalfWidth: 60.0,
+                          topCornerRadius: 22.0,
+                          barColor: Colors.white,
+                          shadowColor: Colors.black.withValues(alpha: 0.08),
                         ),
                       ),
-                    ],
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, color: const Color(0xFF374151), size: 22),
-                      const SizedBox(height: 3),
-                      Text(
-                        label,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF374151),
+                    ),
+
+                    // 2. Floating Orange Circle Pill (BACKGROUND ONLY, NO ORANGE SHADOW)
+                    Positioned(
+                      left: circleCenterX - circleRadius,
+                      top: 6.0,
+                      width: circleDiameter,
+                      height: circleDiameter,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFF851B),
+                              Color(0xFFFF6A00),
+                              Color(0xFFFF4800),
+                            ],
+                            stops: [0.0, 0.5, 1.0],
+                          ),
+                          boxShadow: [
+                            // Subtle dark contact shadow only — NO orange shadow
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // 3. Interactive Icons Layer (ALL 4 ICONS MOVE VERTICALLY IN THEIR FIXED COLUMNS)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: totalHeight,
+                      child: Row(
+                        children: List.generate(_items.length, (index) {
+                          final elevation = _getElevation(index);
+                          final iconY = 44.0 - (25.0 * elevation);
+                          final iconSize = 24.0 + (2.0 * elevation);
+                          final iconColor = Color.lerp(
+                            const Color(0xFF64748B),
+                            Colors.white,
+                            elevation,
+                          )!;
+                          final iconData = elevation > 0.4
+                              ? _items[index].activeIcon
+                              : _items[index].icon;
+
+                          return Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _handleTap(index),
+                              child: Stack(
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  Positioned(
+                                    top: iconY,
+                                    child: Icon(
+                                      iconData,
+                                      color: iconColor,
+                                      size: iconSize,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
                 ),
-        ),
-      ),
+              ),
+            ),
+          );
+        },
+      );
+      },
     );
   }
 }
 
-/// Reusable navigation shell and scaffold for Grade module screens.
-/// Enforces consistent status bar styling, unified brand blue header with app bar,
-/// optional stream/subtitle banner, content body slot, and common bottom navigation bar.
+class _CurvedNavBarPainter extends CustomPainter {
+  final double normalizedPosition;
+  final int itemCount;
+  final double scoopDepth;
+  final double scoopHalfWidth;
+  final double topCornerRadius;
+  final Color barColor;
+  final Color shadowColor;
+
+  static final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _borderPaint = Paint()
+    ..color = const Color(0xFFF1F5F9)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.8;
+
+  const _CurvedNavBarPainter({
+    required this.normalizedPosition,
+    required this.itemCount,
+    required this.scoopDepth,
+    required this.scoopHalfWidth,
+    required this.topCornerRadius,
+    required this.barColor,
+    required this.shadowColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final slotWidth = size.width / itemCount;
+    final currentCenterX = (normalizedPosition + 0.5) * slotWidth;
+
+    final x0 = currentCenterX - scoopHalfWidth;
+    final xMid = currentCenterX;
+    final x1 = currentCenterX + scoopHalfWidth;
+
+    final leftCornerR = (x0 < topCornerRadius)
+        ? (x0 > 0 ? x0 : 0.0)
+        : topCornerRadius;
+    final rightDist = size.width - x1;
+    final rightCornerR = (rightDist < topCornerRadius)
+        ? (rightDist > 0 ? rightDist : 0.0)
+        : topCornerRadius;
+
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(0, leftCornerR);
+
+    if (leftCornerR > 0) {
+      path.arcToPoint(
+        Offset(leftCornerR, 0),
+        radius: Radius.circular(leftCornerR),
+      );
+    }
+
+    if (x0 > leftCornerR) {
+      path.lineTo(x0, 0);
+    }
+
+    // Smooth concave cutout around floating circle
+    path.cubicTo(
+      x0 + scoopHalfWidth * 0.38,
+      0.0,
+      xMid - scoopHalfWidth * 0.44,
+      scoopDepth,
+      xMid,
+      scoopDepth,
+    );
+
+    path.cubicTo(
+      xMid + scoopHalfWidth * 0.44,
+      scoopDepth,
+      x1 - scoopHalfWidth * 0.38,
+      0.0,
+      x1,
+      0.0,
+    );
+
+    if (size.width - rightCornerR > x1) {
+      path.lineTo(size.width - rightCornerR, 0);
+    }
+
+    if (rightCornerR > 0) {
+      path.arcToPoint(
+        Offset(size.width, rightCornerR),
+        radius: Radius.circular(rightCornerR),
+      );
+    }
+
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    // Ambient drop shadow
+    canvas.drawShadow(path, shadowColor, 12.0, false);
+
+    // Solid fill
+    _fillPaint.color = barColor;
+    canvas.drawPath(path, _fillPaint);
+
+    // Top hairline border following contour
+
+    final borderPath = Path();
+    borderPath.moveTo(0, leftCornerR);
+
+    if (leftCornerR > 0) {
+      borderPath.arcToPoint(
+        Offset(leftCornerR, 0),
+        radius: Radius.circular(leftCornerR),
+      );
+    }
+
+    if (x0 > leftCornerR) {
+      borderPath.lineTo(x0, 0);
+    }
+
+    borderPath.cubicTo(
+      x0 + scoopHalfWidth * 0.38,
+      0.0,
+      xMid - scoopHalfWidth * 0.44,
+      scoopDepth,
+      xMid,
+      scoopDepth,
+    );
+
+    borderPath.cubicTo(
+      xMid + scoopHalfWidth * 0.44,
+      scoopDepth,
+      x1 - scoopHalfWidth * 0.38,
+      0.0,
+      x1,
+      0.0,
+    );
+
+    if (size.width - rightCornerR > x1) {
+      borderPath.lineTo(size.width - rightCornerR, 0);
+    }
+
+    if (rightCornerR > 0) {
+      borderPath.arcToPoint(
+        Offset(size.width, rightCornerR),
+        radius: Radius.circular(rightCornerR),
+      );
+    }
+
+    canvas.drawPath(borderPath, _borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CurvedNavBarPainter oldDelegate) {
+    return oldDelegate.normalizedPosition != normalizedPosition ||
+        oldDelegate.barColor != barColor;
+  }
+}
+
 class GradeScreenShell extends StatelessWidget {
   final String title;
   final String? streamTitle;
@@ -322,6 +592,7 @@ class GradeScreenShell extends StatelessWidget {
         statusBarBrightness: Brightness.dark,
       ),
       child: Scaffold(
+        extendBody: true,
         backgroundColor: backgroundColor,
         body: Column(
           children: [
