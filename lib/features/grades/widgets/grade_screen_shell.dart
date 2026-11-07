@@ -591,6 +591,7 @@ class GradeScreenShell extends StatelessWidget {
         statusBarBrightness: Brightness.dark,
       ),
       child: Scaffold(
+        extendBody: true,
         backgroundColor: backgroundColor,
         body: Column(
           children: [

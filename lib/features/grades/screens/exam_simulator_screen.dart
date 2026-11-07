@@ -191,6 +191,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           statusBarBrightness: Brightness.dark,
         ),
         child: Scaffold(
+          extendBody: true,
           backgroundColor: _pageBackground,
           body: RefreshIndicator(
             color: _primaryBlue,
@@ -358,7 +359,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 108),
                 ],
               ),
             ),
