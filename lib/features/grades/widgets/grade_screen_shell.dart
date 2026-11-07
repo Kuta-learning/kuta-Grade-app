@@ -130,11 +130,7 @@ class GradeBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
-  const GradeBottomNavBar({
-    super.key,
-    this.currentIndex = 0,
-    this.onTap,
-  });
+  const GradeBottomNavBar({super.key, this.currentIndex = 0, this.onTap});
 
   @override
   State<GradeBottomNavBar> createState() => _GradeBottomNavBarState();
@@ -149,7 +145,10 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
   int _lastActiveIndex = 0;
   int _targetIndex = 0;
 
-  static const List<({IconData icon, IconData activeIcon, String label, String route})> _items = [
+  static const List<
+    ({IconData icon, IconData activeIcon, String label, String route})
+  >
+  _items = [
     (
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard_rounded,
@@ -185,7 +184,7 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
     _targetIndex = widget.currentIndex;
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 480),
     );
     _animation = CurvedAnimation(
       parent: _controller,
@@ -253,9 +252,9 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
     final t = _controller.value.clamp(0.0, 1.0);
 
     if (index == _targetIndex) {
-      return Curves.easeOutCubic.transform(t);
+      return Curves.easeInOutCubic.transform(t);
     } else if (index == _lastActiveIndex) {
-      return 1.0 - Curves.easeOutCubic.transform(t);
+      return 1.0 - Curves.easeInOutCubic.transform(t);
     }
     return 0.0;
   }
@@ -280,112 +279,114 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
             final pos = _currentPosition;
             final circleCenterX = (pos + 0.5) * slotWidth;
 
-            return ColoredBox(
-              color: Colors.transparent,
-              child: SizedBox(
+            return RepaintBoundary(
+              child: ColoredBox(
+                color: Colors.transparent,
+                child: SizedBox(
                 height: totalHeight + bottomPadding,
                 child: Stack(
                   clipBehavior: Clip.none,
-                children: [
-                  // 1. White Scooped Navbar Background
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: floatOverhead,
-                    height: barHeight + bottomPadding,
-                    child: CustomPaint(
-                      size: Size(width, barHeight + bottomPadding),
-                      painter: _CurvedNavBarPainter(
-                        normalizedPosition: pos,
-                        itemCount: _items.length,
-                        scoopDepth: 42.0,
-                        scoopHalfWidth: 46.0,
-                        topCornerRadius: 22.0,
-                        barColor: Colors.white,
-                        shadowColor: Colors.black.withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
-
-                  // 2. Floating Orange Circle Pill (BACKGROUND ONLY, NO ORANGE SHADOW)
-                  Positioned(
-                    left: circleCenterX - circleRadius,
-                    top: 6.0,
-                    width: circleDiameter,
-                    height: circleDiameter,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFFF851B),
-                            Color(0xFFFF6A00),
-                            Color(0xFFFF4800),
-                          ],
-                          stops: [0.0, 0.5, 1.0],
+                  children: [
+                    // 1. White Scooped Navbar Background
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: floatOverhead,
+                      height: barHeight + bottomPadding,
+                      child: CustomPaint(
+                        size: Size(width, barHeight + bottomPadding),
+                        painter: _CurvedNavBarPainter(
+                          normalizedPosition: pos,
+                          itemCount: _items.length,
+                          scoopDepth: 42.0,
+                          scoopHalfWidth: 60.0,
+                          topCornerRadius: 22.0,
+                          barColor: Colors.white,
+                          shadowColor: Colors.black.withValues(alpha: 0.08),
                         ),
-                        boxShadow: [
-                          // Subtle dark contact shadow only — NO orange shadow
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                     ),
-                  ),
 
-                  // 3. Interactive Icons Layer (ALL 4 ICONS MOVE VERTICALLY IN THEIR FIXED COLUMNS)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    height: totalHeight,
-                    child: Row(
-                      children: List.generate(_items.length, (index) {
-                        final elevation = _getElevation(index);
-                        final iconY = 44.0 - (25.0 * elevation);
-                        final iconSize = 24.0 + (2.0 * elevation);
-                        final iconColor = Color.lerp(
-                          const Color(0xFF64748B),
-                          Colors.white,
-                          elevation,
-                        )!;
-                        final iconData = elevation > 0.4
-                            ? _items[index].activeIcon
-                            : _items[index].icon;
-
-                        return Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _handleTap(index),
-                            child: Stack(
-                              alignment: Alignment.topCenter,
-                              children: [
-                                Positioned(
-                                  top: iconY,
-                                  child: Icon(
-                                    iconData,
-                                    color: iconColor,
-                                    size: iconSize,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    // 2. Floating Orange Circle Pill (BACKGROUND ONLY, NO ORANGE SHADOW)
+                    Positioned(
+                      left: circleCenterX - circleRadius,
+                      top: 6.0,
+                      width: circleDiameter,
+                      height: circleDiameter,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFF851B),
+                              Color(0xFFFF6A00),
+                              Color(0xFFFF4800),
+                            ],
+                            stops: [0.0, 0.5, 1.0],
                           ),
-                        );
-                      }),
+                          boxShadow: [
+                            // Subtle dark contact shadow only — NO orange shadow
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+
+                    // 3. Interactive Icons Layer (ALL 4 ICONS MOVE VERTICALLY IN THEIR FIXED COLUMNS)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: totalHeight,
+                      child: Row(
+                        children: List.generate(_items.length, (index) {
+                          final elevation = _getElevation(index);
+                          final iconY = 44.0 - (25.0 * elevation);
+                          final iconSize = 24.0 + (2.0 * elevation);
+                          final iconColor = Color.lerp(
+                            const Color(0xFF64748B),
+                            Colors.white,
+                            elevation,
+                          )!;
+                          final iconData = elevation > 0.4
+                              ? _items[index].activeIcon
+                              : _items[index].icon;
+
+                          return Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _handleTap(index),
+                              child: Stack(
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  Positioned(
+                                    top: iconY,
+                                    child: Icon(
+                                      iconData,
+                                      color: iconColor,
+                                      size: iconSize,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        );
+            ),
+          );
+        },
+      );
       },
     );
   }
@@ -399,6 +400,12 @@ class _CurvedNavBarPainter extends CustomPainter {
   final double topCornerRadius;
   final Color barColor;
   final Color shadowColor;
+
+  static final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _borderPaint = Paint()
+    ..color = const Color(0xFFF1F5F9)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.8;
 
   const _CurvedNavBarPainter({
     required this.normalizedPosition,
@@ -479,16 +486,10 @@ class _CurvedNavBarPainter extends CustomPainter {
     canvas.drawShadow(path, shadowColor, 12.0, false);
 
     // Solid fill
-    final paint = Paint()
-      ..color = barColor
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, paint);
+    _fillPaint.color = barColor;
+    canvas.drawPath(path, _fillPaint);
 
     // Top hairline border following contour
-    final borderPaint = Paint()
-      ..color = const Color(0xFFF1F5F9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
 
     final borderPath = Path();
     borderPath.moveTo(0, leftCornerR);
@@ -533,7 +534,7 @@ class _CurvedNavBarPainter extends CustomPainter {
       );
     }
 
-    canvas.drawPath(borderPath, borderPaint);
+    canvas.drawPath(borderPath, _borderPaint);
   }
 
   @override
