@@ -1,14 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/cache/cache_response.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/router/route_names.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
+import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../../authentication/bloc/auth_bloc.dart';
@@ -22,11 +23,13 @@ import '../widgets/grade_screen_shell.dart';
 class ExamSimulatorScreen extends StatefulWidget {
   final NationalExamDashboardModel? initialDashboardData;
   final bool showBottomNav;
+  final NationalExamService? examService;
 
   const ExamSimulatorScreen({
     super.key,
     this.initialDashboardData,
     this.showBottomNav = false,
+    this.examService,
   });
 
   @override
@@ -50,6 +53,12 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   static const Color _textSecondary = AppColors.textSecondary;
   static const Color _cardBorder = AppColors.containerHigh;
 
+  late final NationalExamService _examService =
+      widget.examService ?? NationalExamService();
+
+  StreamSubscription<CacheResponse<NationalExamDashboardModel>>?
+      _dashboardSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -60,48 +69,87 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         if (mounted) _showWelcomeSnackbarOnce();
       });
     } else {
-      _loadDashboardData();
+      _loadDashboardWithCache();
     }
   }
 
-  /// Loads dashboard data from backend service. Supports Pull-Down-to-Refresh.
-  Future<void> _loadDashboardData() async {
-    if (_dashboardData == null) {
+  @override
+  void dispose() {
+    _dashboardSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Loads dashboard data using the centralized CacheManager via NationalExamService.
+  void _loadDashboardWithCache({bool isPullToRefresh = false}) {
+    if (_dashboardData == null && !isPullToRefresh) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
     }
 
-    try {
-      final service = NationalExamService();
-      final data = await service.getDashboard();
-      final authenticatedGrade = _authenticatedGradeLevel();
-      if (!_supportsNationalExams(data.student.gradeLevel)) {
-        throw Exception(
-          'National exams are available for Grades 6, 8, and 12 only.',
-        );
-      }
-      if (authenticatedGrade != null &&
-          data.student.gradeLevel != authenticatedGrade) {
-        throw Exception('The exam content does not match your selected grade.');
-      }
-      if (mounted) {
+    _dashboardSubscription?.cancel();
+    _dashboardSubscription = _examService
+        .watchDashboard(forceRefresh: isPullToRefresh)
+        .listen(
+      (response) {
+        if (!mounted) return;
+        final data = response.data;
+        final authenticatedGrade = _authenticatedGradeLevel();
+
+        if (!_supportsNationalExams(data.student.gradeLevel)) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                'National exams are available for Grades 6, 8, and 12 only.';
+          });
+          return;
+        }
+
+        if (authenticatedGrade != null &&
+            data.student.gradeLevel != authenticatedGrade) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                'The exam content does not match your selected grade.';
+          });
+          return;
+        }
+
         setState(() {
           _dashboardData = data;
           _isLoading = false;
           _errorMessage = null;
         });
         _showWelcomeSnackbarOnce();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        });
-      }
-    }
+
+        if (response.backgroundError != null && isPullToRefresh) {
+          AppSnackBar.showError(
+            context,
+            'Could not refresh live exam data. Showing cached offline data.',
+          );
+        }
+      },
+      onError: (e) {
+        if (!mounted) return;
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
+        if (isPullToRefresh) {
+          AppSnackBar.showError(
+            context,
+            'Could not refresh live exam data. Showing cached offline data.',
+          );
+        } else if (_dashboardData == null) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = errorMsg;
+          });
+        }
+      },
+    );
+  }
+
+  Future<void> _loadDashboardData({bool isPullToRefresh = false}) async {
+    _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
   }
 
   int? _authenticatedGradeLevel() {
@@ -195,7 +243,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           backgroundColor: _pageBackground,
           body: RefreshIndicator(
             color: _primaryBlue,
-            onRefresh: _loadDashboardData,
+            onRefresh: () => _loadDashboardData(isPullToRefresh: true),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: ClampingScrollPhysics(),
