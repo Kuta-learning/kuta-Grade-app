@@ -29,6 +29,13 @@ abstract class StorageKeys {
   /// Cleared on logout via [ProfileBloc]'s reset flow.
   static const String profileCache = 'profile_cache';
 
+  // ── National Exam Dashboard Cache ─────────────────────────────────────────
+  /// Serialized JSON string of [NationalExamDashboardModel].
+  static const String examDashboardCache = 'exam_dashboard_cache';
+
+  /// Epoch timestamp (milliseconds) when [examDashboardCache] was last updated.
+  static const String examDashboardCacheTime = 'exam_dashboard_cache_time';
+
   // ── User Preferences ─────────────────────────────────────────────────────
   /// App locale code (e.g. "en", "am").
   static const String preferredLocale = 'preferred_locale';

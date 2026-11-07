@@ -191,4 +191,49 @@ void main() {
     expect(find.text('Practice'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
   });
+  test('NationalExamDashboardModel serializes to JSON string and deserializes correctly', () {
+    const original = NationalExamDashboardModel(
+      student: StudentInfo(
+        name: 'Ruth',
+        gradeLevel: 12,
+        stream: 'NATURAL',
+        isPremium: true,
+      ),
+      bannerExam: BannerExamInfo(
+        title: '2022 National Exam',
+        subjectName: 'Physics',
+        action: 'Resume Exam',
+        timeRemainingSeconds: 2520,
+        answeredQuestions: 34,
+        totalQuestions: 100,
+      ),
+      subjectsCount: 1,
+      subjects: [
+        NationalExamSubjectModel(
+          id: 'sub-1',
+          name: 'Mathematics',
+          code: 'MATH',
+          stream: 'NATURAL',
+          description: 'Natural Science Track',
+          subcategories: 'Natural Science Track',
+          iconKey: 'calculator',
+          hexColor: '#3B82F6',
+          totalExams: 10,
+          totalQuestions: 850,
+          completedExams: 4,
+          progressPercentage: 0.45,
+        ),
+      ],
+    );
+
+    final jsonStr = original.toJsonString();
+    final restored = NationalExamDashboardModel.fromJsonString(jsonStr);
+
+    expect(restored, isNotNull);
+    expect(restored!.student.name, 'Ruth');
+    expect(restored.student.gradeLevel, 12);
+    expect(restored.bannerExam?.title, '2022 National Exam');
+    expect(restored.subjects.length, 1);
+    expect(restored.subjects.first.name, 'Mathematics');
+  });
 }
