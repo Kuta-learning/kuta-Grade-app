@@ -206,7 +206,7 @@ class _GradeSelectionView extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${state.currentStep}',
-                    style: const TextStyle(
+                    style: AppTypography.labelMdSemiBold.copyWith(
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -219,7 +219,7 @@ class _GradeSelectionView extends StatelessWidget {
               // Step text e.g. "STEP 1 OF 2" or "STEP 1 OF 1"
               Text(
                 state.stepLabel,
-                style: const TextStyle(
+                style: AppTypography.captionBold.copyWith(
                   color: AppColors.accentDark,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -642,10 +642,10 @@ class _GradeSelectionView extends StatelessWidget {
                     ),
                     child: Text(
                       subject,
-                      style: const TextStyle(
+                      style: AppTypography.labelSm.copyWith(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF334155),
+                        color: const Color(0xFF334155),
                       ),
                     ),
                   );
@@ -713,10 +713,9 @@ class _GradeSelectionView extends StatelessWidget {
                     children: [
                       Text(
                         state.ctaLabel,
-                        style: const TextStyle(
+                        style: AppTypography.headlineLg.copyWith(
                           color: Colors.white,
                           fontSize: 16.5,
-                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.2,
                         ),
                       ),
