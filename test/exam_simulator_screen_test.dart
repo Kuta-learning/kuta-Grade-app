@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kuta_grade/features/grades/models/national_exam_dashboard_model.dart';
 import 'package:kuta_grade/features/grades/screens/exam_simulator_screen.dart';
+import 'package:kuta_grade/features/grades/widgets/grade_screen_shell.dart';
 
 void main() {
   testWidgets('ExamSimulatorScreen renders all reference design elements without back button', (
@@ -186,9 +187,10 @@ void main() {
     expect(find.text('640 Questions'), findsOneWidget);
 
     // 6. Bottom Navigation
-    expect(find.text('Exams'), findsOneWidget);
-    expect(find.text('Notes'), findsOneWidget);
-    expect(find.text('Practice'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.byType(GradeBottomNavBar), findsOneWidget);
+    expect(find.byIcon(Icons.dashboard_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.edit_note_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
   });
 }
