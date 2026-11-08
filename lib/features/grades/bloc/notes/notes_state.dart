@@ -20,22 +20,30 @@ final class NotesSubjectsLoaded extends NotesState {
   final List<NoteSubjectItem> subjects;
   final Set<int> expandedIndices;
   final Map<int, String> selectedGrades;
+  final String? curriculumType;
+  final int? studentGrade;
 
   const NotesSubjectsLoaded({
     required this.subjects,
     this.expandedIndices = const {0},
     this.selectedGrades = const {0: 'Grade 12'},
+    this.curriculumType,
+    this.studentGrade,
   });
 
   NotesSubjectsLoaded copyWith({
     List<NoteSubjectItem>? subjects,
     Set<int>? expandedIndices,
     Map<int, String>? selectedGrades,
+    String? curriculumType,
+    int? studentGrade,
   }) {
     return NotesSubjectsLoaded(
       subjects: subjects ?? this.subjects,
       expandedIndices: expandedIndices ?? this.expandedIndices,
       selectedGrades: selectedGrades ?? this.selectedGrades,
+      curriculumType: curriculumType ?? this.curriculumType,
+      studentGrade: studentGrade ?? this.studentGrade,
     );
   }
 }

@@ -5,9 +5,10 @@ sealed class NotesEvent {
   const NotesEvent();
 }
 
-/// Request to fetch the high school subjects list.
+/// Request to fetch the subjects list.
 final class LoadNotesSubjects extends NotesEvent {
-  const LoadNotesSubjects();
+  final bool forceRefresh;
+  const LoadNotesSubjects({this.forceRefresh = false});
 }
 
 /// Toggles accordion expansion for a subject index.

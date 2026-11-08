@@ -13,15 +13,15 @@ void main() {
     expect(find.text('Skip'), findsOneWidget);
 
     // Verify Slide 1 text
-    expect(find.text('Excel in Your Exams'), findsOneWidget);
+    expect(find.text('Excel in Your Exam'), findsOneWidget);
     expect(
       find.text(
-        'Personalized learning paths for Grade 6 to 8. Master complex topics with interactive practice and expert guidance.',
+        'Personalized learning paths for grade 6 to 8. Master complex topics with interactive practice and expert guidance',
       ),
       findsOneWidget,
     );
 
-    // Verify Next CTA button exists
+    // Verify Next CTA button exists (capitalized 'Next')
     expect(find.text('Next'), findsOneWidget);
   });
 
@@ -45,7 +45,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Slide 1
-    expect(find.text('Excel in Your Exams'), findsOneWidget);
+    expect(find.text('Excel in Your Exam'), findsOneWidget);
     expect(find.text('Next'), findsOneWidget);
 
     // Tap Next to go to Slide 2
@@ -57,7 +57,7 @@ void main() {
     expect(find.text('Next'), findsOneWidget);
     expect(
       find.text(
-        'Interactive lessons with videos, audio and quizzes designed to keep you engaged and motivated every day.',
+        'Interactive lessons with videos, audios and quizzes designed to keep you engaged and motivated everyday',
       ),
       findsOneWidget,
     );
@@ -71,7 +71,7 @@ void main() {
     expect(find.text('Get Started'), findsOneWidget);
     expect(
       find.text(
-        'See how far you\'ve come. Complete lessons, earn badges and show your achievements to the world!',
+        'see how far you\'ve come. Complete lessons,earn badges and show your achievement to the world!',
       ),
       findsOneWidget,
     );

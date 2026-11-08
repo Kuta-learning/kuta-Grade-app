@@ -254,12 +254,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                             color: AppColors.headlineDark,
                           ),
                         ),
-                        const SizedBox(width: 2),
-                        const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
+                        if (!_selectedGrade.contains('Grade 6') &&
+                            !_selectedGrade.contains('Grade 8') &&
+                            _detail?.requiresGradeSelection != false) ...[
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -347,7 +351,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 BlocConsumer<NotesBloc, NotesState>(
                   listener: (context, state) {
                     if (state is SubjectNotesDetailLoaded) {
-                      setState(() => _detail = state.detail);
+                      setState(() {
+                        _detail = state.detail;
+                        if (state.detail.gradeLevel.isNotEmpty) {
+                          _selectedGrade = state.detail.gradeLevel;
+                        }
+                      });
                     }
                   },
                   builder: (context, state) {
