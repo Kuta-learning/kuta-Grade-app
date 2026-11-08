@@ -6,14 +6,20 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/storage/shared_prefs_storage.dart';
+import '../../../core/storage/storage_keys.dart';
+import '../../authentication/bloc/auth_bloc.dart';
+import '../../authentication/models/user_model.dart';
+import '../../profile/bloc/profile_bloc.dart';
+import '../../profile/models/profile_model.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
 
 import '../widgets/grade_screen_shell.dart';
 import '../widgets/notes_loading_skeleton.dart';
 
-/// Screen presenting the High School Curriculum notes, study guides & cheat sheets
-/// per subject and grade level, exactly matching the reference screenshot.
+/// Screen presenting the Curriculum notes, study guides & cheat sheets
+/// per subject and grade level, automatically tailoring content to the student's grade.
 class HighSchoolNotesScreen extends StatefulWidget {
   final bool showBottomNav;
 
@@ -29,29 +35,116 @@ class HighSchoolNotesScreen extends StatefulWidget {
 class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
   // Local cached state to ensure instant recovery during back navigation
   List<NoteSubjectItem>? _subjects;
-  Set<int> _expandedIndices = {0}; // Mathematics expanded by default
+  String? _curriculumType;
+  int _studentGrade = 12;
+  Set<int> _expandedIndices = {0}; // Mathematics expanded by default (Grade 12)
   Map<int, String> _selectedGrades = {0: 'Grade 12'}; // Grade 12 selected by default
 
   @override
   void initState() {
     super.initState();
+    _studentGrade = _resolveInitialStudentGrade();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkCachedStorageGrade();
       try {
         final bloc = context.read<NotesBloc>();
-        if (bloc.cachedSubjects != null && bloc.cachedSubjects!.isNotEmpty) {
+        // Force refresh when: (a) grade mismatch with cached grade, OR
+        // (b) cached subjects exist but were loaded for a different grade
+        // (cachedStudentGrade is null means first load — still refresh if
+        //  subjects are cached so stale cross-grade data never shows).
+        final cachedGrade = bloc.cachedStudentGrade;
+        final hasCachedSubjects =
+            bloc.cachedSubjects != null && bloc.cachedSubjects!.isNotEmpty;
+        final gradeMismatch =
+            cachedGrade != null && cachedGrade != _studentGrade;
+        // If subjects are cached but we don't know which grade they belong to,
+        // treat it as a mismatch so we always load fresh data for the student.
+        final unknownGradeCached = hasCachedSubjects && cachedGrade == null;
+        final needsRefresh = gradeMismatch || unknownGradeCached;
+
+        if (!needsRefresh && hasCachedSubjects) {
           setState(() {
             _subjects = bloc.cachedSubjects;
+            _curriculumType = bloc.cachedCurriculumType;
+            if (bloc.cachedStudentGrade != null) {
+              _studentGrade = bloc.cachedStudentGrade!;
+            }
             _expandedIndices = Set<int>.from(bloc.cachedExpanded);
             _selectedGrades = Map<int, String>.from(bloc.cachedSelectedGrades);
           });
         }
-        if (bloc.state is! NotesSubjectsLoaded) {
-          bloc.add(const LoadNotesSubjects());
+        if (needsRefresh || bloc.state is! NotesSubjectsLoaded) {
+          bloc.add(LoadNotesSubjects(forceRefresh: needsRefresh));
         }
       } catch (_) {
         // BlocProvider unavailable — error shown via NotesError state
       }
     });
+  }
+
+  Future<void> _checkCachedStorageGrade() async {
+    try {
+      final storage = SharedPrefsStorage.instanceOrNull;
+      if (storage != null) {
+        final rawUser = await storage.getString(StorageKeys.authUser);
+        if (rawUser != null && rawUser.isNotEmpty) {
+          final user = UserModel.fromJsonString(rawUser);
+          final cachedGrade = _extractGradeFromEntity(user);
+          if (cachedGrade != null &&
+              cachedGrade > 0 &&
+              cachedGrade != _studentGrade &&
+              mounted) {
+            setState(() {
+              _studentGrade = cachedGrade;
+            });
+            try {
+              context
+                  .read<NotesBloc>()
+                  .add(const LoadNotesSubjects(forceRefresh: true));
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Extracts the numeric grade level from [UserModel] or [ProfileModel].
+  int? _extractGradeFromEntity(dynamic entity) {
+    if (entity == null) return null;
+    if (entity is UserModel && entity.gradeLevel != null) {
+      final val = entity.gradeLevel!.numericValue;
+      if (val > 0) return val;
+    }
+    if (entity is ProfileModel && entity.gradeLevel != null) {
+      final val = entity.gradeLevel!.numericValue;
+      if (val > 0) return val;
+    }
+    return null;
+  }
+
+  /// Fast synchronous grade resolution from in-memory Blocs and SharedPreferences cache.
+  int _resolveInitialStudentGrade() {
+    // 1. Check AuthBloc in-memory state
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final g = _extractGradeFromEntity(authState.user);
+        if (g != null) return g;
+      }
+    } catch (_) {}
+
+    // 2. Check ProfileBloc in-memory state
+    try {
+      final profileState = context.read<ProfileBloc>().state;
+      if (profileState is ProfileLoaded) {
+        final g = _extractGradeFromEntity(profileState.profile);
+        if (g != null) return g;
+      }
+    } catch (_) {}
+
+    // 3. Default fallback
+    return 12;
   }
 
   void _onToggle(int index, NotesBloc? bloc) {
@@ -89,6 +182,16 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     );
   }
 
+  void _onOpenPrimarySubject(NoteSubjectItem subject, int studentGrade) {
+    final gradeLabel = subject.gradeBadge ?? 'Grade $studentGrade';
+    context.push(
+      '${RouteNames.noteDetail}'
+      '?subject=${Uri.encodeComponent(subject.name)}'
+      '&gradeLevel=${Uri.encodeComponent(gradeLabel)}'
+      '&subjectId=${Uri.encodeComponent(subject.id)}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     NotesBloc? bloc;
@@ -97,6 +200,21 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     } catch (_) {
       bloc = null;
     }
+
+    final currentGrade = (bloc?.state is NotesSubjectsLoaded)
+        ? ((bloc!.state as NotesSubjectsLoaded).studentGrade ?? _studentGrade)
+        : (bloc?.cachedStudentGrade ?? _studentGrade);
+    final isPrimary = currentGrade <= 8;
+
+    final currentCurriculum = (bloc?.state is NotesSubjectsLoaded)
+        ? (bloc!.state as NotesSubjectsLoaded).curriculumType
+        : (bloc?.cachedCurriculumType ?? _curriculumType);
+    // Use isPrimary (derived from the already-resolved currentGrade) as the
+    // source of truth for the curriculum title so it is correct even before
+    // the API responds — avoids briefly showing "High School Curriculum" for
+    // primary grade students.
+    final curriculumTitle = currentCurriculum ??
+        (isPrimary ? 'Primary School Curriculum' : 'High School Curriculum');
 
     return Scaffold(
       extendBody: true,
@@ -122,9 +240,11 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Subtitle guide text matching screenshot
+              // Subtitle guide text tailored to curriculum
               Text(
-                'Select a subject and grade to access\nsummarized study guides & cheat sheets.',
+                isPrimary
+                    ? 'Select a subject to access\nsummarized study guides & cheat sheets.'
+                    : 'Select a subject and grade to access\nsummarized study guides & cheat sheets.',
                 style: GoogleFonts.inter(
                   fontSize: 13.5,
                   height: 1.45,
@@ -134,38 +254,16 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Section title & subject counter row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'High School Curriculum',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.headlineDark,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  Text(
-                    '6 Subjects',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
               if (bloc != null)
                 BlocConsumer<NotesBloc, NotesState>(
                   listener: (context, state) {
                     if (state is NotesSubjectsLoaded) {
                       setState(() {
                         _subjects = state.subjects;
+                        _curriculumType = state.curriculumType;
+                        if (state.studentGrade != null) {
+                          _studentGrade = state.studentGrade!;
+                        }
                         _expandedIndices = Set<int>.from(state.expandedIndices);
                         _selectedGrades =
                             Map<int, String>.from(state.selectedGrades);
@@ -188,28 +286,91 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                             : (bloc?.cachedSelectedGrades ??
                                 const {0: 'Grade 12'}));
 
-                    if (displaySubjects != null && displaySubjects.isNotEmpty) {
-                      return _buildSubjectList(
-                        displaySubjects,
-                        displayExpanded,
-                        displaySelected,
-                        bloc,
-                      );
-                    }
-                    if (state is NotesLoading) {
-                      return const NotesLoadingSkeleton(itemCount: 4);
-                    }
-                    return const NotesLoadingSkeleton(itemCount: 4);
+                    final subjectCount = displaySubjects?.length ?? 0;
+                    final subjectCountText = subjectCount > 0
+                        ? '$subjectCount Subjects'
+                        : (isPrimary ? '4 Subjects' : '6 Subjects');
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section title & subject counter row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              curriculumTitle,
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.headlineDark,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            Text(
+                              subjectCountText,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        if (displaySubjects != null && displaySubjects.isNotEmpty)
+                          _buildSubjectList(
+                            displaySubjects,
+                            displayExpanded,
+                            displaySelected,
+                            bloc,
+                            isPrimary,
+                            currentGrade,
+                          )
+                        else if (state is NotesLoading)
+                          const NotesLoadingSkeleton(itemCount: 4)
+                        else
+                          const NotesLoadingSkeleton(itemCount: 4),
+                      ],
+                    );
                   },
                 )
-              else if (_subjects != null)
+              else if (_subjects != null) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      curriculumTitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.headlineDark,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    Text(
+                      '${_subjects!.length} Subjects',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
                 _buildSubjectList(
                   _subjects!,
                   _expandedIndices,
                   _selectedGrades,
                   null,
-                )
-              else
+                  isPrimary,
+                  currentGrade,
+                ),
+              ] else
                 const NotesLoadingSkeleton(itemCount: 4),
             ],
           ),
@@ -226,6 +387,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     Set<int> expandedIndices,
     Map<int, String> selectedGrades,
     NotesBloc? bloc,
+    bool isPrimary,
+    int currentGrade,
   ) {
     return ListView.separated(
       itemCount: subjects.length,
@@ -241,9 +404,12 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
           subject: subject,
           isExpanded: isExpanded,
           selectedGrade: selectedGrade,
+          isPrimary: isPrimary,
+          studentGrade: currentGrade,
           onToggle: () => _onToggle(index, bloc),
           onSelectGrade: (gradeName) =>
               _onSelectGrade(index, gradeName, subject, bloc),
+          onOpenPrimary: (s) => _onOpenPrimarySubject(s, currentGrade),
         );
       },
     );
@@ -257,27 +423,41 @@ class _SubjectCard extends StatelessWidget {
   final NoteSubjectItem subject;
   final bool isExpanded;
   final String? selectedGrade;
+  final bool isPrimary;
+  final int studentGrade;
   final VoidCallback onToggle;
   final ValueChanged<String> onSelectGrade;
+  final ValueChanged<NoteSubjectItem>? onOpenPrimary;
 
   const _SubjectCard({
     required this.subject,
     required this.isExpanded,
     required this.selectedGrade,
+    this.isPrimary = false,
+    this.studentGrade = 12,
     required this.onToggle,
     required this.onSelectGrade,
+    this.onOpenPrimary,
   });
 
   @override
   Widget build(BuildContext context) {
     final grades = subject.grades.isNotEmpty
         ? subject.grades
-        : const [
-            NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-            NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
-            NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
-            NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
-          ];
+        : (isPrimary
+            ? [
+                NoteGradeOption(
+                  name: 'Grade $studentGrade',
+                  chapters: '${subject.totalChapters} Chapters',
+                  gradeLevel: studentGrade,
+                )
+              ]
+            : const [
+                NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
+                NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
+                NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
+                NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
+              ]);
 
     return Container(
       decoration: BoxDecoration(
@@ -294,10 +474,12 @@ class _SubjectCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Row (Tappable to expand / collapse)
+            // Header Row (Tappable: directly navigates if primary, expands if high school)
             InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: onToggle,
+              onTap: isPrimary
+                  ? () => onOpenPrimary?.call(subject)
+                  : onToggle,
               child: Row(
                 children: [
                   _buildIcon(subject),
@@ -315,7 +497,17 @@ class _SubjectCard extends StatelessWidget {
                             letterSpacing: -0.2,
                           ),
                         ),
-                        if (!isExpanded) ...[
+                        if (isPrimary) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            subject.gradeBadge ?? 'Grade $studentGrade',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ] else if (!isExpanded) ...[
                           const SizedBox(height: 3),
                           Text(
                             'Tap to choose Grade 9–12',
@@ -329,7 +521,7 @@ class _SubjectCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Circular chevron indicator button matching screenshot
+                  // Circular chevron indicator button
                   Container(
                     width: 32,
                     height: 32,
@@ -338,9 +530,11 @@ class _SubjectCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
+                      isPrimary
+                          ? Icons.chevron_right_rounded
+                          : (isExpanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded),
                       color: const Color(0xFF475569),
                       size: 20,
                     ),
@@ -349,8 +543,8 @@ class _SubjectCard extends StatelessWidget {
               ),
             ),
 
-            // Expandable Grid of Grades matching screenshot
-            if (isExpanded) ...[
+            // Expandable Grid of Grades (only for High School multiple grade selections)
+            if (!isPrimary && isExpanded) ...[
               const SizedBox(height: 12),
               Text(
                 'Select  grade level:',
@@ -396,7 +590,7 @@ class _SubjectCard extends StatelessWidget {
     Widget iconWidget;
 
     final normName = subject.name.toLowerCase();
-    if (normName.contains('math')) {
+    if (normName.contains('math') || normName.contains('ሒሳብ')) {
       bgColor = const Color(0xFFFFDBCA);
       iconColor = const Color(0xFF341100);
       iconWidget = Text(

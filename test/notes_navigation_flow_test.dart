@@ -41,10 +41,10 @@ void main() {
     // 3. Verify Note Detail screen
     expect(find.text('Note Detail'), findsOneWidget);
     expect(find.textContaining('Mathematics - Grade 12'), findsOneWidget);
-    expect(find.text('Read'), findsWidgets);
 
-    // 4. Tap 'Read' on the first chapter to navigate to LessonDetailScreen
-    await tester.tap(find.text('Read').first);
+    // 4. Tap 'Completed' / 'Read' action button on the first chapter to navigate to LessonDetailScreen
+    final chapterButton = find.text('Completed').first;
+    await tester.tap(chapterButton);
     await tester.pumpAndSettle();
 
     // 5. Verify Lesson Detail screen

@@ -1,4 +1,3 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,11 +14,7 @@ import 'features/profile/bloc/profile_bloc.dart';
 import 'features/profile/services/api_profile_service.dart';
 
 void main() async {
-  // DevicePreview installs its own WidgetsBinding (a drop-in replacement for
-  // WidgetsFlutterBinding) so it must run BEFORE ensureInitialized. Calling
-  // both throws "Binding is already initialized" and leaves the app stuck
-  // behind the native splash screen.
-  DevicePreview.enable();
+  WidgetsFlutterBinding.ensureInitialized();
   debugPrint('[KUTA] WidgetsBinding initialized');
 
   // Load environment configuration (API base URL, OAuth client IDs, …).
