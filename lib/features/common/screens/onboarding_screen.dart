@@ -457,10 +457,10 @@ class _OnboardingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Responsive width clamped between 280 and 340
-    final cardWidth = (screenWidth - 48).clamp(280.0, 340.0);
-    // Natural aspect ratio for 512x279 landscape illustrations (approx 1.835)
-    final cardHeight = cardWidth / 1.835;
+    // Responsive width clamped between 280 and 360
+    final cardWidth = (screenWidth - 48).clamp(280.0, 360.0);
+    // Images are square (6000x6000), so height == width (1:1 ratio)
+    final cardHeight = cardWidth;
 
     return Center(
       child: SizedBox(
@@ -517,7 +517,7 @@ class _OnboardingCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8.0),
                 child: Image.asset(
                   item.imageAsset,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: const Color(0xFFE8F1FC),
                     child: Center(
