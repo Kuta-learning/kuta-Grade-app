@@ -300,6 +300,15 @@ class CacheManager {
     }
   }
 
+  /// Synchronously retrieves the cached payload from L1 memory if present.
+  T? getMemoryCached<T>(String key) {
+    final mem = _memoryCache[key];
+    if (mem != null && mem.data is T) {
+      return mem.data as T;
+    }
+    return null;
+  }
+
   /// Explicitly writes data to L1 memory and L2 disk cache.
   Future<void> save<T>({
     required String key,
