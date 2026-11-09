@@ -3,22 +3,37 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
 import '../services/national_exam_service.dart';
 
-/// Loads the server-graded result for a national-exam attempt.
+/// Displays the server-graded result for a submitted national-exam attempt.
+/// Matches the Results screen design: header card, score/accuracy card,
+/// 3-column stats, question breakdown list, and a sticky "Done" button.
 class NationalExamResultScreen extends StatefulWidget {
   final String attemptId;
   final String title;
+
+  /// Passed directly from the submit response so the screen renders instantly.
+  final ExamResultReview? initialReview;
+
+  /// Original question list from the attempt (used for breakdown fallback).
+  final List<ExamQuestion>? fallbackQuestions;
+
+  /// User's selected answers keyed by questionId (used for breakdown fallback).
+  final Map<String, String>? fallbackAnswers;
+
+  /// Injectable service for testing.
   final NationalExamService? service;
 
   const NationalExamResultScreen({
     super.key,
     required this.attemptId,
     required this.title,
+    this.initialReview,
+    this.fallbackQuestions,
+    this.fallbackAnswers,
     this.service,
   });
 
@@ -33,11 +48,38 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
   String? _errorMessage;
   bool _isLoading = true;
 
+  // ── Design tokens ──────────────────────────────────────────────────────────
+  static const _cardBg = Colors.white;
+  static const _statsBg = Color(0xFFF8FAFC);
+  static const _borderColor = Color(0xFFE2E8F0);
+  static const _correctGreen = Color(0xFF22C55E);
+  static const _wrongRed = Color(0xFFEF4444);
+  static const _correctBg = Color(0xFFDCFCE7);
+  static const _wrongBg = Color(0xFFFEE2E2);
+  static const _passedGreen = Color(0xFF16A34A);
+  static const _passedBg = Color(0xFFDCFCE7);
+  static const _failedRed = Color(0xFFDC2626);
+  static const _failedBg = Color(0xFFFEE2E2);
+
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? NationalExamService();
-    _loadResult();
+
+    // If we already have a full review (with question breakdown), render immediately.
+    if (widget.initialReview != null &&
+        widget.initialReview!.questions.isNotEmpty) {
+      _result = widget.initialReview;
+      _isLoading = false;
+    } else if (widget.initialReview != null) {
+      // We have basic result data but no question breakdown — show it and
+      // then fetch the full breakdown in the background.
+      _result = widget.initialReview;
+      _isLoading = false;
+      _fetchFullReview();
+    } else {
+      _loadResult();
+    }
   }
 
   Future<void> _loadResult() async {
@@ -61,20 +103,53 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     }
   }
 
+  /// Silently fetches the full review (with question breakdown) and merges it
+  /// with the already-displayed basic result.
+  Future<void> _fetchFullReview() async {
+    try {
+      final full = await _service.getExamAttemptResult(widget.attemptId);
+      if (!mounted) return;
+      if (full.questions.isNotEmpty) {
+        setState(() => _result = full);
+      }
+    } catch (_) {
+      // Swallow — the basic result is already shown; breakdown is optional.
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  String _formatDuration(int totalSeconds) {
+    final h = totalSeconds ~/ 3600;
+    final m = (totalSeconds % 3600) ~/ 60;
+    if (h > 0) return '${h}h ${m}m';
+    return '${m}m';
+  }
+
+  String _submittedLabel(DateTime? dt) {
+    if (dt == null) return 'Submitted';
+    final now = DateTime.now();
+    final isToday =
+        dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour < 12 ? 'AM' : 'PM';
+    final timeStr = '$hour:$minute $period';
+    if (isToday) return 'Submitted today at $timeStr';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return 'Submitted on ${months[dt.month - 1]} ${dt.day} at $timeStr';
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceApp,
-      appBar: AppBar(
-        backgroundColor: AppColors.brandPrimary,
-        foregroundColor: Colors.white,
-        title: Text(
-          widget.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 18),
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(
               child: KutaLoadingWidget(
@@ -83,8 +158,42 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               ),
             )
           : _result != null
-          ? _buildResult(_result!)
+          ? _buildBody(_result!)
           : _buildError(),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.brandPrimary,
+      foregroundColor: Colors.white,
+      leading: const BackButton(),
+      title: Text(
+        'Results',
+        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 18),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.bookmark_border_rounded),
+          tooltip: 'Bookmark',
+          onPressed: () {},
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.orange500,
+            child: Text(
+              'P',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -127,82 +236,357 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     );
   }
 
-  Widget _buildResult(ExamResultReview result) {
+  Widget _buildBody(ExamResultReview result) {
     final accuracy = result.accuracy <= 1
         ? result.accuracy * 100
         : result.accuracy;
     final passed = accuracy >= 50;
-    final resultColor = passed ? AppColors.success : AppColors.orange500;
+    final correctCount = result.questions.isNotEmpty
+        ? result.questions.where((q) => q.isCorrect).length
+        : result.score;
+    final wrongCount = result.questions.isNotEmpty
+        ? result.questions.where((q) => !q.isCorrect).length
+        : (result.totalQuestions - result.score).clamp(0, result.totalQuestions);
+    final totalCount = result.totalQuestions > 0
+        ? result.totalQuestions
+        : result.questions.length;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: resultColor.withValues(alpha: 0.28)),
-              boxShadow: AppElevation.cardLow,
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    color: resultColor.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    passed ? Icons.check_rounded : Icons.school_outlined,
-                    color: resultColor,
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 14),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header Card ──────────────────────────────────────────────
+              _buildHeaderCard(result, passed),
+              const SizedBox(height: 12),
+
+              // ── Score & Accuracy Card ────────────────────────────────────
+              _buildScoreCard(
+                result,
+                accuracy,
+                passed,
+                totalCount,
+                correctCount,
+                wrongCount,
+              ),
+              const SizedBox(height: 20),
+
+              // ── Question Breakdown ───────────────────────────────────────
+              if (result.questions.isNotEmpty) ...[
                 Text(
-                  'Exam submitted',
+                  'Question Breakdown',
                   style: GoogleFonts.inter(
-                    fontSize: 19,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  result.totalQuestions > 0
-                      ? 'Score: ${result.score} / ${result.totalQuestions}'
-                      : 'Score: ${result.score}',
+                const SizedBox(height: 10),
+                ...result.questions.asMap().entries.map(
+                  (entry) => _buildQuestionBreakdownCard(
+                    entry.value,
+                    entry.key,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // ── Sticky Done Button ───────────────────────────────────────────────
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 24,
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () => context.go(RouteNames.examSimulator),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange500,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                elevation: 2,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.done_all_rounded, size: 20),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Done',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Header Card ─────────────────────────────────────────────────────────────
+
+  Widget _buildHeaderCard(ExamResultReview result, bool passed) {
+    final examTitle = result.examTitle ?? widget.title;
+    final category = result.category ?? '';
+    final submittedLabel = _submittedLabel(result.submittedAt);
+    final durationLabel = result.totalDurationSeconds != null
+        ? _formatDuration(result.totalDurationSeconds!)
+        : null;
+    final spentLabel = _formatDuration(result.timeSpentSeconds);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Category + Passed/Failed badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  category,
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: passed ? _passedBg : _failedBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      passed
+                          ? Icons.check_circle_rounded
+                          : Icons.cancel_rounded,
+                      size: 13,
+                      color: passed ? _passedGreen : _failedRed,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      passed ? 'PASSED' : 'FAILED',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: passed ? _passedGreen : _failedRed,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Exam title
+          Text(
+            examTitle,
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.headlineDark,
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Submitted label
+          Row(
+            children: [
+              const Icon(
+                Icons.access_time_rounded,
+                size: 13,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                submittedLabel,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              if (durationLabel != null) ...[
+                const Text(' • ', style: TextStyle(color: AppColors.textSecondary)),
+                Text(
+                  'Duration: $spentLabel / $durationLabel',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    _metric('Accuracy', '${accuracy.round()}%'),
-                    const SizedBox(width: 12),
-                    _metric('Time spent', _formatTime(result.timeSpentSeconds)),
-                  ],
+              ] else ...[
+                const Text(' • ', style: TextStyle(color: AppColors.textSecondary)),
+                Text(
+                  'Time spent: $spentLabel',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Score & Accuracy Card ───────────────────────────────────────────────────
+
+  Widget _buildScoreCard(
+    ExamResultReview result,
+    double accuracy,
+    bool passed,
+    int totalCount,
+    int correctCount,
+    int wrongCount,
+  ) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Top row: Total Score | Overall Accuracy
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                // Total Score
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Score',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${result.score}',
+                              style: GoogleFonts.inter(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.headlineDark,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' / $totalCount',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Vertical divider
+                Container(
+                  width: 1,
+                  height: 52,
+                  color: _borderColor,
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+
+                // Overall Accuracy
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Overall Accuracy',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${accuracy.round()}%',
+                        style: GoogleFonts.inter(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.orange500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.go(RouteNames.examSimulator),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brandPrimary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-              ),
-              child: const Text('Back to Exam Simulator'),
+
+          // Divider
+          const Divider(height: 1, color: _borderColor),
+
+          // Bottom row: Total | Correct | Wrong
+          Container(
+            color: _statsBg,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              children: [
+                _buildStatColumn('Total', '$totalCount', AppColors.headlineDark),
+                _buildStatDivider(),
+                _buildStatColumn('Correct', '$correctCount', _correctGreen),
+                _buildStatDivider(),
+                _buildStatColumn('Wrong', '$wrongCount', _wrongRed),
+              ],
             ),
           ),
         ],
@@ -210,43 +594,169 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     );
   }
 
-  Widget _metric(String label, String value) {
+  Widget _buildStatColumn(String label, String value, Color valueColor) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: valueColor,
             ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11.5,
-                color: AppColors.textSecondary,
-              ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    if (minutes == 0) return '${remainingSeconds}s';
-    return '${minutes}m ${remainingSeconds}s';
+  Widget _buildStatDivider() {
+    return Container(
+      width: 1,
+      height: 36,
+      color: _borderColor,
+    );
+  }
+
+  // ── Question Breakdown Card ─────────────────────────────────────────────────
+
+  Widget _buildQuestionBreakdownCard(
+    ExamQuestionReviewItem question,
+    int index,
+  ) {
+    final qNumber = question.order ?? (index + 1);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Q number label
+          Text(
+            'Q$qNumber',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Question text
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _statsBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _borderColor),
+            ),
+            child: Text(
+              question.questionText,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Wrong answer row (only if the user got it wrong and selected something)
+          if (!question.isCorrect && question.selectedOptionText != null) ...[
+            _buildAnswerRow(
+              isCorrect: false,
+              label: question.selectedOptionLabel,
+              text: question.selectedOptionText ?? '',
+            ),
+            const SizedBox(height: 6),
+          ],
+
+          // Correct answer row
+          _buildAnswerRow(
+            isCorrect: true,
+            label: question.correctOptionLabel,
+            text: question.correctOptionText ?? '',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnswerRow({
+    required bool isCorrect,
+    String? label,
+    required String text,
+  }) {
+    final bg = isCorrect ? _correctBg : _wrongBg;
+    final textColor = isCorrect ? _correctGreen : _wrongRed;
+    final icon = isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
+    final prefix = isCorrect ? 'Correct answer' : 'Your answer';
+    final answerText = label != null && label.isNotEmpty
+        ? '$label. $text'
+        : text;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17, color: textColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$prefix: ',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  TextSpan(
+                    text: answerText,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: textColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
