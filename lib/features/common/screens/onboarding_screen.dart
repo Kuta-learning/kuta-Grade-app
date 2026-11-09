@@ -1,14 +1,19 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/constants/asset_constants.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
 
-/// Onboarding screen recreated to match the reference designs exactly.
-/// Features full illustration with circular backdrop, rounded bottom card container,
-/// smooth animated transitions, custom pill indicator, and primary orange CTA.
+/// Onboarding screen displaying key product highlights matching the reference design.
+/// Features a soft ambient background, elevated landscape illustration with floating icons,
+/// centered typography, responsive pagination dots, and primary CTA.
 class OnboardingScreen extends StatefulWidget {
   final int initialPage;
 
@@ -21,60 +26,108 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   late final PageController _pageController;
   late int _currentPage;
-  double _pageOffset = 0.0;
 
   late final List<_OnboardingPageData> _pages;
-
-  // Design Tokens matching reference UI screenshots
-  static const Color _bgCardColor = Color(0xFFDFDFDF); // Soft warm gray card
-  static const Color _bgBottomColor = Color(0xFFEAE8EB); // Bottom area tone
-  static const Color _btnColor = Color(0xFFFE5722); // Vibrant warm orange CTA
-  static const Color _titleColor = Color(0xFF141414); // Near black title
-  static const Color _descColor = Color(0xFF555555); // Neutral medium gray
-  static const Color _activeDotColor = Color(0xFF34211A); // Dark brownish active indicator
-  static const Color _inactiveDotColor = Color(0xFFB6B4B7); // Light gray inactive dot
 
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialPage;
-    _pageOffset = widget.initialPage.toDouble();
-    _pageController = PageController(initialPage: widget.initialPage)
-      ..addListener(_onPageScroll);
+    _pageController = PageController(initialPage: widget.initialPage);
 
-    _pages = const [
+    _pages = [
+      // Slide 1: Excel in Your Exams
       _OnboardingPageData(
-        title: 'Excel in Your Exam',
+        title: 'Excel in Your Exams',
         description:
-            'Personalized learning paths for grade 6 to 8. Master complex topics with interactive practice and expert guidance',
+            'Personalized learning paths for Grade 6 to 8. Master complex topics with interactive practice and expert guidance.',
         imageAsset: AssetConstants.onboardingImage1,
+        topBadge: _OnboardingBadge(
+          child: SvgPicture.asset(
+            AppIcons.calculationSvg,
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF9D4300), // Terracotta brown math icon
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        bottomBadge: _OnboardingBadge(
+          child: SvgPicture.asset(
+            AppIcons.greenMenuSvg,
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF006E2F), // Emerald green open book icon
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
       ),
+
+      // Slide 2: Learn at Your Pace
       _OnboardingPageData(
         title: 'Learn at Your Pace',
         description:
-            'Interactive lessons with videos, audios and quizzes designed to keep you engaged and motivated everyday',
+            'Interactive lessons with videos, audio and quizzes designed to keep you engaged and motivated every day.',
         imageAsset: AssetConstants.onboardingImage2,
+        topBadge: _OnboardingBadge(
+          child: SvgPicture.asset(
+            AppIcons.quizSvg,
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF2563EB), // Interactive quiz blue
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        bottomBadge: const _OnboardingBadge(
+          child: Icon(
+            Icons.headphones_rounded,
+            color: Color(0xFF0D9488), // Audio lessons teal
+            size: 26,
+          ),
+        ),
       ),
+
+      // Slide 3: Track Your Progress
       _OnboardingPageData(
         title: 'Track Your Progress',
         description:
-            'see how far you\'ve come. Complete lessons,earn badges and show your achievement to the world!',
+            'See how far you\'ve come. Complete lessons, earn badges and show your achievements to the world!',
         imageAsset: AssetConstants.onboardingImage3,
+        topBadge: _OnboardingBadge(
+          child: SvgPicture.asset(
+            AppIcons.militaryTechSvg,
+            width: 26,
+            height: 26,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFFD97706), // Milestone badge amber/gold
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        bottomBadge: _OnboardingBadge(
+          child: SvgPicture.asset(
+            AppIcons.analyticsSvg,
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF4F46E5), // Progress analytics indigo
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
       ),
     ];
   }
 
   @override
   void dispose() {
-    _pageController.removeListener(_onPageScroll);
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _onPageScroll() {
-    if (!mounted) return;
-    final offset = _pageController.page ?? _currentPage.toDouble();
-    setState(() => _pageOffset = offset);
   }
 
   void _onNext() {
@@ -89,6 +142,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _navigateToRegister() async {
+    // Record in local storage that onboarding has been completed
     final storage = await SharedPrefsStorage.getInstance();
     await storage.setBool(StorageKeys.hasSeenOnboarding, value: true);
 
@@ -99,232 +153,174 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final item = _pages[_currentPage];
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Responsive illustration sizing: scaled cleanly to fit circle + graphic
-    final double illustrationSize = (screenWidth * 0.76).clamp(240.0, 340.0);
-
-    // Screen-height based proportional spacing matching the reference screenshots
-    final double cardHeight = (screenHeight * 0.774).clamp(520.0, 800.0);
-    final double gapDescToCurve = (screenHeight * 0.038).clamp(24.0, 48.0);
-    final double gapCurveToDots = (screenHeight * 0.075).clamp(32.0, 90.0);
-    final double gapDotsToButton = (screenHeight * 0.027).clamp(16.0, 32.0);
-    final double bottomMargin = (screenHeight * 0.032).clamp(18.0, 36.0);
-    final double buttonHeight = (screenHeight * 0.052).clamp(48.0, 56.0);
-
     return Scaffold(
-      backgroundColor: _bgBottomColor,
+      backgroundColor: AppColors.surfaceApp,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Upper Card Container with Rounded Bottom Corners ──
+          // 1. Soft Warm Ambient Glow (Top-Right)
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: cardHeight,
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: _bgCardColor,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(42.0),
-                  bottomRight: Radius.circular(42.0),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x331E1E24),
-                    blurRadius: 28,
-                    offset: Offset(0, 14),
-                    spreadRadius: -4,
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Stack(
-                  children: [
-                    // Top Bar: Back (if not first) and Skip (if not last)
-                    Positioned(
-                      top: 4,
-                      left: 12,
-                      right: 12,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (_currentPage > 0)
-                            IconButton(
-                              onPressed: () {
-                                _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 350),
-                                  curve: Curves.easeInOutCubic,
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                size: 20,
-                                color: _titleColor,
-                              ),
-                              tooltip: 'Back',
-                            )
-                          else
-                            const SizedBox(width: 48),
-                          if (_currentPage < _pages.length - 1)
-                            TextButton(
-                              onPressed: _navigateToRegister,
-                              style: TextButton.styleFrom(
-                                foregroundColor: _descColor,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                              ),
-                              child: Text(
-                                'Skip',
-                                style: AppTypography.labelMdSemiBold.copyWith(
-                                  color: _descColor,
-                                  fontSize: 14.5,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            )
-                          else
-                            const SizedBox(width: 48),
-                        ],
-                      ),
+            top: -60,
+            right: -60,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.45,
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                  child: Container(
+                    width: 240,
+                    height: 240,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFFFDBCA),
                     ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-                    // Centered Content (Illustration PageView + Animated Text)
-                    Column(
-                      children: [
-                        SizedBox(height: screenHeight > 700 ? 36 : 18),
-
-                        // Image PageView with smooth parallax and natural scaling
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: _pages.length,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentPage = index;
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              final parallax = (index - _pageOffset) * 24.0;
-                              final pageItem = _pages[index];
-
-                              return Center(
-                                child: Transform.translate(
-                                  offset: Offset(parallax, 0),
-                                  child: SizedBox(
-                                    width: illustrationSize,
-                                    height: illustrationSize,
-                                    child: Image.asset(
-                                      pageItem.imageAsset,
-                                      fit: BoxFit.contain,
-                                      filterQuality: FilterQuality.high,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Center(
-                                        child: Icon(
-                                          Icons.image_outlined,
-                                          size: 80,
-                                          color: Colors.black26,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Animated Text Section (Title & Description)
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 320),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, animation) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0.0, 0.08),
-                                  end: Offset.zero,
-                                ).animate(animation),
-                                child: child,
-                              ),
+          // 2. Main Onboarding Content (Safe Area)
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Top Navigation Row: Back Arrow (left) + Skip (right) ──
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: 8.0,
+                    left: 4.0,
+                    right: 4.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back Arrow – visible on slides 2 and 3
+                      if (_currentPage > 0)
+                        IconButton(
+                          onPressed: () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 380),
+                              curve: Curves.easeInOutCubic,
                             );
                           },
-                          child: Padding(
-                            key: ValueKey<int>(_currentPage),
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Color(0xFF9D4300),
+                            size: 24.0,
+                          ),
+                          tooltip: 'Back',
+                          padding: const EdgeInsets.all(8.0),
+                        )
+                      else
+                        const SizedBox(
+                          width: 48.0,
+                        ), // placeholder to keep Skip aligned
+                      // Skip Button – hidden on last slide
+                      if (_currentPage < _pages.length - 1)
+                        TextButton(
+                          onPressed: _navigateToRegister,
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF9D4300),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 28.0,
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Text(
+                            'Skip',
+                            style: AppTypography.labelMdSemiBold.copyWith(
+                              fontSize: 14.5,
+                              letterSpacing: 0.2,
+                              color: AppColors.orange900,
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox(
+                          width: 48.0,
+                        ), // reserve space so layout is stable
+                    ],
+                  ),
+                ),
+
+                // Scrollable Page Content Area
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: _pages.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final item = _pages[index];
+
+                      return Center(
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.space6,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Title (Bold, rounded sans-serif matching reference)
+                                // Centered Landscape Illustration with Floating Badges
+                                _OnboardingCard(item: item),
+
+                                AppSpacing
+                                    .vGap8, // 32px matching splash_screen exactly
+                                // Heading Text
                                 Text(
                                   item.title,
-                                  textAlign: TextAlign.center,
                                   style: AppTypography.displayLg.copyWith(
-                                    fontSize: 27.0,
-                                    fontWeight: FontWeight.w800,
-                                    color: _titleColor,
-                                    letterSpacing: -0.4,
-                                    height: 1.25,
+                                    fontSize: 32,
+                                    color: AppColors.textPrimary,
+                                    letterSpacing: -0.7,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 12.0),
 
-                                // Subtitle / Description
+                                AppSpacing
+                                    .vGap2, // 8px matching splash_screen exactly
+                                // Subtitle / Body Description
                                 ConstrainedBox(
                                   constraints: const BoxConstraints(
                                     maxWidth: 320,
                                   ),
                                   child: Text(
                                     item.description,
-                                    textAlign: TextAlign.center,
                                     style: AppTypography.bodyLg.copyWith(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w400,
-                                      color: _descColor,
-                                      height: 1.5,
-                                      letterSpacing: 0.1,
+                                      fontSize: 17,
+                                      height: 1.55,
+                                      color: AppColors.textSecondary,
+                                      letterSpacing: 0.3,
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                                SizedBox(height: gapDescToCurve),
                               ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ),
-          ),
 
-          // ── Bottom Section: Indicators and Primary CTA Button ──
-          Positioned(
-            left: 24.0,
-            right: 24.0,
-            bottom: 0,
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: gapCurveToDots),
-
-                  // Indicator Dots (Active is elongated pill, inactive are small circles)
-                  Row(
+                // 3. Functional Pagination Dots
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.space2,
+                    bottom: AppSpacing.space6,
+                  ),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_pages.length, (index) {
                       final bool isActive = index == _currentPage;
@@ -338,57 +334,95 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             curve: Curves.easeInOutCubic,
                           );
                         },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeInOutCubic,
-                          margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                          width: isActive ? 26.0 : 7.0,
-                          height: 7.0,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4.0),
-                            color: isActive
-                                ? _activeDotColor
-                                : _inactiveDotColor,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 3.5,
+                            vertical: 8.0,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            width: isActive ? 26.0 : 7.5,
+                            height: 7.5,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4.0),
+                              color: isActive
+                                  ? const Color(0xFF9D4300)
+                                  : const Color(0xFFD6CDC6),
+                            ),
                           ),
                         ),
                       );
                     }),
                   ),
+                ),
 
-                  SizedBox(height: gapDotsToButton),
-
-                  // Primary Orange CTA Button: "Next" or "Get Started"
-                  SizedBox(
+                // 4. Primary Bottom CTA Button: "Get Started ->"
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.space6,
+                    0,
+                    AppSpacing.space6,
+                    AppSpacing.space8,
+                  ),
+                  child: SizedBox(
                     width: double.infinity,
-                    height: buttonHeight,
-                    child: ElevatedButton(
-                      onPressed: _onNext,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _btnColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(buttonHeight / 2),
-                        ),
+                    height: 58.0,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(29.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFF97316,
+                            ).withValues(alpha: 0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        _currentPage < _pages.length - 1
-                            ? 'Next'
-                            : 'Get Started',
-                        style: AppTypography.headlineLg.copyWith(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
+                      child: ElevatedButton(
+                        onPressed: _onNext,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(29.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _currentPage < _pages.length - 1
+                                  ? 'Next'
+                                  : 'Get Started',
+                              style: AppTypography.headlineLg.copyWith(
+                                color: Colors.white,
+                                fontSize: 17.5,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-
-                  SizedBox(height: bottomMargin),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -397,15 +431,149 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-/// Data holder for an onboarding page item.
+/// Onboarding page content data container.
 class _OnboardingPageData {
   final String title;
   final String description;
   final String imageAsset;
+  final Widget topBadge;
+  final Widget bottomBadge;
 
   const _OnboardingPageData({
     required this.title,
     required this.description,
     required this.imageAsset,
+    required this.topBadge,
+    required this.bottomBadge,
   });
+}
+
+/// Central illustration card with soft circular backdrop shadow, blue glow, and floating corner badges.
+class _OnboardingCard extends StatelessWidget {
+  final _OnboardingPageData item;
+
+  const _OnboardingCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Responsive width clamped between 280 and 340
+    final cardWidth = (screenWidth - 48).clamp(280.0, 340.0);
+    // Natural aspect ratio for 512x279 landscape illustrations (approx 1.835)
+    final cardHeight = cardWidth / 1.835;
+
+    return Center(
+      child: SizedBox(
+        width: cardWidth,
+        height: cardHeight,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 1. Soft Blue Ambient Glow behind illustration
+            Positioned.fill(
+              child: Center(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
+                  child: Container(
+                    width: cardWidth * 0.95,
+                    height: cardHeight * 1.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF81AEFF).withValues(alpha: 0.28),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Diffused Dark Radial Shadow behind illustration
+            Positioned.fill(
+              child: Center(
+                child: Container(
+                  width: cardWidth * 0.85,
+                  height: cardHeight * 1.35,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1E293B).withValues(alpha: 0.16),
+                        blurRadius: 45,
+                        spreadRadius: 10,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 25,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Crisp landscape illustration image
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.asset(
+                  item.imageAsset,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: const Color(0xFFE8F1FC),
+                    child: Center(
+                      child: Icon(
+                        Icons.school_outlined,
+                        size: 56,
+                        color: AppColors.navy700.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 4. Floating Top-Right Badge (positioned above the card top, indented from right)
+            Positioned(top: -36.0, right: 28.0, child: item.topBadge),
+
+            // 5. Floating Bottom-Left Badge (overlapping bottom-left corner)
+            Positioned(bottom: -22.0, left: 6.0, child: item.bottomBadge),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating badge matching the reference design: pure white, smooth rounded corners, soft drop shadow.
+class _OnboardingBadge extends StatelessWidget {
+  final Widget child;
+
+  const _OnboardingBadge({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52.0,
+      height: 52.0,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -2,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Center(child: child),
+    );
+  }
 }
