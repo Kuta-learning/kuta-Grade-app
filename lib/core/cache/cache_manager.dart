@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../storage/local_storage.dart';
 import '../storage/shared_prefs_storage.dart';
+import '../storage/storage_keys.dart';
 import 'cache_response.dart';
 
 class _MemoryCacheEntry {
@@ -21,11 +22,14 @@ class _MemoryCacheEntry {
 /// - Background silent revalidation for stale data without UI spinners.
 /// - Graceful offline error handling (keeps stale data visible on failure).
 /// - Full debug logging to easily trace cache state transitions.
+/// - Safe cache clearing: only purges cached payloads without erasing user flags (e.g. [hasSeenOnboarding]).
 class CacheManager {
   static CacheManager? _instance;
+  static const String _trackedKeysStorageKey = '__cache_manager_tracked_keys__';
 
   final LocalStorage? _customStorage;
   final Map<String, _MemoryCacheEntry> _memoryCache = {};
+  final Set<String> _trackedKeys = {};
 
   CacheManager({LocalStorage? storage}) : _customStorage = storage;
 
@@ -282,6 +286,11 @@ class CacheManager {
     final storage = await _getStorage();
     await storage.setString(key, toJson(data));
     await storage.setString(_timeKey(key), now.toIso8601String());
+
+    if (!_trackedKeys.contains(key)) {
+      _trackedKeys.add(key);
+      await storage.setString(_trackedKeysStorageKey, _trackedKeys.join(','));
+    }
   }
 
   /// Removes a cached key from both memory and disk.
@@ -290,6 +299,10 @@ class CacheManager {
     final storage = await _getStorage();
     await storage.remove(key);
     await storage.remove(_timeKey(key));
+
+    if (_trackedKeys.remove(key)) {
+      await storage.setString(_trackedKeysStorageKey, _trackedKeys.join(','));
+    }
   }
 
   /// Clears the entire in-memory cache.
@@ -297,10 +310,31 @@ class CacheManager {
     _memoryCache.clear();
   }
 
-  /// Clears the entire memory cache and disk storage.
+  /// Clears all CacheManager data from memory and all cached resource keys from disk.
+  /// NOTE: This only purges CacheManager payloads and intentionally preserves user settings
+  /// and navigation flags such as [StorageKeys.hasSeenOnboarding].
   Future<void> clearAll() async {
     _memoryCache.clear();
     final storage = await _getStorage();
-    await storage.clear();
+
+    final rawTracked = await storage.getString(_trackedKeysStorageKey);
+    if (rawTracked != null && rawTracked.isNotEmpty) {
+      _trackedKeys.addAll(rawTracked.split(',').where((k) => k.isNotEmpty));
+    }
+
+    for (final key in _trackedKeys) {
+      await storage.remove(key);
+      await storage.remove(_timeKey(key));
+    }
+    _trackedKeys.clear();
+    await storage.remove(_trackedKeysStorageKey);
+
+    // Defensively purge standard domain cache keys
+    await storage.remove(StorageKeys.examDashboardCache);
+    await storage.remove(_timeKey(StorageKeys.examDashboardCache));
+    await storage.remove(StorageKeys.notesSubjectsCache);
+    await storage.remove(_timeKey(StorageKeys.notesSubjectsCache));
+    await storage.remove(StorageKeys.profileCache);
+    await storage.remove(_timeKey(StorageKeys.profileCache));
   }
 }
