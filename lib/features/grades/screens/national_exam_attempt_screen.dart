@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/route_names.dart';
-import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
 import '../services/national_exam_service.dart';
@@ -478,7 +477,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                     child: Image.network(
                       question.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const SizedBox.shrink(),
                     ),
                   ),
                 ],

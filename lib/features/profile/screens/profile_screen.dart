@@ -57,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final (profile, isLoading, errorMessage) = _resolve(state);
 
           return Scaffold(
+            extendBody: true,
             backgroundColor: const Color(0xFFF8F9FA),
             appBar: _ProfileAppBar(
               onNotificationsPressed: () => AppSnackBar.showInfo(
@@ -67,6 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             body: SafeArea(
               top: false,
+              bottom: false,
               child: _buildBody(context, profile, isLoading, errorMessage),
             ),
             bottomNavigationBar: widget.showBottomNav
@@ -153,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       physics: const AlwaysScrollableScrollPhysics(
         parent: ClampingScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 108),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

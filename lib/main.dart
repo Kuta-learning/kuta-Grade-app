@@ -50,7 +50,10 @@ void main() async {
   final authService = ApiAuthService(apiClient: apiClient, storage: storage);
   final notesService = ApiNotesService(apiClient: apiClient);
   final coursesService = ApiCoursesService(apiClient: apiClient);
-  final profileService = ApiProfileService(apiClient: apiClient, storage: storage);
+  final profileService = ApiProfileService(
+    apiClient: apiClient,
+    storage: storage,
+  );
   debugPrint('[KUTA] Services ready – launching app');
 
   runApp(
@@ -59,12 +62,8 @@ void main() async {
         BlocProvider<AuthBloc>(
           create: (_) => AuthBloc(authService)..add(const AuthCheckRequested()),
         ),
-        BlocProvider<NotesBloc>(
-          create: (_) => NotesBloc(notesService),
-        ),
-        BlocProvider<CoursesBloc>(
-          create: (_) => CoursesBloc(coursesService),
-        ),
+        BlocProvider<NotesBloc>(create: (_) => NotesBloc(notesService)),
+        BlocProvider<CoursesBloc>(create: (_) => CoursesBloc(coursesService)),
         BlocProvider<ProfileBloc>(
           // Lazy: no profile fetch until the Profile screen requests it.
           create: (_) => ProfileBloc(profileService),

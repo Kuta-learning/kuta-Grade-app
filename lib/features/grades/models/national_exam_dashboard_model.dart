@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 /// Top-level model representing response from GET /national-exams/dashboard.
@@ -36,6 +37,26 @@ class NationalExamDashboardModel {
           .toList(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'student': student.toJson(),
+    if (bannerExam != null) 'bannerExam': bannerExam!.toJson(),
+    'subjectsCount': subjectsCount,
+    'subjects': subjects.map((s) => s.toJson()).toList(),
+  };
+
+  String toJsonString() => jsonEncode(toJson());
+
+  static NationalExamDashboardModel? fromJsonString(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return NationalExamDashboardModel.fromJson(decoded);
+      }
+    } catch (_) {}
+    return null;
+  }
 }
 
 class StudentInfo {
@@ -59,6 +80,13 @@ class StudentInfo {
       isPremium: json['isPremium'] as bool? ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'gradeLevel': gradeLevel,
+    'stream': stream,
+    'isPremium': isPremium,
+  };
 }
 
 class BannerExamInfo {
@@ -117,6 +145,20 @@ class BannerExamInfo {
       progress: prog,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    if (attemptId != null) 'attemptId': attemptId,
+    if (examId != null) 'examId': examId,
+    'title': title,
+    'subjectName': subjectName,
+    if (year != null) 'year': year,
+    if (status != null) 'status': status,
+    'action': action,
+    'timeRemainingSeconds': timeRemainingSeconds,
+    if (answeredQuestions != null) 'answeredQuestions': answeredQuestions,
+    if (totalQuestions != null) 'totalQuestions': totalQuestions,
+    if (progress != null) 'progress': progress,
+  };
 
   bool get isInProgress =>
       status == 'IN_PROGRESS' ||
@@ -210,6 +252,21 @@ class NationalExamSubjectModel {
       progressPercentage: progress,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'code': code,
+    'stream': stream,
+    'description': description,
+    'subcategories': subcategories,
+    'icon': iconKey,
+    'color': hexColor,
+    'totalExams': totalExams,
+    'totalQuestions': totalQuestions,
+    'completedExams': completedExams,
+    'progressPercentage': progressPercentage,
+  };
 
   Color get parsedColor {
     try {

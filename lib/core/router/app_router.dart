@@ -412,6 +412,8 @@ class MainGradeAppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.transparent,
       body: child,
       bottomNavigationBar: GradeBottomNavBar(
         currentIndex: _calculateIndex(),

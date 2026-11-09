@@ -14,6 +14,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   List<NoteSubjectItem>? _cachedSubjects;
   Set<int> _cachedExpanded = {0};
   Map<int, String> _cachedSelectedGrades = {0: 'Grade 12'};
+  String? _cachedCurriculumType;
+  int? _cachedStudentGrade;
   final Map<String, SubjectNotesDetail> _cachedDetails = {};
   final Map<String, LessonDetail> _cachedLessons = {};
 
@@ -31,6 +33,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   List<NoteSubjectItem>? get cachedSubjects => _cachedSubjects;
   Set<int> get cachedExpanded => _cachedExpanded;
   Map<int, String> get cachedSelectedGrades => _cachedSelectedGrades;
+  String? get cachedCurriculumType => _cachedCurriculumType;
+  int? get cachedStudentGrade => _cachedStudentGrade;
   SubjectNotesDetail? getCachedDetail(String id) => _cachedDetails[id];
   LessonDetail? getCachedLesson(String id) => _cachedLessons[id];
 
@@ -38,11 +42,22 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadNotesSubjects event,
     Emitter<NotesState> emit,
   ) async {
-    if (_cachedSubjects != null && _cachedSubjects!.isNotEmpty) {
+    // If not force-refreshing, check that cached data belongs to the same
+    // student grade. If the grade is unknown (null) but subjects exist, treat
+    // it as stale and reload so a newly-logged-in student always gets fresh data.
+    final hasCachedSubjects =
+        _cachedSubjects != null && _cachedSubjects!.isNotEmpty;
+    final cacheIsValid = !event.forceRefresh &&
+        hasCachedSubjects &&
+        _cachedStudentGrade != null; // grade must be known to trust the cache
+
+    if (cacheIsValid) {
       emit(NotesSubjectsLoaded(
         subjects: _cachedSubjects!,
         expandedIndices: _cachedExpanded,
         selectedGrades: _cachedSelectedGrades,
+        curriculumType: _cachedCurriculumType,
+        studentGrade: _cachedStudentGrade,
       ));
       return;
     }
@@ -51,10 +66,20 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     try {
       final subjects = await _notesService.getShortNotesSubjects();
       _cachedSubjects = subjects;
+      _cachedCurriculumType = subjects.firstOrNull?.curriculumType;
+      _cachedStudentGrade = subjects.firstOrNull?.studentGrade;
+      // Reset selection state when grade changes (avoid showing Grade 12
+      // selection on a fresh load for Grade 6/8 students).
+      if (event.forceRefresh) {
+        _cachedExpanded = {0};
+        _cachedSelectedGrades = {};
+      }
       emit(NotesSubjectsLoaded(
         subjects: subjects,
         expandedIndices: _cachedExpanded,
         selectedGrades: _cachedSelectedGrades,
+        curriculumType: _cachedCurriculumType,
+        studentGrade: _cachedStudentGrade,
       ));
     } catch (e) {
       emit(NotesError(e.toString()));
@@ -78,6 +103,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         subjects: _cachedSubjects!,
         expandedIndices: _cachedExpanded,
         selectedGrades: _cachedSelectedGrades,
+        curriculumType: _cachedCurriculumType,
+        studentGrade: _cachedStudentGrade,
       ));
     }
   }
@@ -95,6 +122,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         subjects: _cachedSubjects!,
         expandedIndices: _cachedExpanded,
         selectedGrades: _cachedSelectedGrades,
+        curriculumType: _cachedCurriculumType,
+        studentGrade: _cachedStudentGrade,
       ));
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kuta_grade/features/grades/models/national_exam_dashboard_model.dart';
 import 'package:kuta_grade/features/grades/screens/exam_simulator_screen.dart';
+import 'package:kuta_grade/features/grades/widgets/grade_screen_shell.dart';
 
 void main() {
   testWidgets('ExamSimulatorScreen renders all reference design elements without back button', (
@@ -186,9 +187,55 @@ void main() {
     expect(find.text('640 Questions'), findsOneWidget);
 
     // 6. Bottom Navigation
-    expect(find.text('Exams'), findsOneWidget);
-    expect(find.text('Notes'), findsOneWidget);
-    expect(find.text('Practice'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.byType(GradeBottomNavBar), findsOneWidget);
+    expect(find.byIcon(Icons.dashboard_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.edit_note_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
+  });
+  test('NationalExamDashboardModel serializes to JSON string and deserializes correctly', () {
+    const original = NationalExamDashboardModel(
+      student: StudentInfo(
+        name: 'Ruth',
+        gradeLevel: 12,
+        stream: 'NATURAL',
+        isPremium: true,
+      ),
+      bannerExam: BannerExamInfo(
+        title: '2022 National Exam',
+        subjectName: 'Physics',
+        action: 'Resume Exam',
+        timeRemainingSeconds: 2520,
+        answeredQuestions: 34,
+        totalQuestions: 100,
+      ),
+      subjectsCount: 1,
+      subjects: [
+        NationalExamSubjectModel(
+          id: 'sub-1',
+          name: 'Mathematics',
+          code: 'MATH',
+          stream: 'NATURAL',
+          description: 'Natural Science Track',
+          subcategories: 'Natural Science Track',
+          iconKey: 'calculator',
+          hexColor: '#3B82F6',
+          totalExams: 10,
+          totalQuestions: 850,
+          completedExams: 4,
+          progressPercentage: 0.45,
+        ),
+      ],
+    );
+
+    final jsonStr = original.toJsonString();
+    final restored = NationalExamDashboardModel.fromJsonString(jsonStr);
+
+    expect(restored, isNotNull);
+    expect(restored!.student.name, 'Ruth');
+    expect(restored.student.gradeLevel, 12);
+    expect(restored.bannerExam?.title, '2022 National Exam');
+    expect(restored.subjects.length, 1);
+    expect(restored.subjects.first.name, 'Mathematics');
   });
 }

@@ -29,9 +29,13 @@ class ApiNotesService implements NotesService {
       if (response.statusCode == 200 && response.data != null) {
         final dynamic data = response.data;
         List<dynamic> list = [];
+        int? studentGrade;
+        String? curriculumType;
         if (data is List) {
           list = data;
         } else if (data is Map<String, dynamic>) {
+          studentGrade = (data['studentGrade'] as num?)?.toInt();
+          curriculumType = data['curriculumType'] as String?;
           if (data['data'] is List) {
             list = data['data'] as List<dynamic>;
           } else if (data['subjects'] is List) {
@@ -39,7 +43,11 @@ class ApiNotesService implements NotesService {
           }
         }
         return list
-            .map((item) => NoteSubjectItem.fromJson(item as Map<String, dynamic>))
+            .map((item) => NoteSubjectItem.fromJson(
+                  item as Map<String, dynamic>,
+                  parentStudentGrade: studentGrade,
+                  parentCurriculumType: curriculumType,
+                ))
             .toList();
       }
       throw Exception('Failed to load notes subjects');

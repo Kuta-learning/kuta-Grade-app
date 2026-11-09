@@ -41,6 +41,11 @@ class NoteSubjectItem {
   final bool isSymbol;
   final String? symbol;
   final List<NoteGradeOption> grades;
+  final int? studentGrade;
+  final String? curriculumType;
+  final String? gradeBadge;
+  final int totalChapters;
+  final List<int> availableGrades;
 
   const NoteSubjectItem({
     required this.id,
@@ -51,9 +56,18 @@ class NoteSubjectItem {
     this.isSymbol = false,
     this.symbol,
     required this.grades,
+    this.studentGrade,
+    this.curriculumType,
+    this.gradeBadge,
+    this.totalChapters = 0,
+    this.availableGrades = const [],
   });
 
-  factory NoteSubjectItem.fromJson(Map<String, dynamic> json) {
+  factory NoteSubjectItem.fromJson(
+    Map<String, dynamic> json, {
+    int? parentStudentGrade,
+    String? parentCurriculumType,
+  }) {
     Color parseColor(dynamic value, Color fallback) {
       if (value is int) return Color(value);
       if (value is String) {
@@ -69,6 +83,17 @@ class NoteSubjectItem {
 
     final name = json['name'] as String? ?? json['title'] as String? ?? '';
     final norm = name.toLowerCase();
+
+    final availableGrades = (json['availableGrades'] as List<dynamic>?)
+            ?.map((e) => (e as num).toInt())
+            .toList() ??
+        const <int>[];
+    final totalChapters = (json['totalChapters'] as num?)?.toInt() ?? 0;
+    final gradeBadge = json['gradeBadge'] as String?;
+    final studentGrade =
+        (json['studentGrade'] as num?)?.toInt() ?? parentStudentGrade;
+    final curriculumType =
+        json['curriculumType'] as String? ?? parentCurriculumType;
 
     Color defaultBg = const Color(0xFFFFDBCA);
     Color defaultColor = const Color(0xFF341100);
@@ -235,11 +260,33 @@ class NoteSubjectItem {
     }
 
     final rawGrades = json['grades'] as List<dynamic>? ?? [];
-    final grades = rawGrades.isNotEmpty
-        ? rawGrades
-              .map((g) => NoteGradeOption.fromJson(g as Map<String, dynamic>))
-              .toList()
-        : defaultGrades;
+    List<NoteGradeOption> grades;
+    if (rawGrades.isNotEmpty) {
+      grades = rawGrades
+          .map((g) => NoteGradeOption.fromJson(g as Map<String, dynamic>))
+          .toList();
+    } else if (availableGrades.isNotEmpty && !availableGrades.any((g) => g >= 9)) {
+      // Primary grades (e.g. Grade 6 or Grade 8)
+      grades = availableGrades
+          .map((g) => NoteGradeOption(
+                name: 'Grade $g',
+                chapters: '$totalChapters Chapters',
+                gradeLevel: g,
+              ))
+          .toList();
+    } else if (studentGrade != null && studentGrade <= 8) {
+      // Single primary grade fallback
+      grades = [
+        NoteGradeOption(
+          name: 'Grade $studentGrade',
+          chapters: '$totalChapters Chapters',
+          gradeLevel: studentGrade,
+        ),
+      ];
+    } else {
+      // High school (Grade 9-12)
+      grades = defaultGrades;
+    }
 
     return NoteSubjectItem(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
@@ -250,6 +297,11 @@ class NoteSubjectItem {
       isSymbol: defaultIsSymbol,
       symbol: defaultSymbol,
       grades: grades,
+      studentGrade: studentGrade,
+      curriculumType: curriculumType,
+      gradeBadge: gradeBadge,
+      totalChapters: totalChapters,
+      availableGrades: availableGrades,
     );
   }
 
@@ -262,6 +314,11 @@ class NoteSubjectItem {
     'isSymbol': isSymbol,
     'symbol': symbol,
     'grades': grades.map((g) => g.toJson()).toList(),
+    if (studentGrade != null) 'studentGrade': studentGrade,
+    if (curriculumType != null) 'curriculumType': curriculumType,
+    if (gradeBadge != null) 'gradeBadge': gradeBadge,
+    'totalChapters': totalChapters,
+    'availableGrades': availableGrades,
   };
 }
 
@@ -331,6 +388,9 @@ class SubjectNotesDetail {
   final String totalFileSize;
   final String downloadAllUrl;
   final List<ChapterNoteItem> chapters;
+  final bool requiresGradeSelection;
+  final int? studentGrade;
+  final String? curriculumType;
 
   const SubjectNotesDetail({
     required this.subjectId,
@@ -340,6 +400,9 @@ class SubjectNotesDetail {
     required this.totalFileSize,
     required this.downloadAllUrl,
     required this.chapters,
+    this.requiresGradeSelection = true,
+    this.studentGrade,
+    this.curriculumType,
   });
 
   factory SubjectNotesDetail.fromJson(Map<String, dynamic> json) {
@@ -359,10 +422,19 @@ class SubjectNotesDetail {
         json['title'] as String? ??
         'Subject Notes';
 
+    final studentGrade = (json['studentGrade'] as num?)?.toInt();
+    final selectedGradeInt = (json['selectedGrade'] as num?)?.toInt();
+    final requiresGradeSelection = json['requiresGradeSelection'] as bool? ??
+        ((studentGrade != null && studentGrade <= 8) ? false : true);
+    final curriculumType = json['curriculumType'] as String?;
+
     final resolvedGrade =
         json['gradeLevel']?.toString() ??
-        (json['selectedGrade'] != null
-            ? 'Grade ${json['selectedGrade']}'
+        (selectedGradeInt != null
+            ? 'Grade $selectedGradeInt'
+            : null) ??
+        (studentGrade != null
+            ? 'Grade $studentGrade'
             : null) ??
         'Grade 12';
 
@@ -381,6 +453,9 @@ class SubjectNotesDetail {
       chapters: rawChapters
           .map((c) => ChapterNoteItem.fromJson(c as Map<String, dynamic>))
           .toList(),
+      requiresGradeSelection: requiresGradeSelection,
+      studentGrade: studentGrade,
+      curriculumType: curriculumType,
     );
   }
 
@@ -392,6 +467,9 @@ class SubjectNotesDetail {
     'totalFileSize': totalFileSize,
     'downloadAllUrl': downloadAllUrl,
     'chapters': chapters.map((c) => c.toJson()).toList(),
+    'requiresGradeSelection': requiresGradeSelection,
+    if (studentGrade != null) 'studentGrade': studentGrade,
+    if (curriculumType != null) 'curriculumType': curriculumType,
   };
 }
 

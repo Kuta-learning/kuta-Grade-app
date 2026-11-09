@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Design system typography tokens extracted from the typography scale specifications.
-/// Supported Font Families:
+///
+/// Fonts are bundled locally (see `pubspec.yaml`), so no text style in this
+/// layer fetches fonts from the network. Supported families:
 /// - Poppins (Titles & Headings)
-/// - Inter (Primary System Font - Adult / Admin)
-/// - Quicksand (Kids & Youth Modules - Ages 6-10)
-/// - JetBrains Mono (Data, Code & Timestamps)
+/// - Open Sans (Body, Labels, Captions & UI text)
 class AppTypography {
   // Prevent instantiation
   AppTypography._();
@@ -16,16 +15,15 @@ class AppTypography {
   // FONT FAMILIES
   // ==========================================
   static const String fontFamilyPoppins = 'Poppins';
-  static const String fontFamilyInter = 'Inter';
-  static const String fontFamilyQuicksand = 'Quicksand';
-  static const String fontFamilyMono = 'JetBrains Mono';
+  static const String fontFamilyOpenSans = 'Open Sans';
 
   // ==========================================
   // 1. MOBILE TYPE SCALE (Primary / Mobile App)
   // ==========================================
 
   /// display-lg (Mobile: 28px / 36px line height, Bold 700)
-  static final TextStyle displayLg = GoogleFonts.poppins(
+  static const TextStyle displayLg = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 28,
     height: 36 / 28,
     fontWeight: FontWeight.w700,
@@ -33,7 +31,8 @@ class AppTypography {
   );
 
   /// headline-md (Mobile: 20px / 28px line height, Medium 500) - Auth/Modal Headings
-  static final TextStyle headlineMd = GoogleFonts.poppins(
+  static const TextStyle headlineMd = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 20,
     height: 28 / 22,
     fontWeight: FontWeight.w500,
@@ -41,7 +40,8 @@ class AppTypography {
   );
 
   /// headline-lg (Mobile: 22px / 28px line height, Bold 700)
-  static final TextStyle headlineLg = GoogleFonts.poppins(
+  static const TextStyle headlineLg = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 22,
     height: 28 / 20,
     fontWeight: FontWeight.w700,
@@ -49,7 +49,8 @@ class AppTypography {
   );
 
   /// body-xl (Mobile: 16px / 24px line height, Regular 400) - Subtitles & form inputs
-  static final TextStyle bodyXl = GoogleFonts.inter(
+  static const TextStyle bodyXl = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 16,
     height: 24 / 16,
     fontWeight: FontWeight.w400,
@@ -57,7 +58,8 @@ class AppTypography {
   );
 
   /// title-md (Mobile: 16px / 22px line height, SemiBold 600)
-  static final TextStyle titleMd = GoogleFonts.inter(
+  static const TextStyle titleMd = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 16,
     height: 22 / 16,
     fontWeight: FontWeight.w600,
@@ -65,7 +67,8 @@ class AppTypography {
   );
 
   /// body-lg (Mobile: 15px / 22px line height, Regular 400)
-  static final TextStyle bodyLg = GoogleFonts.inter(
+  static const TextStyle bodyLg = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 15,
     height: 22 / 15,
     fontWeight: FontWeight.w400,
@@ -73,7 +76,8 @@ class AppTypography {
   );
 
   /// subtitle-lg (Mobile: 18px / 28px line height, Regular 400) - Profile subtitles
-  static final TextStyle subtitleLg = GoogleFonts.inter(
+  static const TextStyle subtitleLg = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 18,
     height: 28 / 18,
     fontWeight: FontWeight.w400,
@@ -81,7 +85,8 @@ class AppTypography {
   );
 
   /// stat-value (Mobile: 32px / 40px line height, SemiBold 600) - Profile metric values
-  static final TextStyle statValue = GoogleFonts.inter(
+  static const TextStyle statValue = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 32,
     height: 40 / 32,
     fontWeight: FontWeight.w600,
@@ -89,7 +94,8 @@ class AppTypography {
   );
 
   /// label-md (Mobile: 14px / 20px line height, SemiBold 600) - Form labels & buttons
-  static final TextStyle labelMd = GoogleFonts.inter(
+  static const TextStyle labelMd = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w600,
@@ -98,7 +104,8 @@ class AppTypography {
   );
 
   /// body-md (Mobile: 14px / 20px line height, Regular 400)
-  static final TextStyle bodyMd = GoogleFonts.inter(
+  static const TextStyle bodyMd = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w400,
@@ -106,7 +113,8 @@ class AppTypography {
   );
 
   /// body-md medium (Mobile: 14px / 20px line height, Medium 500)
-  static final TextStyle bodyMdMedium = GoogleFonts.inter(
+  static const TextStyle bodyMdMedium = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w500,
@@ -114,7 +122,8 @@ class AppTypography {
   );
 
   /// label-md medium (Mobile: 12px / 16px line height, Medium 500) - Auth hints & dividers
-  static final TextStyle labelMdMedium = GoogleFonts.inter(
+  static const TextStyle labelMdMedium = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 12,
     height: 16 / 12,
     fontWeight: FontWeight.w500,
@@ -122,7 +131,8 @@ class AppTypography {
   );
 
   /// label-md semibold (Mobile: 12px / 16px line height, SemiBold 600) - Link buttons
-  static final TextStyle labelMdSemiBold = GoogleFonts.inter(
+  static const TextStyle labelMdSemiBold = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 12,
     height: 16 / 12,
     fontWeight: FontWeight.w600,
@@ -130,7 +140,8 @@ class AppTypography {
   );
 
   /// label-sm (Mobile: 11px / 14px line height, SemiBold 600)
-  static final TextStyle labelSm = GoogleFonts.inter(
+  static const TextStyle labelSm = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 11,
     height: 14 / 11,
     fontWeight: FontWeight.w600,
@@ -138,7 +149,8 @@ class AppTypography {
   );
 
   /// caption-sm (Mobile: 10px / 15px line height, Regular 400) - Helper text
-  static final TextStyle captionSm = GoogleFonts.inter(
+  static const TextStyle captionSm = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 10,
     height: 15 / 10,
     fontWeight: FontWeight.w400,
@@ -146,19 +158,12 @@ class AppTypography {
   );
 
   /// caption-bold (Mobile: 10px / 15px line height, Bold 700) - Badges & security marks
-  static final TextStyle captionBold = GoogleFonts.inter(
+  static const TextStyle captionBold = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 10,
     height: 15 / 10,
     fontWeight: FontWeight.w700,
     letterSpacing: 1.0,
-    color: AppColors.textSecondary,
-  );
-
-  /// caption-mono (Mobile: 10px / 12px line height, JetBrains Mono 500)
-  static final TextStyle captionMono = GoogleFonts.jetBrainsMono(
-    fontSize: 10,
-    height: 12 / 10,
-    fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
   );
 
@@ -167,7 +172,8 @@ class AppTypography {
   // ==========================================
 
   /// display-lg (Desktop: 36px / 44px line height, Bold 700)
-  static final TextStyle displayLgDesktop = GoogleFonts.poppins(
+  static const TextStyle displayLgDesktop = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 36,
     height: 44 / 36,
     fontWeight: FontWeight.w700,
@@ -175,7 +181,8 @@ class AppTypography {
   );
 
   /// headline-lg (Desktop: 24px / 32px line height, Bold 700)
-  static final TextStyle headlineLgDesktop = GoogleFonts.poppins(
+  static const TextStyle headlineLgDesktop = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 24,
     height: 32 / 24,
     fontWeight: FontWeight.w700,
@@ -183,7 +190,8 @@ class AppTypography {
   );
 
   /// title-md (Desktop: 18px / 24px line height, SemiBold 600)
-  static final TextStyle titleMdDesktop = GoogleFonts.poppins(
+  static const TextStyle titleMdDesktop = TextStyle(
+    fontFamily: fontFamilyPoppins,
     fontSize: 18,
     height: 24 / 18,
     fontWeight: FontWeight.w600,
@@ -191,7 +199,8 @@ class AppTypography {
   );
 
   /// body-lg (Desktop: 16px / 24px line height, Regular 400)
-  static final TextStyle bodyLgDesktop = GoogleFonts.inter(
+  static const TextStyle bodyLgDesktop = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 16,
     height: 24 / 16,
     fontWeight: FontWeight.w400,
@@ -199,7 +208,8 @@ class AppTypography {
   );
 
   /// body-md (Desktop: 14px / 20px line height, Regular 400)
-  static final TextStyle bodyMdDesktop = GoogleFonts.inter(
+  static const TextStyle bodyMdDesktop = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 14,
     height: 20 / 14,
     fontWeight: FontWeight.w400,
@@ -207,63 +217,19 @@ class AppTypography {
   );
 
   /// label-sm (Desktop: 12px / 16px line height, SemiBold 600)
-  static final TextStyle labelSmDesktop = GoogleFonts.inter(
+  static const TextStyle labelSmDesktop = TextStyle(
+    fontFamily: fontFamilyOpenSans,
     fontSize: 12,
     height: 16 / 12,
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
   );
 
-  /// caption-mono (Desktop: 11px / 14px line height, JetBrains Mono 500)
-  static final TextStyle captionMonoDesktop = GoogleFonts.jetBrainsMono(
-    fontSize: 11,
-    height: 14 / 11,
-    fontWeight: FontWeight.w500,
-    color: AppColors.textSecondary,
-  );
-
   // ==========================================
-  // 3. KIDS & YOUTH MODULES (AGES 6-10) - QUICKSAND
+  // 3. BACKWARD COMPATIBILITY ALIASES
   // ==========================================
-
-  /// kids display-lg (Quicksand, Bold 700)
-  static final TextStyle kidsDisplayLg = GoogleFonts.quicksand(
-    fontSize: 28,
-    height: 36 / 28,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-  );
-
-  /// kids headline-lg (Quicksand, Bold 700)
-  static final TextStyle kidsHeadlineLg = GoogleFonts.quicksand(
-    fontSize: 20,
-    height: 28 / 20,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-  );
-
-  /// kids title-md (Quicksand, SemiBold 600)
-  static final TextStyle kidsTitleMd = GoogleFonts.quicksand(
-    fontSize: 16,
-    height: 22 / 16,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
-  );
-
-  /// kids body-md (Quicksand, Medium 500)
-  static final TextStyle kidsBodyMd = GoogleFonts.quicksand(
-    fontSize: 14,
-    height: 20 / 14,
-    fontWeight: FontWeight.w500,
-    color: AppColors.textPrimary,
-  );
-
-  // ==========================================
-  // 4. BACKWARD COMPATIBILITY ALIASES
-  // ==========================================
-  static final TextStyle heading1 = displayLg;
-  static final TextStyle heading2 = headlineLg;
-  static final TextStyle body = bodyMd;
-  static final TextStyle caption = labelSm;
+  static const TextStyle heading1 = displayLg;
+  static const TextStyle heading2 = headlineLg;
+  static const TextStyle body = bodyMd;
+  static const TextStyle caption = labelSm;
 }
-
