@@ -29,10 +29,6 @@ abstract class StorageKeys {
   /// Cleared on logout via [ProfileBloc]'s reset flow.
   static const String profileCache = 'profile_cache';
 
-  // ── Notes Cache ───────────────────────────────────────────────────────────
-  /// Serialized JSON string of the notes subjects list (HighSchoolNotesScreen).
-  static const String notesSubjectsCache = 'notes_subjects_cache';
-
   // ── National Exam Dashboard Cache ─────────────────────────────────────────
   /// Serialized JSON string of [NationalExamDashboardModel].
   static const String examDashboardCache = 'exam_dashboard_cache';
