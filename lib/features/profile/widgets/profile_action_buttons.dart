@@ -27,6 +27,7 @@ class ProfileActionButtons extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -36,18 +37,27 @@ class ProfileActionButtons extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
                       Icons.edit_outlined,
-                      size: 18,
+                      size: 17,
                       color: Color(0xFF1E5BB0),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Edit Profile',
-                      style: AppTypography.labelMd.copyWith(
-                        color: const Color(0xFF1E5BB0),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Edit Profile',
+                          maxLines: 1,
+                          style: AppTypography.labelMdMedium.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1E5BB0),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -69,23 +79,33 @@ class ProfileActionButtons extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
                       Icons.local_offer_outlined,
-                      size: 18,
+                      size: 17,
                       color: Colors.white,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Manage Subscription',
-                      style: AppTypography.labelMd.copyWith(
-                        color: Colors.white,
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Manage Subscription',
+                          maxLines: 1,
+                          style: AppTypography.labelMdMedium.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -98,4 +118,3 @@ class ProfileActionButtons extends StatelessWidget {
     );
   }
 }
-
