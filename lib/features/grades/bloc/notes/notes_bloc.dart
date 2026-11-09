@@ -1,4 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/cache/cache_manager.dart';
+import '../../../../core/storage/storage_keys.dart';
 import '../../models/note_models.dart';
 import '../../services/notes_service.dart';
 
@@ -6,10 +9,11 @@ part 'notes_event.dart';
 part 'notes_state.dart';
 
 /// Manages Short Notes, Chapters, Lessons, and PDF interactions.
-/// Caches loaded data across navigation transitions between Notes,
-/// Note Detail, and Lesson Detail screens.
+/// Backed by [CacheManager] with persistent multi-tier caching,
+/// offline support, and grade-isolated storage keys.
 class NotesBloc extends Bloc<NotesEvent, NotesState> {
   final NotesService _notesService;
+  final CacheManager _cacheManager;
 
   List<NoteSubjectItem>? _cachedSubjects;
   Set<int> _cachedExpanded = {0};
@@ -18,8 +22,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   int? _cachedStudentGrade;
   final Map<String, SubjectNotesDetail> _cachedDetails = {};
   final Map<String, LessonDetail> _cachedLessons = {};
+  final Set<String> _inProgressDownloads = {};
 
-  NotesBloc(this._notesService) : super(const NotesInitial()) {
+  NotesBloc(this._notesService, {CacheManager? cacheManager})
+      : _cacheManager = cacheManager ?? CacheManager.instance,
+        super(const NotesInitial()) {
     on<LoadNotesSubjects>(_onLoadNotesSubjects);
     on<ToggleSubjectExpand>(_onToggleSubjectExpand);
     on<SelectGradeLevel>(_onSelectGradeLevel);
@@ -42,14 +49,12 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadNotesSubjects event,
     Emitter<NotesState> emit,
   ) async {
-    // If not force-refreshing, check that cached data belongs to the same
-    // student grade. If the grade is unknown (null) but subjects exist, treat
-    // it as stale and reload so a newly-logged-in student always gets fresh data.
+    // If not force-refreshing, check in-memory cache
     final hasCachedSubjects =
         _cachedSubjects != null && _cachedSubjects!.isNotEmpty;
     final cacheIsValid = !event.forceRefresh &&
         hasCachedSubjects &&
-        _cachedStudentGrade != null; // grade must be known to trust the cache
+        _cachedStudentGrade != null;
 
     if (cacheIsValid) {
       emit(NotesSubjectsLoaded(
@@ -68,12 +73,20 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       _cachedSubjects = subjects;
       _cachedCurriculumType = subjects.firstOrNull?.curriculumType;
       _cachedStudentGrade = subjects.firstOrNull?.studentGrade;
-      // Reset selection state when grade changes (avoid showing Grade 12
-      // selection on a fresh load for Grade 6/8 students).
       if (event.forceRefresh) {
         _cachedExpanded = {0};
         _cachedSelectedGrades = {};
       }
+
+      // Persist to CacheManager with grade-isolated key for disk persistence & offline support
+      final grade = _cachedStudentGrade ?? 12;
+      final key = '${StorageKeys.notesSubjectsCache}_grade_$grade';
+      await _cacheManager.save<List<NoteSubjectItem>>(
+        key: key,
+        data: subjects,
+        toJson: NoteSubjectItem.listToJsonString,
+      );
+
       emit(NotesSubjectsLoaded(
         subjects: subjects,
         expandedIndices: _cachedExpanded,
@@ -82,7 +95,27 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         studentGrade: _cachedStudentGrade,
       ));
     } catch (e) {
-      emit(NotesError(e.toString()));
+      // If network fails, attempt to retrieve grade-isolated data from CacheManager
+      final grade = _cachedStudentGrade ?? 12;
+      final key = '${StorageKeys.notesSubjectsCache}_grade_$grade';
+      final offlineCached = await _cacheManager.getCached<List<NoteSubjectItem>>(
+        key: key,
+        fromJson: NoteSubjectItem.listFromJsonString,
+      );
+      if (offlineCached != null && offlineCached.isNotEmpty) {
+        _cachedSubjects = offlineCached;
+        _cachedCurriculumType = offlineCached.firstOrNull?.curriculumType;
+        _cachedStudentGrade = offlineCached.firstOrNull?.studentGrade;
+        emit(NotesSubjectsLoaded(
+          subjects: offlineCached,
+          expandedIndices: _cachedExpanded,
+          selectedGrades: _cachedSelectedGrades,
+          curriculumType: _cachedCurriculumType,
+          studentGrade: _cachedStudentGrade,
+        ));
+      } else {
+        emit(NotesError(e.toString()));
+      }
     }
   }
 
@@ -132,8 +165,14 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadSubjectNotesDetail event,
     Emitter<NotesState> emit,
   ) async {
-    final cached = _cachedDetails[event.subjectId];
+    final cached = _cachedDetails[event.subjectId] ??
+        await _cacheManager.getCached<SubjectNotesDetail>(
+          key: StorageKeys.notesSubjectDetailCache(event.subjectId),
+          fromJson: SubjectNotesDetail.fromJsonString,
+        );
+
     if (cached != null) {
+      _cachedDetails[event.subjectId] = cached;
       emit(SubjectNotesDetailLoaded(detail: cached));
       return;
     }
@@ -142,6 +181,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     try {
       final detail = await _notesService.getSubjectNotesDetails(event.subjectId);
       _cachedDetails[event.subjectId] = detail;
+      await _cacheManager.save<SubjectNotesDetail>(
+        key: StorageKeys.notesSubjectDetailCache(event.subjectId),
+        data: detail,
+        toJson: (d) => d.toJsonString(),
+      );
       emit(SubjectNotesDetailLoaded(detail: detail));
     } catch (e) {
       emit(NotesError(e.toString()));
@@ -152,8 +196,14 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadChapterLessonDetail event,
     Emitter<NotesState> emit,
   ) async {
-    final cached = _cachedLessons[event.chapterId];
+    final cached = _cachedLessons[event.chapterId] ??
+        await _cacheManager.getCached<LessonDetail>(
+          key: StorageKeys.notesChapterLessonCache(event.chapterId),
+          fromJson: LessonDetail.fromJsonString,
+        );
+
     if (cached != null) {
+      _cachedLessons[event.chapterId] = cached;
       emit(LessonDetailLoaded(lesson: cached));
       return;
     }
@@ -162,6 +212,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     try {
       final lesson = await _notesService.getChapterNoteDetail(event.chapterId);
       _cachedLessons[event.chapterId] = lesson;
+      await _cacheManager.save<LessonDetail>(
+        key: StorageKeys.notesChapterLessonCache(event.chapterId),
+        data: lesson,
+        toJson: (l) => l.toJsonString(),
+      );
       emit(LessonDetailLoaded(lesson: lesson));
     } catch (e) {
       emit(NotesError(e.toString()));
@@ -175,14 +230,18 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     if (state is LessonDetailLoaded) {
       final current = state as LessonDetailLoaded;
       emit(current.copyWith(isProgressSaving: true));
-      try {
-        await _notesService.updateChapterReadingProgress(
-          event.chapterId,
-          isRead: event.isRead,
-        );
-        emit(current.copyWith(isProgressSaving: false));
-      } catch (_) {
-        emit(current.copyWith(isProgressSaving: false));
+    }
+    try {
+      await _notesService.updateChapterReadingProgress(
+        event.chapterId,
+        isRead: event.isRead,
+      );
+      if (state is LessonDetailLoaded) {
+        emit((state as LessonDetailLoaded).copyWith(isProgressSaving: false));
+      }
+    } catch (_) {
+      if (state is LessonDetailLoaded) {
+        emit((state as LessonDetailLoaded).copyWith(isProgressSaving: false));
       }
     }
   }
@@ -191,15 +250,26 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     DownloadChapterPdfEvent event,
     Emitter<NotesState> emit,
   ) async {
+    if (_inProgressDownloads.contains(event.chapterId)) return;
+    _inProgressDownloads.add(event.chapterId);
+
     try {
       final url = await _notesService.downloadChapterPdf(event.chapterId);
       if (state is SubjectNotesDetailLoaded) {
         final current = state as SubjectNotesDetailLoaded;
         emit(current.copyWith(
-          activeDownloadMessage: 'Downloading: $url',
+          activeDownloadMessage: 'Opening download: $url',
         ));
       }
-    } catch (_) {}
+      if (url.isNotEmpty) {
+        final uri = Uri.tryParse(url);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      }
+    } catch (_) {
+    } finally {
+      _inProgressDownloads.remove(event.chapterId);
+    }
   }
 }
-

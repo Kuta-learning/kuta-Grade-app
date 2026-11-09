@@ -29,6 +29,7 @@ class NationalExamService {
   Stream<CacheResponse<NationalExamDashboardModel>> watchDashboard({
     Duration ttl = defaultDashboardTtl,
     bool forceRefresh = false,
+    int? expectedGradeLevel,
   }) {
     return _cache.watch<NationalExamDashboardModel>(
       key: StorageKeys.examDashboardCache,
@@ -36,6 +37,9 @@ class NationalExamService {
       networkFetch: getDashboard,
       fromJson: (raw) => NationalExamDashboardModel.fromJsonString(raw)!,
       toJson: (model) => model.toJsonString(),
+      guard: expectedGradeLevel != null
+          ? (dash) => dash.student.gradeLevel == expectedGradeLevel
+          : null,
       forceRefresh: forceRefresh,
     );
   }

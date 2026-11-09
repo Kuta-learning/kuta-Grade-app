@@ -36,6 +36,18 @@ abstract class StorageKeys {
   /// Epoch timestamp (milliseconds) when [examDashboardCache] was last updated.
   static const String examDashboardCacheTime = 'exam_dashboard_cache_time';
 
+  // ── Short Notes & Chapters Cache ──────────────────────────────────────────
+  /// Serialized JSON cache of short notes subjects list.
+  static const String notesSubjectsCache = 'notes_subjects_cache';
+
+  /// Generates the cache key for a specific subject's chapters detail.
+  static String notesSubjectDetailCache(String subjectId) =>
+      'notes_subject_detail_$subjectId';
+
+  /// Generates the cache key for a specific chapter lesson detail.
+  static String notesChapterLessonCache(String chapterId) =>
+      'notes_chapter_lesson_$chapterId';
+
   // ── User Preferences ─────────────────────────────────────────────────────
   /// App locale code (e.g. "en", "am").
   static const String preferredLocale = 'preferred_locale';
