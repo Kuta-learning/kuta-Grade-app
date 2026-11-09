@@ -11,6 +11,22 @@ class _MemoryCacheEntry {
   _MemoryCacheEntry({required this.data, required this.timestamp});
 }
 
+class _InMemoryLocalStorage implements LocalStorage {
+  final Map<String, String> _data = {};
+
+  @override
+  Future<void> setString(String key, String value) async => _data[key] = value;
+
+  @override
+  Future<String?> getString(String key) async => _data[key];
+
+  @override
+  Future<void> remove(String key) async => _data.remove(key);
+
+  @override
+  Future<void> clear() async => _data.clear();
+}
+
 /// Centralized, type-safe multi-tier cache engine implementing the
 /// Stale-While-Revalidate (SWR) caching pattern for Flutter apps.
 ///
@@ -25,6 +41,7 @@ class CacheManager {
   static CacheManager? _instance;
 
   final LocalStorage? _customStorage;
+  LocalStorage? _fallbackStorage;
   final Map<String, _MemoryCacheEntry> _memoryCache = {};
 
   CacheManager({LocalStorage? storage}) : _customStorage = storage;
@@ -39,7 +56,16 @@ class CacheManager {
     if (_customStorage != null) return _customStorage;
     final inst = SharedPrefsStorage.instanceOrNull;
     if (inst != null) return inst;
-    return await SharedPrefsStorage.getInstance();
+    try {
+      return await SharedPrefsStorage.getInstance().timeout(
+        const Duration(milliseconds: 200),
+        onTimeout: () => throw TimeoutException('Storage timeout'),
+      );
+    } catch (_) {
+      // In environments where SharedPreferences platform channel is not initialized
+      // (e.g. standalone bloc / widget tests), fallback gracefully to in-memory storage.
+      return _fallbackStorage ??= _InMemoryLocalStorage();
+    }
   }
 
   String _timeKey(String key) => '$key:timestamp';

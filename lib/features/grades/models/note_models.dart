@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 /// Grade level option under an expandable subject card.
@@ -320,6 +321,19 @@ class NoteSubjectItem {
     'totalChapters': totalChapters,
     'availableGrades': availableGrades,
   };
+
+  String toJsonString() => jsonEncode(toJson());
+
+  static NoteSubjectItem fromJsonString(String raw) =>
+      NoteSubjectItem.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+
+  static String listToJsonString(List<NoteSubjectItem> list) =>
+      jsonEncode(list.map((item) => item.toJson()).toList());
+
+  static List<NoteSubjectItem> listFromJsonString(String raw) =>
+      (jsonDecode(raw) as List)
+          .map((item) => NoteSubjectItem.fromJson(item as Map<String, dynamic>))
+          .toList();
 }
 
 /// Chapter note row item under NoteDetailScreen.
@@ -471,6 +485,11 @@ class SubjectNotesDetail {
     if (studentGrade != null) 'studentGrade': studentGrade,
     if (curriculumType != null) 'curriculumType': curriculumType,
   };
+
+  String toJsonString() => jsonEncode(toJson());
+
+  static SubjectNotesDetail fromJsonString(String raw) =>
+      SubjectNotesDetail.fromJson(jsonDecode(raw) as Map<String, dynamic>);
 }
 
 /// Diagram card in lesson detail.
@@ -713,4 +732,9 @@ class LessonDetail {
     'resources': resources.map((r) => r.toJson()).toList(),
     'progressPercent': progressPercent,
   };
+
+  String toJsonString() => jsonEncode(toJson());
+
+  static LessonDetail fromJsonString(String raw) =>
+      LessonDetail.fromJson(jsonDecode(raw) as Map<String, dynamic>);
 }
