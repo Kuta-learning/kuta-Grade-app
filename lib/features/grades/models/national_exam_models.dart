@@ -155,28 +155,128 @@ class ExamAnswerSubmission {
   };
 }
 
+class ExamQuestionReviewItem {
+  final String questionId;
+  final int? order;
+  final String questionText;
+  final String? selectedOptionId;
+  final String? selectedOptionText;
+  final String? selectedOptionLabel;
+  final String? correctOptionId;
+  final String? correctOptionText;
+  final String? correctOptionLabel;
+  final bool isCorrect;
+  final String? explanation;
+
+  const ExamQuestionReviewItem({
+    required this.questionId,
+    this.order,
+    required this.questionText,
+    this.selectedOptionId,
+    this.selectedOptionText,
+    this.selectedOptionLabel,
+    this.correctOptionId,
+    this.correctOptionText,
+    this.correctOptionLabel,
+    required this.isCorrect,
+    this.explanation,
+  });
+
+  factory ExamQuestionReviewItem.fromJson(Map<String, dynamic> json) {
+    return ExamQuestionReviewItem(
+      questionId: json['questionId'] as String? ?? json['id'] as String? ?? '',
+      order: json['order'] as int?,
+      questionText: json['questionText'] as String? ??
+          json['text'] as String? ??
+          json['prompt'] as String? ??
+          '',
+      selectedOptionId: json['selectedOptionId'] as String? ??
+          json['userOptionId'] as String?,
+      selectedOptionText: json['selectedOptionText'] as String? ??
+          json['userOptionText'] as String?,
+      selectedOptionLabel: json['selectedOptionLabel'] as String? ??
+          json['userOptionLabel'] as String?,
+      correctOptionId: json['correctOptionId'] as String?,
+      correctOptionText: json['correctOptionText'] as String?,
+      correctOptionLabel: json['correctOptionLabel'] as String?,
+      isCorrect: json['isCorrect'] as bool? ?? false,
+      explanation: json['explanation'] as String?,
+    );
+  }
+}
+
 class ExamResultReview {
   final String attemptId;
+  final String? examTitle;
+  final String? category;
   final int score;
   final int totalQuestions;
   final double accuracy;
   final int timeSpentSeconds;
+  final int? totalDurationSeconds;
+  final DateTime? submittedAt;
+  final List<ExamQuestionReviewItem> questions;
 
   const ExamResultReview({
     required this.attemptId,
+    this.examTitle,
+    this.category,
     required this.score,
     required this.totalQuestions,
     required this.accuracy,
     required this.timeSpentSeconds,
+    this.totalDurationSeconds,
+    this.submittedAt,
+    this.questions = const [],
   });
 
   factory ExamResultReview.fromJson(Map<String, dynamic> json) {
+    final rawQuestions =
+        (json['questions'] ?? json['results'] ?? json['review'])
+            as List<dynamic>? ??
+            [];
     return ExamResultReview(
       attemptId: json['attemptId'] as String? ?? json['id'] as String? ?? '',
+      examTitle: json['examTitle'] as String? ?? json['title'] as String?,
+      category: json['category'] as String? ?? json['subject'] as String?,
       score: json['score'] as int? ?? 0,
       totalQuestions: json['totalQuestions'] as int? ?? 0,
       accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
       timeSpentSeconds: json['timeSpentSeconds'] as int? ?? 0,
+      totalDurationSeconds:
+          json['totalDurationSeconds'] as int? ?? json['durationSeconds'] as int?,
+      submittedAt: json['submittedAt'] != null
+          ? DateTime.tryParse(json['submittedAt'] as String)
+          : null,
+      questions: rawQuestions
+          .map((q) => ExamQuestionReviewItem.fromJson(q as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  ExamResultReview copyWith({
+    String? attemptId,
+    String? examTitle,
+    String? category,
+    int? score,
+    int? totalQuestions,
+    double? accuracy,
+    int? timeSpentSeconds,
+    int? totalDurationSeconds,
+    DateTime? submittedAt,
+    List<ExamQuestionReviewItem>? questions,
+  }) {
+    return ExamResultReview(
+      attemptId: attemptId ?? this.attemptId,
+      examTitle: examTitle ?? this.examTitle,
+      category: category ?? this.category,
+      score: score ?? this.score,
+      totalQuestions: totalQuestions ?? this.totalQuestions,
+      accuracy: accuracy ?? this.accuracy,
+      timeSpentSeconds: timeSpentSeconds ?? this.timeSpentSeconds,
+      totalDurationSeconds: totalDurationSeconds ?? this.totalDurationSeconds,
+      submittedAt: submittedAt ?? this.submittedAt,
+      questions: questions ?? this.questions,
     );
   }
 }
