@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/cache/cache_manager.dart';
 import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
 import '../models/register_request.dart';
@@ -126,6 +127,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _authService.logout();
+    await CacheManager.instance.clearAll();
     emit(const AuthUnauthenticated());
   }
 }

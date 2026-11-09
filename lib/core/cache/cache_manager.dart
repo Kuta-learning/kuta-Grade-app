@@ -17,6 +17,7 @@ class _MemoryCacheEntry {
 /// Features:
 /// - L1 In-Memory Cache (0ms instant retrieval).
 /// - L2 Persistent Disk Storage via [LocalStorage] / [SharedPrefsStorage].
+/// - Guard validation to reject mismatched / invalid cached items (e.g. cross-grade data).
 /// - Background silent revalidation for stale data without UI spinners.
 /// - Graceful offline error handling (keeps stale data visible on failure).
 /// - Full debug logging to easily trace cache state transitions.
@@ -46,10 +47,12 @@ class CacheManager {
   /// Watches a resource with Stale-While-Revalidate semantics.
   ///
   /// 1. Emits cached data immediately if available (L1 memory or L2 disk).
-  /// 2. If the cached data is fresh (age <= [ttl]), stops here.
-  /// 3. If stale (age > [ttl]) or empty, fetches from [networkFetch].
-  /// 4. Emits the fresh network data and updates local memory and disk cache.
-  /// 5. If network fetch fails while serving stale data, logs the error and gracefully keeps
+  /// 2. If [guard] is provided and returns false, the cached item is treated as invalid
+  ///    and discarded, triggering an immediate network fetch.
+  /// 3. If the cached data is fresh (age <= [ttl]), stops here.
+  /// 4. If stale (age > [ttl]) or empty, fetches from [networkFetch].
+  /// 5. Emits the fresh network data and updates local memory and disk cache.
+  /// 6. If network fetch fails while serving stale data, logs the error and gracefully keeps
   ///    cached data displayed.
   Stream<CacheResponse<T>> watch<T>({
     required String key,
@@ -57,6 +60,7 @@ class CacheManager {
     required Future<T> Function() networkFetch,
     required T Function(String rawJson) fromJson,
     required String Function(T data) toJson,
+    bool Function(T data)? guard,
     bool forceRefresh = false,
     bool enableLogging = true,
   }) async* {
@@ -68,76 +72,27 @@ class CacheManager {
       // 1. Check L1 Memory Cache
       final memEntry = _memoryCache[key];
       if (memEntry != null && memEntry.data is T) {
-        final age = DateTime.now().difference(memEntry.timestamp);
-        final isStale = age > ttl;
-
-        log('L1 Memory cache HIT (age: ${age.inSeconds}s, TTL: ${ttl.inSeconds}s).');
-        yield CacheResponse<T>(
-          data: memEntry.data as T,
-          source: CacheSource.memory,
-          isStale: isStale,
-        );
-
-        if (!isStale) {
-          log('✅ Cache is FRESH. Returning immediately (0ms network).');
-          return;
-        }
-
-        log('⏳ Cache is STALE (${age.inSeconds}s old > ${ttl.inSeconds}s TTL). Triggering SILENT background re-fetch...');
-        try {
-          final freshData = await networkFetch();
-          await save<T>(key: key, data: freshData, toJson: toJson);
-          log('🔄 Silent background re-fetch SUCCEEDED. Updated cache & UI.');
-          yield CacheResponse<T>(
-            data: freshData,
-            source: CacheSource.network,
-            isStale: false,
-          );
-        } catch (e) {
-          log('⚠️ Silent background re-fetch FAILED: $e. Gracefully preserving cached data.');
-          yield CacheResponse<T>(
-            data: memEntry.data as T,
-            source: CacheSource.memory,
-            isStale: true,
-            backgroundError: e,
-          );
-        }
-        return;
-      }
-
-      // 2. Check L2 Disk Storage
-      final storage = await _getStorage();
-      final raw = await storage.getString(key);
-      final rawTime = await storage.getString(_timeKey(key));
-
-      if (raw != null && raw.isNotEmpty) {
-        try {
-          final cachedData = fromJson(raw);
-          final timestamp = rawTime != null
-              ? DateTime.tryParse(rawTime) ?? DateTime.now()
-              : DateTime.now();
-          final age = DateTime.now().difference(timestamp);
+        final data = memEntry.data as T;
+        if (guard != null && !guard(data)) {
+          log('⚠️ L1 Memory cache failed guard validation (e.g. grade/user mismatch). Invalidating entry and skipping cache.');
+          _memoryCache.remove(key);
+        } else {
+          final age = DateTime.now().difference(memEntry.timestamp);
           final isStale = age > ttl;
 
-          // Warm up L1 Memory Cache
-          _memoryCache[key] = _MemoryCacheEntry(
-            data: cachedData,
-            timestamp: timestamp,
-          );
-
-          log('L2 Disk cache HIT (age: ${age.inSeconds}s, TTL: ${ttl.inSeconds}s).');
+          log('L1 Memory cache HIT (age: ${age.inSeconds}s, TTL: ${ttl.inSeconds}s).');
           yield CacheResponse<T>(
-            data: cachedData,
-            source: CacheSource.disk,
+            data: data,
+            source: CacheSource.memory,
             isStale: isStale,
           );
 
           if (!isStale) {
-            log('✅ Disk cache is FRESH. Returning immediately (0ms network).');
+            log('✅ Cache is FRESH. Returning immediately (0ms network).');
             return;
           }
 
-          log('⏳ Disk cache is STALE (${age.inSeconds}s old > ${ttl.inSeconds}s TTL). Triggering SILENT background re-fetch...');
+          log('⏳ Cache is STALE (${age.inSeconds}s old > ${ttl.inSeconds}s TTL). Triggering SILENT background re-fetch...');
           try {
             final freshData = await networkFetch();
             await save<T>(key: key, data: freshData, toJson: toJson);
@@ -150,13 +105,73 @@ class CacheManager {
           } catch (e) {
             log('⚠️ Silent background re-fetch FAILED: $e. Gracefully preserving cached data.');
             yield CacheResponse<T>(
-              data: cachedData,
-              source: CacheSource.disk,
+              data: data,
+              source: CacheSource.memory,
               isStale: true,
               backgroundError: e,
             );
           }
           return;
+        }
+      }
+
+      // 2. Check L2 Disk Storage
+      final storage = await _getStorage();
+      final raw = await storage.getString(key);
+      final rawTime = await storage.getString(_timeKey(key));
+
+      if (raw != null && raw.isNotEmpty) {
+        try {
+          final cachedData = fromJson(raw);
+          if (guard != null && !guard(cachedData)) {
+            log('⚠️ L2 Disk cache failed guard validation (e.g. grade/user mismatch). Clearing invalid entry.');
+            await invalidate(key);
+          } else {
+            final timestamp = rawTime != null
+                ? DateTime.tryParse(rawTime) ?? DateTime.now()
+                : DateTime.now();
+            final age = DateTime.now().difference(timestamp);
+            final isStale = age > ttl;
+
+            // Warm up L1 Memory Cache
+            _memoryCache[key] = _MemoryCacheEntry(
+              data: cachedData,
+              timestamp: timestamp,
+            );
+
+            log('L2 Disk cache HIT (age: ${age.inSeconds}s, TTL: ${ttl.inSeconds}s).');
+            yield CacheResponse<T>(
+              data: cachedData,
+              source: CacheSource.disk,
+              isStale: isStale,
+            );
+
+            if (!isStale) {
+              log('✅ Disk cache is FRESH. Returning immediately (0ms network).');
+              return;
+            }
+
+            log('⏳ Disk cache is STALE (${age.inSeconds}s old > ${ttl.inSeconds}s TTL). Triggering SILENT background re-fetch...');
+            try {
+              final freshData = await networkFetch();
+              await save<T>(key: key, data: freshData, toJson: toJson);
+              log('🔄 Silent background re-fetch SUCCEEDED. Updated cache & UI.');
+              yield CacheResponse<T>(
+                data: freshData,
+                source: CacheSource.network,
+                isStale: false,
+              );
+            } catch (e) {
+              log('⚠️ Silent background re-fetch FAILED: $e. Gracefully preserving cached data.');
+              yield CacheResponse<T>(
+                data: cachedData,
+                source: CacheSource.disk,
+                isStale: true,
+                backgroundError: e,
+              );
+            }
+            return;
+          }
         } catch (deserializationError) {
           log('⚠️ Corrupted disk cache detected for key "$key". Clearing invalid entry: $deserializationError');
           await invalidate(key);
@@ -186,13 +201,14 @@ class CacheManager {
 
   /// Single-shot asynchronous get with SWR pattern.
   /// If cached, returns immediately and triggers a background revalidation if stale.
-  /// If empty, waits for [networkFetch].
+  /// If empty or fails [guard], waits for [networkFetch].
   Future<T> get<T>({
     required String key,
     required Duration ttl,
     required Future<T> Function() networkFetch,
     required T Function(String rawJson) fromJson,
     required String Function(T data) toJson,
+    bool Function(T data)? guard,
     bool forceRefresh = false,
   }) async {
     final stream = watch<T>(
@@ -201,6 +217,7 @@ class CacheManager {
       networkFetch: networkFetch,
       fromJson: fromJson,
       toJson: toJson,
+      guard: guard,
       forceRefresh: forceRefresh,
     );
     return (await stream.first).data;
@@ -219,20 +236,30 @@ class CacheManager {
   }
 
   /// Directly retrieves the currently cached data without making any network calls.
-  /// Returns `null` if no valid cache exists.
+  /// Returns `null` if no valid cache exists or if it fails [guard].
   Future<T?> getCached<T>({
     required String key,
     required T Function(String rawJson) fromJson,
+    bool Function(T data)? guard,
   }) async {
     final mem = _memoryCache[key];
     if (mem != null && mem.data is T) {
-      return mem.data as T;
+      final data = mem.data as T;
+      if (guard != null && !guard(data)) {
+        _memoryCache.remove(key);
+      } else {
+        return data;
+      }
     }
     final storage = await _getStorage();
     final raw = await storage.getString(key);
     if (raw == null || raw.isEmpty) return null;
     try {
       final parsed = fromJson(raw);
+      if (guard != null && !guard(parsed)) {
+        await invalidate(key);
+        return null;
+      }
       _memoryCache[key] = _MemoryCacheEntry(
         data: parsed,
         timestamp: DateTime.now(),
@@ -265,6 +292,11 @@ class CacheManager {
     await storage.remove(_timeKey(key));
   }
 
+  /// Clears the entire in-memory cache.
+  void clearMemoryCache() {
+    _memoryCache.clear();
+  }
+
   /// Clears the entire memory cache and disk storage.
   Future<void> clearAll() async {
     _memoryCache.clear();
@@ -272,4 +304,3 @@ class CacheManager {
     await storage.clear();
   }
 }
-
