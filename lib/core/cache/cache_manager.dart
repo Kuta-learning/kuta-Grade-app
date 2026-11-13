@@ -371,5 +371,7 @@ class CacheManager {
     await storage.remove(_timeKey(StorageKeys.notesSubjectsCache));
     await storage.remove(StorageKeys.profileCache);
     await storage.remove(_timeKey(StorageKeys.profileCache));
+    await storage.remove(StorageKeys.bookmarksCache);
+    await storage.remove(_timeKey(StorageKeys.bookmarksCache));
   }
 }

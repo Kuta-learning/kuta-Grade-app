@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/storage/shared_prefs_storage.dart';
+import '../../../core/storage/storage_keys.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
 import '../services/national_exam_service.dart';
@@ -99,6 +101,32 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         }
       }
 
+      // Restore position where the user left off
+      int initialIndex = 0;
+      if (attempt.currentQuestionIndex != null &&
+          attempt.currentQuestionIndex! >= 0 &&
+          attempt.currentQuestionIndex! < attempt.questions.length) {
+        initialIndex = attempt.currentQuestionIndex!;
+      } else {
+        try {
+          final storage = SharedPrefsStorage.instanceOrNull ??
+              await SharedPrefsStorage.getInstance();
+          final saved = await storage.getInt(
+            StorageKeys.examAttemptQuestionIndex(attempt.attemptId),
+          );
+          if (saved != null && saved >= 0 && saved < attempt.questions.length) {
+            initialIndex = saved;
+          } else if (selectedAnswers.isNotEmpty) {
+            final firstUnanswered = attempt.questions.indexWhere(
+              (q) => !selectedAnswers.containsKey(q.id),
+            );
+            if (firstUnanswered != -1) {
+              initialIndex = firstUnanswered;
+            }
+          }
+        } catch (_) {}
+      }
+
       if (!mounted) return;
       setState(() {
         _attempt = attempt;
@@ -112,6 +140,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         _flaggedQuestionIds
           ..clear()
           ..addAll(flaggedQuestions);
+        _currentQuestionIndex = initialIndex;
         _isLoading = false;
       });
       _startCountdown();
@@ -206,11 +235,18 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
     setState(() {
       _isPaused = true;
     });
+    unawaited(_saveProgress());
+
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
         title: Row(
           children: [
             Container(
@@ -222,26 +258,28 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               child: const Icon(
                 Icons.pause_circle_filled_rounded,
                 color: Color(0xFF2563EB),
-                size: 28,
+                size: 26,
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Exam Paused',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E293B),
+            Expanded(
+              child: Text(
+                'Exam Paused',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headlineDark,
+                ),
               ),
             ),
           ],
         ),
         content: Text(
-          'Your timer is temporarily paused. Progress has been autosaved.',
+          'Your answers have been autosaved. Note: National exam timer continues in the background.',
           style: GoogleFonts.inter(
             fontSize: 14,
             height: 1.5,
-            color: const Color(0xFF64748B),
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [
@@ -255,8 +293,15 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            child: const Text('Submit Now'),
+            child: Text(
+              'Submit Now',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -268,11 +313,19 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
-            child: const Text('Resume Exam'),
+            child: Text(
+              'Resume Exam',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -330,6 +383,117 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
     }
   }
 
+  void _setQuestionIndex(int newIndex) {
+    if (newIndex < 0 ||
+        (_attempt != null && newIndex >= _attempt!.questions.length)) {
+      return;
+    }
+    setState(() {
+      _currentQuestionIndex = newIndex;
+    });
+    if (_attempt != null && _attempt!.attemptId.isNotEmpty) {
+      unawaited(_saveQuestionPosition(_attempt!.attemptId, newIndex));
+    }
+  }
+
+  Future<void> _saveQuestionPosition(String attemptId, int index) async {
+    try {
+      final storage = SharedPrefsStorage.instanceOrNull ??
+          await SharedPrefsStorage.getInstance();
+      await storage.setInt(
+        StorageKeys.examAttemptQuestionIndex(attemptId),
+        value: index,
+      );
+    } catch (_) {}
+  }
+
+  Future<bool?> _showLeaveDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.orange500.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.exit_to_app_rounded,
+                color: AppColors.orange500,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Leave Exam?',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headlineDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Your timer and answers will continue saving in the background. You can resume at any time from Exam Simulator.',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            height: 1.5,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textSecondary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Stay',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange500,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Leave',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitAttempt() async {
     final attempt = _attempt;
     if (attempt == null || _isSubmitting) return;
@@ -346,6 +510,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         attempt.attemptId,
         answers: _answerSubmissions,
       );
+      await _service.invalidateDashboardCache();
       if (!mounted) return;
       context.pushReplacement(
         '${RouteNames.nationalExamResult}'
@@ -367,21 +532,37 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
     }
   }
 
+  Future<void> _handleLeaveRequest() async {
+    final shouldLeave = await _showLeaveDialog();
+    if (shouldLeave != true || !mounted) return;
+    await _saveProgress();
+    await _service.invalidateDashboardCache();
+    if (!mounted) return;
+    context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildAppBar(),
-      body: _isLoading
-          ? const Center(
-              child: KutaLoadingWidget(
-                size: 130,
-                label: 'Loading Exam Questions...',
-              ),
-            )
-          : _errorMessage != null && _attempt == null
-              ? _buildErrorState()
-              : _buildAttemptContent(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleLeaveRequest();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: _buildAppBar(),
+        body: _isLoading
+            ? const Center(
+                child: KutaLoadingWidget(
+                  size: 130,
+                  label: 'Loading Exam Questions...',
+                ),
+              )
+            : _errorMessage != null && _attempt == null
+                ? _buildErrorState()
+                : _buildAttemptContent(),
+      ),
     );
   }
 
@@ -392,35 +573,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-        onPressed: () async {
-          final shouldLeave = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: const Text('Leave Exam?'),
-              content: const Text(
-                  'Your timer and answers will continue saving in the background. You can resume at any time from Exam Simulator.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Stay'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF97316),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Leave'),
-                ),
-              ],
-            ),
-          );
-          if (shouldLeave == true && mounted) {
-            context.pop();
-          }
-        },
+        onPressed: _handleLeaveRequest,
       ),
       titleSpacing: 0,
       title: Text(
@@ -988,7 +1141,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         if (_currentQuestionIndex > 0)
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => setState(() => _currentQuestionIndex--),
+              onPressed: () => _setQuestionIndex(_currentQuestionIndex - 1),
               icon: const Icon(Icons.arrow_back_rounded, size: 18),
               label: const Text('Previous'),
               style: ElevatedButton.styleFrom(
@@ -1011,7 +1164,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                 ? null
                 : isLastQuestion
                     ? _confirmSubmit
-                    : () => setState(() => _currentQuestionIndex++),
+                    : () => _setQuestionIndex(_currentQuestionIndex + 1),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF97316),
               foregroundColor: Colors.white,
@@ -1180,7 +1333,7 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               }
 
               return InkWell(
-                onTap: () => setState(() => _currentQuestionIndex = index),
+                onTap: () => _setQuestionIndex(index),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(

@@ -60,4 +60,10 @@ class ApiEndpoints {
   static String submitQuiz(String quizId) => '/quizzes/$quizId/submit';
   static String quizAttemptReview(String attemptId) =>
       '/quizzes/attempts/$attemptId';
+
+  // ── Bookmarks ─────────────────────────────────────────────────────────────
+  static const String bookmarks = '/bookmarks';
+  static const String bookmarkToggle = '/bookmarks/toggle';
+  static const String bookmarkCheck = '/bookmarks/check';
+  static String bookmarkById(String id) => '/bookmarks/$id';
 }

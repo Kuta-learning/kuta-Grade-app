@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,6 +57,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   late final NationalExamService _examService =
       widget.examService ?? NationalExamService();
 
+  late final ScrollController _scrollController = ScrollController();
+
   StreamSubscription<CacheResponse<NationalExamDashboardModel>>?
       _dashboardSubscription;
 
@@ -76,11 +79,14 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   @override
   void dispose() {
     _dashboardSubscription?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
   /// Loads dashboard data using the centralized CacheManager via NationalExamService.
-  void _loadDashboardWithCache({bool isPullToRefresh = false}) {
+  Future<void> _loadDashboardWithCache({bool isPullToRefresh = false}) {
+    final completer = Completer<void>();
+
     if (_dashboardData == null && !isPullToRefresh) {
       setState(() {
         _isLoading = true;
@@ -96,7 +102,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         )
         .listen(
       (response) {
-        if (!mounted) return;
+        if (!mounted) {
+          if (!completer.isCompleted) completer.complete();
+          return;
+        }
         final data = response.data;
         final authenticatedGrade = _authenticatedGradeLevel();
 
@@ -106,6 +115,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage =
                 'National exams are available for Grades 6, 8, and 12 only.';
           });
+          if (!completer.isCompleted) completer.complete();
           return;
         }
 
@@ -116,6 +126,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage =
                 'The exam content does not match your selected grade.';
           });
+          if (!completer.isCompleted) completer.complete();
           return;
         }
 
@@ -132,9 +143,19 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             'Could not refresh live exam data. Showing cached offline data.',
           );
         }
+
+        // When data has arrived from network or if not pull-to-refresh, complete the spinner
+        if (response.source == CacheSource.network ||
+            response.backgroundError != null ||
+            !isPullToRefresh) {
+          if (!completer.isCompleted) completer.complete();
+        }
       },
       onError: (e) {
-        if (!mounted) return;
+        if (!mounted) {
+          if (!completer.isCompleted) completer.complete();
+          return;
+        }
         final errorMsg = e.toString().replaceFirst('Exception: ', '');
         if (isPullToRefresh) {
           AppSnackBar.showError(
@@ -147,12 +168,15 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage = errorMsg;
           });
         }
+        if (!completer.isCompleted) completer.complete();
       },
     );
+
+    return completer.future;
   }
 
   Future<void> _loadDashboardData({bool isPullToRefresh = false}) async {
-    _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
+    await _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
   }
 
   int? _authenticatedGradeLevel() {
@@ -245,176 +269,220 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         child: Scaffold(
           extendBody: true,
           backgroundColor: _pageBackground,
-          body: RefreshIndicator(
-            color: _primaryBlue,
-            onRefresh: () => _loadDashboardData(isPullToRefresh: true),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: ClampingScrollPhysics(),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ==========================================
-                  // TOP ROYAL BLUE HEADER SECTION
-                  // ==========================================
-                  Stack(
-                    clipBehavior: Clip.none,
+          body: Stack(
+            children: [
+              RefreshIndicator(
+                color: _primaryBlue,
+                backgroundColor: Colors.white,
+                edgeOffset: topPadding,
+                onRefresh: () => _loadDashboardData(isPullToRefresh: true),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        height:
-                            topPadding +
-                            (_isLoading && _dashboardData == null
-                                ? 145
-                                : hasBannerExam
-                                ? 195
-                                : 125),
-                        color: _primaryBlue,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: topPadding),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildCustomAppBar(context),
-                            const SizedBox(height: 12),
-                            if (_isLoading && _dashboardData == null) ...[
-                              const ExamHeaderSkeleton(),
-                              const SizedBox(height: 10),
-                            ] else if (_dashboardData != null) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: _buildWelcomeBanner(),
-                              ),
-                              if (hasBannerExam) ...[
-                                const SizedBox(height: 14),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                      // ==========================================
+                      // TOP ROYAL BLUE HEADER SECTION (ORIGINAL FLOATING CARD LAYOUT)
+                      // ==========================================
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height:
+                                topPadding +
+                                (_isLoading && _dashboardData == null
+                                    ? 145
+                                    : hasBannerExam
+                                    ? 195
+                                    : 125),
+                            color: _primaryBlue,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: topPadding),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildCustomAppBar(context),
+                                const SizedBox(height: 12),
+                                if (_isLoading && _dashboardData == null) ...[
+                                  const ExamHeaderSkeleton(),
+                                  const SizedBox(height: 10),
+                                ] else if (_dashboardData != null) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: _buildWelcomeBanner(),
                                   ),
-                                  child: _buildActiveExamCard(context),
+                                  if (hasBannerExam) ...[
+                                    const SizedBox(height: 14),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      child: _buildActiveExamCard(context),
+                                    ),
+                                  ],
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ==========================================
+                      // EXAM SUBJECTS SECTION HEADER
+                      // ==========================================
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Exam Subjects',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: _textPrimary,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                Text(
+                                  '${_dashboardData?.subjects.length ?? _displaySubjects.length} Subjects',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF2563EB),
+                                  ),
                                 ),
                               ],
-                            ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tap a subject to practice real past national exam papers by year.',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: _textSecondary,
+                                height: 1.35,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
 
-                  // ==========================================
-                  // EXAM SUBJECTS SECTION HEADER
-                  // ==========================================
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Exam Subjects',
-                              style: GoogleFonts.inter(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: _textPrimary,
-                                letterSpacing: -0.2,
+                      // ==========================================
+                      // BODY / SUBJECT CARDS / LOADING
+                      // ==========================================
+                      if (_isLoading && _dashboardData == null) ...[
+                        Builder(
+                          builder: (context) {
+                            final screenHeight = MediaQuery.of(context).size.height;
+                            final bottomNavHeight =
+                                kBottomNavigationBarHeight +
+                                MediaQuery.of(context).padding.bottom;
+                            // Approximate header height: topPadding + skeleton header (~145) + section header (~60)
+                            final headerHeight = topPadding + 145 + 60;
+                            final remainingHeight =
+                                screenHeight - headerHeight - bottomNavHeight;
+                            return SizedBox(
+                              height: remainingHeight > 200 ? remainingHeight : 200,
+                              child: const Padding(
+                                padding: EdgeInsets.only(bottom: 150),
+                                child: Center(
+                                  child: KutaLoadingWidget(
+                                    size: 140,
+                                    label: 'Loading Exams...',
+                                  ),
+                                ),
                               ),
-                            ),
-                            Text(
-                              '${_dashboardData?.subjects.length ?? _displaySubjects.length} Subjects',
-                              style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF2563EB),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Tap a subject to practice real past national exam papers by year.',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: _textSecondary,
-                            height: 1.35,
+                      ] else if (_errorMessage != null &&
+                          _dashboardData == null) ...[
+                        _buildErrorState(),
+                      ] else if (_displaySubjects.isEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 32,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'No exam subjects found for your grade level.',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: _textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: _displaySubjects.map((subject) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildSubjectCard(context, subject),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ],
-                    ),
-                  ),
 
-                  // ==========================================
-                  // BODY / SUBJECT CARDS / LOADING
-                  // ==========================================
-                  if (_isLoading && _dashboardData == null) ...[
-                    Builder(
-                      builder: (context) {
-                        final screenHeight = MediaQuery.of(context).size.height;
-                        final bottomNavHeight =
-                            kBottomNavigationBarHeight +
-                            MediaQuery.of(context).padding.bottom;
-                        // Approximate header height: topPadding + skeleton header (~145) + section header (~60)
-                        final headerHeight = topPadding + 145 + 60;
-                        final remainingHeight =
-                            screenHeight - headerHeight - bottomNavHeight;
-                        return SizedBox(
-                          height: remainingHeight > 200 ? remainingHeight : 200,
-                          child: const Padding(
-                            padding: EdgeInsets.only(bottom: 150),
-                            child: Center(
-                              child: KutaLoadingWidget(
-                                size: 140,
-                                label: 'Loading Exams...',
-                              ),
+                      const SizedBox(height: 108),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ==========================================
+              // YOUTUBE-STYLE FROSTED STATUS BAR PROTECTION
+              // Smoothly fades in when user scrolls down so OS icons are always readable
+              // ==========================================
+              AnimatedBuilder(
+                animation: _scrollController,
+                builder: (context, _) {
+                  final double offset = _scrollController.hasClients
+                      ? _scrollController.offset
+                      : 0.0;
+                  // Only appear when scrolling past the blue area
+                  final double opacity =
+                      ((offset - 20) / 60.0).clamp(0.0, 1.0);
+                  if (opacity <= 0.0) return const SizedBox.shrink();
+
+                  return Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: topPadding,
+                    child: IgnorePointer(
+                      child: Opacity(
+                        opacity: opacity,
+                        child: ClipRect(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              color: _primaryBlue.withValues(alpha: 0.88),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ] else if (_errorMessage != null &&
-                      _dashboardData == null) ...[
-                    _buildErrorState(),
-                  ] else if (_displaySubjects.isEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 32,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No exam subjects found for your grade level.',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: _textSecondary,
                           ),
                         ),
                       ),
                     ),
-                  ] else ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: _displaySubjects.map((subject) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildSubjectCard(context, subject),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 108),
-                ],
+                  );
+                },
               ),
-            ),
+            ],
           ),
           bottomNavigationBar: widget.showBottomNav
               ? GradeBottomNavBar(

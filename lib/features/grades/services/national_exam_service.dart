@@ -139,8 +139,11 @@ class NationalExamService {
       );
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
-          response.data is Map<String, dynamic>) {
-        return ExamAttempt.fromJson(response.data as Map<String, dynamic>);
+          response.data is Map) {
+        final map = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+        return ExamAttempt.fromJson(map);
       }
       throw Exception('Failed to start exam attempt');
     } on DioException catch (e) {
@@ -188,8 +191,11 @@ class NationalExamService {
         data: payload,
       );
 
-      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        return ExamResultReview.fromJson(response.data as Map<String, dynamic>);
+      if (response.statusCode == 200 && response.data is Map) {
+        final map = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+        return ExamResultReview.fromJson(map);
       }
       throw Exception('Failed to submit exam attempt');
     } on DioException catch (e) {
@@ -208,8 +214,11 @@ class NationalExamService {
         ApiEndpoints.examAttemptResult(attemptId),
       );
 
-      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        return ExamResultReview.fromJson(response.data as Map<String, dynamic>);
+      if (response.statusCode == 200 && response.data is Map) {
+        final map = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+        return ExamResultReview.fromJson(map);
       }
       throw Exception('Failed to fetch exam results');
     } on DioException catch (e) {
