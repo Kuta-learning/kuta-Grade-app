@@ -278,16 +278,68 @@ class ExamQuestionReviewItem {
       }
     }
 
-    bool isCorrect = json['isCorrect'] as bool? ??
-        json['is_correct'] as bool? ??
-        (json['status'] == 'CORRECT');
+    // Robust evaluation of correctness across all possible API conventions
+    final dynamic rawCorrect = json['isCorrect'] ??
+        json['is_correct'] ??
+        json['correct'] ??
+        json['isAnswerCorrect'] ??
+        qObj?['isCorrect'] ??
+        qObj?['is_correct'] ??
+        qObj?['correct'];
 
-    // If both IDs are known and identical, it's definitively correct
-    if (selectedOptId != null &&
-        correctOptId != null &&
-        selectedOptId.isNotEmpty &&
-        selectedOptId == correctOptId) {
-      isCorrect = true;
+    bool isCorrect = false;
+    if (rawCorrect is bool) {
+      isCorrect = rawCorrect;
+    } else if (rawCorrect is num) {
+      isCorrect = rawCorrect > 0;
+    } else if (rawCorrect is String) {
+      final s = rawCorrect.trim().toLowerCase();
+      isCorrect = (s == 'true' || s == '1' || s == 'correct' || s == 'right' || s == 'passed');
+    }
+
+    if (!isCorrect) {
+      final status = (json['status'] ?? qObj?['status'])?.toString().toUpperCase();
+      if (status == 'CORRECT' || status == 'RIGHT' || status == 'PASSED') {
+        isCorrect = true;
+      }
+    }
+
+    if (!isCorrect) {
+      final scoreVal = json['score'] ?? json['points'] ?? json['earnedPoints'] ?? qObj?['score'];
+      if (scoreVal is num && scoreVal > 0) {
+        isCorrect = true;
+      }
+    }
+
+    // If selected and correct match by ID, label, or text
+    if (!isCorrect) {
+      if (selectedOptId != null &&
+          correctOptId != null &&
+          selectedOptId.isNotEmpty &&
+          selectedOptId == correctOptId) {
+        isCorrect = true;
+      } else if (selectedOptLabel != null &&
+          correctOptLabel != null &&
+          selectedOptLabel.isNotEmpty &&
+          selectedOptLabel.toUpperCase() == correctOptLabel.toUpperCase()) {
+        isCorrect = true;
+      } else if (selectedOptText != null &&
+          correctOptText != null &&
+          selectedOptText.trim().isNotEmpty &&
+          selectedOptText.trim().toLowerCase() == correctOptText.trim().toLowerCase()) {
+        isCorrect = true;
+      }
+    }
+
+    // When verified correct, ensure correct option fields carry over the selected option info
+    if (isCorrect) {
+      correctOptId ??= selectedOptId;
+      correctOptText = (correctOptText != null && correctOptText.trim().isNotEmpty)
+          ? correctOptText
+          : selectedOptText;
+      correctOptLabel = (correctOptLabel != null && correctOptLabel.isNotEmpty)
+          ? correctOptLabel
+          : selectedOptLabel;
     }
 
     return ExamQuestionReviewItem(

@@ -785,17 +785,46 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     }
 
     bool isCorrect = item.isCorrect;
-    if (selectedId != null &&
-        correctId != null &&
-        selectedId.isNotEmpty &&
-        selectedId == correctId) {
-      isCorrect = true;
+
+    // Check equivalence of selected vs correct by ID, label, or text
+    if (!isCorrect) {
+      if (selectedId != null &&
+          correctId != null &&
+          selectedId.isNotEmpty &&
+          selectedId == correctId) {
+        isCorrect = true;
+      } else if (selectedLabel != null &&
+          correctLabel != null &&
+          selectedLabel.isNotEmpty &&
+          selectedLabel.toUpperCase() == correctLabel.toUpperCase()) {
+        isCorrect = true;
+      } else if (selectedText != null &&
+          correctText != null &&
+          selectedText.trim().isNotEmpty &&
+          selectedText.trim().toLowerCase() == correctText.trim().toLowerCase()) {
+        isCorrect = true;
+      }
+    }
+
+    // Reconcile with exam summary: if score == totalCount or accuracy == 100%,
+    // all questions are guaranteed to be correct!
+    if (!isCorrect) {
+      final total = _result?.totalQuestions ?? widget.fallbackQuestions?.length ?? 0;
+      final score = _result?.score ?? 0;
+      final accuracy = _result?.accuracy ?? 0.0;
+      if ((total > 0 && score >= total) || accuracy >= 100.0) {
+        isCorrect = true;
+      }
     }
 
     if (isCorrect) {
       correctId ??= selectedId;
-      correctText ??= selectedText;
-      correctLabel ??= selectedLabel;
+      correctText = (correctText != null && correctText.trim().isNotEmpty)
+          ? correctText
+          : selectedText;
+      correctLabel = (correctLabel != null && correctLabel.isNotEmpty)
+          ? correctLabel
+          : selectedLabel;
     }
 
     return ExamQuestionReviewItem(
@@ -879,7 +908,7 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Wrong answer row (only if user got it wrong and made a selection)
+          // Wrong answer row (ONLY rendered if user got it wrong and made a selection)
           if (!question.isCorrect && hasSelectedAnswer) ...[
             _buildAnswerRow(
               isCorrect: false,
@@ -889,11 +918,14 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             const SizedBox(height: 6),
           ],
 
-          // Correct answer row
+          // Correct answer row (if question is correct, it presents the student's correct answer)
           _buildAnswerRow(
             isCorrect: true,
-            label: question.correctOptionLabel,
-            text: question.correctOptionText ?? '',
+            label: question.correctOptionLabel ?? question.selectedOptionLabel,
+            text: (question.correctOptionText != null &&
+                    question.correctOptionText!.trim().isNotEmpty)
+                ? question.correctOptionText!
+                : (question.selectedOptionText ?? ''),
           ),
         ],
       ),
