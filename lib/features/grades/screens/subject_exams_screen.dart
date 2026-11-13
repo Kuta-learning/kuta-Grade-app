@@ -7,6 +7,7 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
+import '../services/bookmark_service.dart';
 import '../services/national_exam_service.dart';
 import '../widgets/grade_screen_shell.dart';
 
@@ -15,11 +16,13 @@ enum ExamPaperStatus { notStarted, inProgress, completed }
 
 /// Unified Subject Exam Papers Screen for all Grades (6, 8, 12).
 /// Displays past official national exam papers matching the exact Figma reference design.
+/// Includes bookmarking functionality with custom [AppSnackBar] notifications.
 class SubjectExamsScreen extends StatefulWidget {
   final String? subjectId;
   final String subjectTitle;
   final String streamTitle;
   final String subtitle;
+  final BookmarkService? bookmarkService;
 
   const SubjectExamsScreen({
     super.key,
@@ -27,6 +30,7 @@ class SubjectExamsScreen extends StatefulWidget {
     this.subjectTitle = 'Mathematics',
     this.streamTitle = 'NATURAL SCIENCE STREAM',
     this.subtitle = 'Official National University Entrance Papers',
+    this.bookmarkService,
   });
 
   @override
@@ -37,14 +41,94 @@ class SubjectExamsScreen extends StatefulWidget {
 typedef Grade12SubjectExamsScreen = SubjectExamsScreen;
 
 class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
+  late final BookmarkService _bookmarkService;
   bool _isLoading = true;
   String? _errorMessage;
   List<_ExamPaperModel> _papers = [];
+  final Set<String> _bookmarkedExamIds = {};
 
   @override
   void initState() {
     super.initState();
+    _bookmarkService = widget.bookmarkService ?? BookmarkService();
     _fetchPapers();
+    _loadBookmarkedExams();
+  }
+
+  /// Silently loads bookmarked exam IDs to mark bookmarked cards.
+  Future<void> _loadBookmarkedExams() async {
+    try {
+      final bookmarks = await _bookmarkService.getBookmarks(type: 'EXAM_QUESTION');
+      if (mounted) {
+        setState(() {
+          _bookmarkedExamIds.clear();
+          for (final b in bookmarks) {
+            _bookmarkedExamIds.add(b.itemId);
+          }
+        });
+      }
+    } catch (_) {
+      // Non-blocking: exam list will still render without prefilled bookmarks
+    }
+  }
+
+  /// Toggles bookmark state for an exam paper with optimistic UI and AppSnackBar.
+  Future<void> _toggleExamBookmark(_ExamPaperModel paper) async {
+    final wasBookmarked = _bookmarkedExamIds.contains(paper.id);
+
+    // 1. Optimistic local update
+    setState(() {
+      if (wasBookmarked) {
+        _bookmarkedExamIds.remove(paper.id);
+      } else {
+        _bookmarkedExamIds.add(paper.id);
+      }
+    });
+
+    try {
+      final result = await _bookmarkService.toggleBookmark(
+        type: 'EXAM_QUESTION',
+        itemId: paper.id,
+        title: '${widget.subjectTitle} - ${paper.displayTitle}',
+        subjectId: widget.subjectId,
+        metadata: {
+          'subject': widget.subjectTitle,
+          'stream': widget.streamTitle,
+        },
+      );
+
+      if (!mounted) return;
+
+      // Sync with server confirmation
+      setState(() {
+        if (result.isBookmarked) {
+          _bookmarkedExamIds.add(paper.id);
+        } else {
+          _bookmarkedExamIds.remove(paper.id);
+        }
+      });
+
+      final msg = result.message.isNotEmpty
+          ? result.message
+          : (result.isBookmarked ? 'Bookmark added' : 'Bookmark removed');
+      AppSnackBar.showSuccess(context, msg);
+    } catch (e) {
+      if (!mounted) return;
+
+      // Rollback optimistic update
+      setState(() {
+        if (wasBookmarked) {
+          _bookmarkedExamIds.add(paper.id);
+        } else {
+          _bookmarkedExamIds.remove(paper.id);
+        }
+      });
+
+      AppSnackBar.showError(
+        context,
+        'Failed to update bookmark: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
+    }
   }
 
   /// Loads exam papers from backend. Supports pull-to-refresh.
@@ -284,7 +368,12 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     // Papers list with pull-to-refresh
     return RefreshIndicator(
       color: AppColors.brandPrimary,
-      onRefresh: _fetchPapers,
+      onRefresh: () async {
+        await Future.wait([
+          _fetchPapers(),
+          _loadBookmarkedExams(),
+        ]);
+      },
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
@@ -304,6 +393,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
 
   /// Individual Exam Year Card matching Figma reference
   Widget _buildExamCard(BuildContext context, _ExamPaperModel paper) {
+    final isBookmarked = _bookmarkedExamIds.contains(paper.id);
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
@@ -343,7 +434,21 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
+
+          // Bookmark Toggle Button
+          IconButton(
+            icon: Icon(
+              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              color: isBookmarked ? AppColors.orange500 : const Color(0xFF94A3B8),
+              size: 24,
+            ),
+            tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark exam',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _toggleExamBookmark(paper),
+          ),
+
+          const SizedBox(width: 4),
 
           // Right side: Action Button
           _buildActionButton(context, paper),

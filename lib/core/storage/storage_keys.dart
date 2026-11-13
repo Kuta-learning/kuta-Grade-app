@@ -36,6 +36,10 @@ abstract class StorageKeys {
   /// Epoch timestamp (milliseconds) when [examDashboardCache] was last updated.
   static const String examDashboardCacheTime = 'exam_dashboard_cache_time';
 
+  // ── Bookmarks Cache ───────────────────────────────────────────────────────
+  /// Serialized JSON string of bookmarked items list.
+  static const String bookmarksCache = 'bookmarks_cache';
+
   // ── Short Notes & Chapters Cache ──────────────────────────────────────────
   /// Serialized JSON cache of short notes subjects list.
   static const String notesSubjectsCache = 'notes_subjects_cache';
