@@ -30,6 +30,7 @@ import '../../features/grades/screens/course_detail_screen.dart';
 import '../../features/grades/screens/chapter_study_screen.dart';
 import '../../features/grades/screens/quiz_screen.dart';
 import '../../features/grades/screens/quiz_result_screen.dart';
+import '../../features/grades/models/national_exam_models.dart';
 import 'route_names.dart';
 
 /// Top-level application router configuration using GoRouter.
@@ -298,7 +299,30 @@ class AppRouter {
         builder: (context, state) {
           final attemptId = state.uri.queryParameters['attemptId'] ?? '';
           final title = state.uri.queryParameters['title'] ?? 'National Exam';
-          return NationalExamResultScreen(attemptId: attemptId, title: title);
+          // Unpack rich data passed via context.pushReplacement(..., extra: {...})
+          // so the result screen can render immediately without an extra network call.
+          ExamResultReview? review;
+          List<ExamQuestion>? questions;
+          Map<String, String>? answers;
+          final extra = state.extra;
+          if (extra is Map<String, dynamic>) {
+            if (extra['review'] is ExamResultReview) {
+              review = extra['review'] as ExamResultReview;
+            }
+            if (extra['questions'] is List<ExamQuestion>) {
+              questions = extra['questions'] as List<ExamQuestion>;
+            }
+            if (extra['answers'] is Map<String, String>) {
+              answers = extra['answers'] as Map<String, String>;
+            }
+          }
+          return NationalExamResultScreen(
+            attemptId: attemptId,
+            title: title,
+            initialReview: review,
+            fallbackQuestions: questions,
+            fallbackAnswers: answers,
+          );
         },
       ),
     ],

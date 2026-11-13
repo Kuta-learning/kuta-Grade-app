@@ -212,6 +212,38 @@ void main() {
       expect(cached, isNull);
       expect(await storage.getString('eng_key'), isNull);
     });
+  
+    test('6. Guard validation failure discards mismatched cache and fetches fresh data', () async {
+      const cachedItem = SampleItem('Grade 12 Item', 12);
+      await cacheManager.save<SampleItem>(
+        key: 'grade_key',
+        data: cachedItem,
+        toJson: (m) => m.toJsonString(),
+      );
+
+      int networkCalls = 0;
+      Future<SampleItem> mockNetwork() async {
+        networkCalls++;
+        return const SampleItem('Grade 8 Fresh Item', 8);
+      }
+
+      final responses = await cacheManager
+          .watch<SampleItem>(
+            key: 'grade_key',
+            ttl: const Duration(minutes: 10),
+            networkFetch: mockNetwork,
+            fromJson: SampleItem.fromJsonString,
+            toJson: (m) => m.toJsonString(),
+            guard: (item) => item.count == 8,
+            enableLogging: false,
+          )
+          .toList();
+
+      expect(responses.length, 1);
+      expect(responses.first.source, CacheSource.network);
+      expect(responses.first.data.title, 'Grade 8 Fresh Item');
+      expect(responses.first.data.count, 8);
+      expect(networkCalls, 1);
+    });
   });
 }
-

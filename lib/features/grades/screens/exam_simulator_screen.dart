@@ -90,7 +90,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
 
     _dashboardSubscription?.cancel();
     _dashboardSubscription = _examService
-        .watchDashboard(forceRefresh: isPullToRefresh)
+        .watchDashboard(
+          forceRefresh: isPullToRefresh,
+          expectedGradeLevel: _authenticatedGradeLevel(),
+        )
         .listen(
       (response) {
         if (!mounted) return;

@@ -8,7 +8,8 @@ sealed class NotesEvent {
 /// Request to fetch the subjects list.
 final class LoadNotesSubjects extends NotesEvent {
   final bool forceRefresh;
-  const LoadNotesSubjects({this.forceRefresh = false});
+  final int? studentGrade;
+  const LoadNotesSubjects({this.forceRefresh = false, this.studentGrade});
 }
 
 /// Toggles accordion expansion for a subject index.
@@ -48,4 +49,3 @@ final class DownloadChapterPdfEvent extends NotesEvent {
   final String chapterId;
   const DownloadChapterPdfEvent(this.chapterId);
 }
-

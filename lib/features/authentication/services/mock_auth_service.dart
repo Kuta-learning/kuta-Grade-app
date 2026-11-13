@@ -1,3 +1,4 @@
+import '../../../core/cache/cache_manager.dart';
 import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
@@ -170,6 +171,7 @@ class MockAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
+    await CacheManager.instance.clearAll();
     // Clear user session and grade selection flag so registration/login is required again
     await _storage.remove(StorageKeys.authUser);
     await _storage.remove(StorageKeys.authToken);

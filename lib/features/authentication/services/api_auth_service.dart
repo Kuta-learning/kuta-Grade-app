@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../core/cache/cache_manager.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/academic_stream.dart';
 import '../../../core/constants/grade_level.dart';
@@ -351,6 +352,7 @@ class ApiAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
+    await CacheManager.instance.clearAll();
     await _storage.remove(StorageKeys.authToken);
     await _storage.remove(StorageKeys.authRefreshToken);
     await _storage.remove(StorageKeys.authUser);
