@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,8 +31,8 @@ class _FakeBookmarkService extends BookmarkService {
 
   _FakeBookmarkService({
     this.mockBookmarks = const [],
-    CacheManager? cacheManager,
-  }) : super(cacheManager: cacheManager);
+    super.cacheManager,
+  });
 
   @override
   Future<List<BookmarkItem>> getBookmarks({
