@@ -191,6 +191,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       subtitle: 'Saved Exam Papers & Important Questions',
       showBottomNav: false,
       selectedNavIndex: 0,
+      actions: const [],
       body: _buildBody(),
     );
   }

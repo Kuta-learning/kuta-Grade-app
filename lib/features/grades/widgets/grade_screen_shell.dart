@@ -559,6 +559,9 @@ class GradeScreenShell extends StatelessWidget {
   final ValueChanged<int>? onNavTap;
   final Color backgroundColor;
   final bool showBackButton;
+  /// Override the default bookmark + profile icon buttons in the app bar.
+  /// Pass an empty list `[]` to show no action icons.
+  final List<Widget>? actions;
 
   const GradeScreenShell({
     super.key,
@@ -576,6 +579,7 @@ class GradeScreenShell extends StatelessWidget {
     this.onNavTap,
     this.backgroundColor = AppColors.surfaceApp,
     this.showBackButton = true,
+    this.actions,
   });
 
   @override
@@ -613,6 +617,7 @@ class GradeScreenShell extends StatelessWidget {
                     onBackPressed: onBackPressed,
                     onBookmarkPressed: onBookmarkPressed,
                     onProfilePressed: onProfilePressed,
+                    actions: actions,
                   ),
                   if (headerExtension != null)
                     headerExtension!
