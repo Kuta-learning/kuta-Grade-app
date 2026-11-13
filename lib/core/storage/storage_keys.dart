@@ -24,6 +24,10 @@ abstract class StorageKeys {
   /// Cleared on logout so the user sees it again on next login.
   static const String hasSeenWelcomeSnackbar = 'has_seen_welcome_snackbar';
 
+  /// Set to `"true"` once the one-time dashboard intro coach-marks tour has
+  /// been completed or skipped. Never cleared afterwards (once-ever).
+  static const String hasSeenDashboardIntro = 'has_seen_dashboard_intro';
+
   // ── Profile ───────────────────────────────────────────────────────────────
   /// Serialized JSON cache of the user's [ProfileModel] for the Profile screen.
   /// Cleared on logout via [ProfileBloc]'s reset flow.

@@ -130,7 +130,17 @@ class GradeBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
-  const GradeBottomNavBar({super.key, this.currentIndex = 0, this.onTap});
+  /// Optional per-item [GlobalKey]s, one per tab. When provided, each key is
+  /// attached to its corresponding nav item so an intro tour can spotlight
+  /// them individually (see [DashboardIntroOverlay]).
+  final List<GlobalKey>? itemKeys;
+
+  const GradeBottomNavBar({
+    super.key,
+    this.currentIndex = 0,
+    this.onTap,
+    this.itemKeys,
+  });
 
   @override
   State<GradeBottomNavBar> createState() => _GradeBottomNavBarState();
@@ -360,6 +370,10 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
 
                           return Expanded(
                             child: GestureDetector(
+                              key: widget.itemKeys != null &&
+                                      index < widget.itemKeys!.length
+                                  ? widget.itemKeys![index]
+                                  : null,
                               behavior: HitTestBehavior.opaque,
                               onTap: () => _handleTap(index),
                               child: Stack(
