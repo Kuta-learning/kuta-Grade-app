@@ -21,6 +21,7 @@ import '../../features/grades/screens/national_exam_result_screen.dart';
 import '../../features/grades/screens/subject_exams_screen.dart';
 import '../../features/grades/screens/bookmarks_screen.dart';
 import '../../features/grades/widgets/grade_screen_shell.dart';
+import '../../features/grades/widgets/intro_overlay/dashboard_intro_overlay.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/grades/screens/high_school_notes_screen.dart';
 import '../../features/grades/screens/note_detail_screen.dart';
@@ -386,7 +387,10 @@ class AppRouter {
 }
 
 /// Persistent App Shell hosting the unified bottom navigation bar for all Grade module screens.
-class MainGradeAppShell extends StatelessWidget {
+/// Also hosts the one-time dashboard intro tour: on the very first visit the
+/// shell shows [DashboardIntroOverlay] (via a non-dismissible dialog route) so
+/// dashboard input stays blocked until the tour is finished or skipped.
+class MainGradeAppShell extends StatefulWidget {
   final Widget child;
   final String location;
 
@@ -396,7 +400,19 @@ class MainGradeAppShell extends StatelessWidget {
     required this.location,
   });
 
-  int _calculateIndex() {
+  @override
+  State<MainGradeAppShell> createState() => _MainGradeAppShellState();
+}
+
+class _MainGradeAppShellState extends State<MainGradeAppShell> {
+  /// Global keys for the 4 bottom-nav tabs, visited in tour order:
+  /// Exams, Notes, Practice, Profile.
+  final List<GlobalKey> _navItemKeys =
+      List.generate(4, (_) => GlobalKey(debugLabel: 'introNavItem'));
+
+  bool _introShown = false;
+
+  int _calculateIndex(String location) {
     if (location.startsWith(RouteNames.profile)) {
       return 3;
     }
@@ -434,14 +450,55 @@ class MainGradeAppShell extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Wait for the first frame so the nav-bar GlobalKeys are attached and
+    // measurable before the spotlight positions are resolved.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowIntro());
+  }
+
+  Future<void> _maybeShowIntro() async {
+    if (_introShown || !mounted) return;
+
+    final storage = SharedPrefsStorage.instanceOrNull;
+    if (storage == null) return; // Widget tests / early shutdown: skip tour.
+
+    final hasSeenIntro =
+        await storage.getBool(StorageKeys.hasSeenDashboardIntro) ?? false;
+    if (hasSeenIntro || !mounted) return;
+
+    _introShown = true;
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      barrierLabel: 'Dashboard intro tour',
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: DashboardIntroOverlay(
+            steps: DashboardIntroOverlay.defaultSteps(_navItemKeys),
+            onComplete: () => Navigator.of(dialogContext).pop(),
+          ),
+        );
+      },
+    );
+
+    // Persist the once-ever flag on finish OR skip.
+    await storage.setBool(StorageKeys.hasSeenDashboardIntro, value: true);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-      body: child,
+      body: widget.child,
       bottomNavigationBar: GradeBottomNavBar(
-        currentIndex: _calculateIndex(),
+        currentIndex: _calculateIndex(widget.location),
         onTap: (index) => _onItemTapped(context, index),
+        itemKeys: _navItemKeys,
       ),
     );
   }
