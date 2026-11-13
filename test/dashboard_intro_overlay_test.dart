@@ -7,8 +7,11 @@ import 'package:kuta_grade/features/grades/widgets/intro_overlay/coach_mark_step
 import 'package:kuta_grade/features/grades/widgets/intro_overlay/dashboard_intro_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Builds the dashboard shell under a plain MaterialApp and settles the
-/// initial frame + intro dialog entrance.
+/// Builds the dashboard shell under a plain MaterialApp and advances past
+/// the initial frame + intro dialog entrance.
+///
+/// Note: the tour's connector dashes repeat forever, so fixed-duration pumps
+/// are used instead of `pumpAndSettle` (which would time out).
 Future<void> pumpShell(WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -18,8 +21,14 @@ Future<void> pumpShell(WidgetTester tester) async {
       ),
     ),
   );
-  // First frame (post-frame callback fires) + dialog route transition.
-  await tester.pumpAndSettle();
+  await settle(tester);
+}
+
+/// Advances time past the entrance animation (220ms) and the post-animation
+/// card measurement frame.
+Future<void> settle(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 350));
 }
 
 void main() {
@@ -68,24 +77,24 @@ void main() {
 
       // Welcome -> Exams -> Notes -> Practice -> Profile
       await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Exams'), findsOneWidget);
 
       await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Notes'), findsOneWidget);
 
       await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Practice'), findsOneWidget);
 
       await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Profile'), findsOneWidget);
       expect(find.text('Get Started'), findsOneWidget);
 
       await tester.tap(find.text('Get Started'));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Tour is gone and the once-ever flag is set.
       expect(find.text('Welcome to Kuta!'), findsNothing);
@@ -105,7 +114,7 @@ void main() {
       await pumpShell(tester);
 
       await tester.tap(find.text('Skip'));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('Welcome to Kuta!'), findsNothing);
       expect(

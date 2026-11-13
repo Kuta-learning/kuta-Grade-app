@@ -370,10 +370,6 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
 
                           return Expanded(
                             child: GestureDetector(
-                              key: widget.itemKeys != null &&
-                                      index < widget.itemKeys!.length
-                                  ? widget.itemKeys![index]
-                                  : null,
                               behavior: HitTestBehavior.opaque,
                               onTap: () => _handleTap(index),
                               child: Stack(
@@ -381,10 +377,17 @@ class _GradeBottomNavBarState extends State<GradeBottomNavBar>
                                 children: [
                                   Positioned(
                                     top: iconY,
-                                    child: Icon(
-                                      iconData,
-                                      color: iconColor,
-                                      size: iconSize,
+                                    child: KeyedSubtree(
+                                      key: widget.itemKeys != null &&
+                                              index <
+                                                  widget.itemKeys!.length
+                                          ? widget.itemKeys![index]
+                                          : null,
+                                      child: Icon(
+                                        iconData,
+                                        color: iconColor,
+                                        size: iconSize,
+                                      ),
                                     ),
                                   ),
                                 ],

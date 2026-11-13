@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -60,11 +61,15 @@ class DashboardIntroOverlay extends StatefulWidget {
 }
 
 class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _index = 0;
   late AnimationController _controller;
+  late AnimationController _dashController;
   late Animation<double> _fade;
   late Animation<Offset> _slide;
+
+  final GlobalKey _cardKey = GlobalKey(debugLabel: 'introCoachCard');
+  Rect? _cardRect;
 
   @override
   void initState() {
@@ -73,13 +78,30 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     _slide = Tween<Offset>(begin: const Offset(0, 0.18), end: Offset.zero)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    _controller.forward();
+    _controller.forward().whenComplete(_measureCard);
+
+    // Drives the flowing dashes of the connector line.
+    _dashController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+      ..repeat();
+    WidgetsBinding.instance.addPostFrameCallback(_measureCard);
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _dashController.dispose();
     super.dispose();
+  }
+
+  /// Resolves the coach card's final on-screen rect (after the entrance
+  /// animation settles) so the connector line can start from its edge.
+  void _measureCard([_]) {
+    final box = _cardKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return;
+    final rect = box.localToGlobal(Offset.zero) & box.size;
+    if (mounted && _cardRect != rect) {
+      setState(() => _cardRect = rect);
+    }
   }
 
   void _goNext() {
@@ -88,12 +110,11 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
       return;
     }
     setState(() => _index++);
-    _controller.forward(from: 0);
+    _controller.forward().whenComplete(_measureCard);
   }
 
   void _skip() => widget.onComplete();
 
-  bool get _isWelcomeStep => widget.steps[_index].targetKey == null;
   bool get _isLastStep => _index == widget.steps.length - 1;
 
   @override
@@ -134,25 +155,39 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
             ),
           ),
 
-        // 3. Coach card (animated fade + slide per step).
-        Positioned(
-          left: AppSpacing.space6,
-          right: AppSpacing.space6,
-          child: SlideTransition(
-            position: _slide,
-            child: FadeTransition(
-              opacity: _fade,
-              child: _CoachCard(
-                title: step.title,
-                body: step.body,
-                stepCount: steps.length,
-                currentStep: _index,
-                isWelcome: _isWelcomeStep,
-                isLast: _isLastStep,
-                bottomAligned: hole != null,
-                holeBottom: hole?.bottom ?? 0,
-                onNext: _goNext,
-                onSkip: _skip,
+        // 3. Flowing dashed connector from the card edge to the spotlight.
+        if (hole != null && _cardRect != null)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _ConnectorPainter(
+                from: Offset(_cardRect!.center.dx, _cardRect!.bottom + 6),
+                to: hole.center - Offset(0, hole.shortestSide / 2 + 12 + 10),
+                dash: _dashController,
+              ),
+            ),
+          ),
+
+        // 4. Coach card, always centered on screen so the spotlight hole at
+        // the nav bar stays fully visible (animated fade + slide per step).
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space6),
+            child: Center(
+              child: SlideTransition(
+                position: _slide,
+                child: FadeTransition(
+                  opacity: _fade,
+                  child: _CoachCard(
+                    key: _cardKey,
+                    title: step.title,
+                    body: step.body,
+                    stepCount: steps.length,
+                    currentStep: _index,
+                    isLast: _isLastStep,
+                    onNext: _goNext,
+                    onSkip: _skip,
+                  ),
+                ),
               ),
             ),
           ),
@@ -162,7 +197,9 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
   }
 }
 
-/// Clips out the rounded-rect spotlight hole from the fullscreen scrim.
+/// Clips a circular spotlight hole out of the fullscreen scrim.
+/// The circle is centered on the target rect (the nav item icon) with a
+/// small padding halo, so it hugs the icon instead of spanning the slot.
 class _SpotlightClipper extends CustomClipper<Path> {
   final Rect hole;
   final Size screen;
@@ -180,13 +217,15 @@ class _SpotlightClipper extends CustomClipper<Path> {
   }
 
   Path _holePath() =>
-      Path()..addRRect(RRect.fromRectAndRadius(hole, const Radius.circular(16)));
+      Path()..addOval(Rect.fromCircle(center: hole.center, radius: _radius));
+
+  double get _radius => hole.shortestSide / 2 + 12;
 
   @override
   bool shouldReclip(_SpotlightClipper old) => old.hole != hole || old.screen != screen;
 }
 
-/// Soft white glow + crisp border drawn around the spotlight hole.
+/// Soft white glow + crisp circular ring drawn around the spotlight hole.
 class _SpotlightBorderPainter extends CustomPainter {
   final Rect hole;
 
@@ -194,20 +233,23 @@ class _SpotlightBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(hole, const Radius.circular(16));
+    final center = hole.center;
+    final radius = hole.shortestSide / 2 + 12;
 
     // Soft outer glow.
-    canvas.drawRRect(
-      rrect.inflate(6),
+    canvas.drawCircle(
+      center,
+      radius + 6,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.18)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
-    // Crisp highlight line.
-    canvas.drawRRect(
-      rrect,
+    // Crisp highlight ring.
+    canvas.drawCircle(
+      center,
+      radius,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.9)
         ..style = PaintingStyle.stroke
@@ -219,56 +261,99 @@ class _SpotlightBorderPainter extends CustomPainter {
   bool shouldRepaint(_SpotlightBorderPainter old) => old.hole != hole;
 }
 
+/// Animated dashed S-curve connecting the coach card to the spotlighted
+/// icon. Dashes flow toward the target ("direction" cue) and a small dot
+/// marks the landing point, Driver.js / Intro.js style.
+class _ConnectorPainter extends CustomPainter {
+  final Offset from;
+  final Offset to;
+  final Animation<double> dash;
+
+  _ConnectorPainter({
+    required this.from,
+    required this.to,
+    required this.dash,
+  }) : super(repaint: dash);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(from.dx, from.dy)
+      ..cubicTo(
+        from.dx,
+        from.dy + (to.dy - from.dy) * 0.45,
+        to.dx,
+        to.dy - (to.dy - from.dy) * 0.45,
+        to.dx,
+        to.dy,
+      );
+
+    // Dashes are drawn as short segments along the path (no dart:ui
+    // PathEffect needed). Each cycle the start offset advances by one dash
+    // period, so the pattern flows seamlessly toward the icon.
+    const dashLength = 7.0;
+    const period = 13.0; // dash 7 + gap 6
+    final phase = dash.value * period;
+
+    final dashPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    for (final metric in path.computeMetrics()) {
+      final length = metric.length;
+      // Start one period back so the pattern stays continuous; as phase
+      // advances the drawn segments move forward, i.e. toward the icon.
+      double start = phase - period;
+      while (start < length) {
+        final segStart = math.max(start, 0.0);
+        final segEnd = math.min(start + dashLength, length);
+        if (segEnd > segStart) {
+          canvas.drawPath(metric.extractPath(segStart, segEnd), dashPaint);
+        }
+        start += period;
+      }
+    }
+
+    // Landing dot on the spotlight edge.
+    canvas.drawCircle(
+      to,
+      4,
+      Paint()..color = Colors.white.withValues(alpha: 0.95),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ConnectorPainter old) => old.from != from || old.to != to;
+}
+
 /// The floating coach card: title, description, step dots, Skip + Next.
+/// Rendered centered on screen for every step.
 class _CoachCard extends StatelessWidget {
   final String title;
   final String body;
   final int stepCount;
   final int currentStep;
-  final bool isWelcome;
   final bool isLast;
-
-  /// When true the card sits above the spotlight hole (bottom-aligned hole),
-  /// otherwise it is centered on screen (welcome step).
-  final bool bottomAligned;
-  final double holeBottom;
 
   final VoidCallback onNext;
   final VoidCallback onSkip;
 
   const _CoachCard({
+    super.key,
     required this.title,
     required this.body,
     required this.stepCount,
     required this.currentStep,
-    required this.isWelcome,
     required this.isLast,
-    required this.bottomAligned,
-    required this.holeBottom,
     required this.onNext,
     required this.onSkip,
   });
 
   @override
   Widget build(BuildContext context) {
-    final screen = MediaQuery.of(context).size;
-    final cardHeightEstimate = 210.0;
-
-    // Anchor: above the hole for targeted steps; vertically centered for the
-    // welcome step; fall back to below-center when the hole is too high.
-    double top;
-    if (!bottomAligned) {
-      top = (screen.height - cardHeightEstimate) / 2;
-    } else {
-      final above = holeBottom - cardHeightEstimate - AppSpacing.space6;
-      top = above > AppSpacing.space8 ? above : holeBottom + AppSpacing.space6;
-      if (top + cardHeightEstimate > screen.height - AppSpacing.space4) {
-        top = screen.height - cardHeightEstimate - AppSpacing.space4;
-      }
-    }
-
     return Container(
-      margin: EdgeInsets.only(top: top),
       padding: const EdgeInsets.all(AppSpacing.space6),
       decoration: BoxDecoration(
         color: AppColors.surface,
