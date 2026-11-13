@@ -329,6 +329,9 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                   (entry) => _buildQuestionBreakdownCard(
                     entry.value,
                     entry.key,
+                    totalCount: totalCount,
+                    correctCount: correctCount,
+                    wrongCount: wrongCount,
                   ),
                 ),
               ] else if (_isLoadingBreakdown) ...[
@@ -735,7 +738,13 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
 
   // ── Question Breakdown Card ─────────────────────────────────────────────────
 
-  ExamQuestionReviewItem _resolveItem(ExamQuestionReviewItem item, int index) {
+  ExamQuestionReviewItem _resolveItem(
+    ExamQuestionReviewItem item,
+    int index, {
+    required int totalCount,
+    required int correctCount,
+    required int wrongCount,
+  }) {
     ExamQuestion? originalQ;
     if (widget.fallbackQuestions != null) {
       try {
@@ -786,7 +795,16 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
 
     bool isCorrect = item.isCorrect;
 
-    // Check equivalence of selected vs correct by ID, label, or text
+    // 1. Reconcile with exam summary: if 0 wrong answers and >= 1 correct,
+    // or correctCount >= totalCount, this question is definitely correct!
+    if (!isCorrect) {
+      if ((wrongCount == 0 && correctCount > 0) ||
+          (totalCount > 0 && correctCount >= totalCount)) {
+        isCorrect = true;
+      }
+    }
+
+    // 2. Check equivalence of selected vs correct by ID, label, or text
     if (!isCorrect) {
       if (selectedId != null &&
           correctId != null &&
@@ -806,17 +824,7 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       }
     }
 
-    // Reconcile with exam summary: if score == totalCount or accuracy == 100%,
-    // all questions are guaranteed to be correct!
-    if (!isCorrect) {
-      final total = _result?.totalQuestions ?? widget.fallbackQuestions?.length ?? 0;
-      final score = _result?.score ?? 0;
-      final accuracy = _result?.accuracy ?? 0.0;
-      if ((total > 0 && score >= total) || accuracy >= 100.0) {
-        isCorrect = true;
-      }
-    }
-
+    // When verified correct, populate the correct answer details from the verified choice
     if (isCorrect) {
       correctId ??= selectedId;
       correctText = (correctText != null && correctText.trim().isNotEmpty)
@@ -848,14 +856,41 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
 
   Widget _buildQuestionBreakdownCard(
     ExamQuestionReviewItem rawQuestion,
-    int index,
-  ) {
-    final question = _resolveItem(rawQuestion, index);
+    int index, {
+    required int totalCount,
+    required int correctCount,
+    required int wrongCount,
+  }) {
+    final question = _resolveItem(
+      rawQuestion,
+      index,
+      totalCount: totalCount,
+      correctCount: correctCount,
+      wrongCount: wrongCount,
+    );
     final qNumber = question.order ?? (index + 1);
     final hasSelectedAnswer = (question.selectedOptionText != null &&
             question.selectedOptionText!.trim().isNotEmpty) ||
         (question.selectedOptionLabel != null &&
             question.selectedOptionLabel!.trim().isNotEmpty);
+
+    final isSelectedSameAsCorrect = (question.selectedOptionText != null &&
+            question.correctOptionText != null &&
+            question.selectedOptionText!.trim().toLowerCase() ==
+                question.correctOptionText!.trim().toLowerCase()) ||
+        (question.selectedOptionLabel != null &&
+            question.correctOptionLabel != null &&
+            question.selectedOptionLabel!.trim().toUpperCase() ==
+                question.correctOptionLabel!.trim().toUpperCase()) ||
+        (question.selectedOptionId != null &&
+            question.correctOptionId != null &&
+            question.selectedOptionId == question.correctOptionId);
+
+    // Red wrong row ONLY appears if question is genuinely wrong AND user's answer is NOT identical to correct answer
+    final showWrongRow = !question.isCorrect &&
+        !isSelectedSameAsCorrect &&
+        wrongCount > 0 &&
+        hasSelectedAnswer;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -908,8 +943,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Wrong answer row (ONLY rendered if user got it wrong and made a selection)
-          if (!question.isCorrect && hasSelectedAnswer) ...[
+          // Wrong answer row (ONLY rendered if user actually got it wrong and selected a different option)
+          if (showWrongRow) ...[
             _buildAnswerRow(
               isCorrect: false,
               label: question.selectedOptionLabel,
@@ -918,7 +953,7 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             const SizedBox(height: 6),
           ],
 
-          // Correct answer row (if question is correct, it presents the student's correct answer)
+          // Correct answer row (always shows the verified correct answer in green)
           _buildAnswerRow(
             isCorrect: true,
             label: question.correctOptionLabel ?? question.selectedOptionLabel,
