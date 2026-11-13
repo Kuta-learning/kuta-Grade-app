@@ -471,16 +471,30 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category + Passed/Failed badge
+          // Category label
+          if (category.isNotEmpty)
+            Text(
+              category,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          if (category.isNotEmpty) const SizedBox(height: 6),
+
+          // Exam title + Passed/Failed badge on the same row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
-                  category,
+                  examTitle,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.headlineDark,
+                    height: 1.25,
                   ),
                 ),
               ),
@@ -515,18 +529,6 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-
-          // Exam title
-          Text(
-            examTitle,
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.headlineDark,
-              height: 1.25,
-            ),
           ),
           const SizedBox(height: 8),
 
