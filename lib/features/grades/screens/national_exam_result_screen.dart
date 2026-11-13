@@ -47,6 +47,7 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
   ExamResultReview? _result;
   String? _errorMessage;
   bool _isLoading = true;
+  bool _isLoadingBreakdown = false;
 
   // ── Design tokens ──────────────────────────────────────────────────────────
   static const _cardBg = Colors.white;
@@ -72,14 +73,56 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       _result = widget.initialReview;
       _isLoading = false;
     } else if (widget.initialReview != null) {
-      // We have basic result data but no question breakdown — show it and
-      // then fetch the full breakdown in the background.
-      _result = widget.initialReview;
+      // We have basic result data but no question breakdown — populate from fallback if present
+      // and fetch the full breakdown in the background.
+      _result = _populateWithFallbackQuestions(widget.initialReview!);
       _isLoading = false;
       _fetchFullReview();
     } else {
       _loadResult();
     }
+  }
+
+  ExamResultReview _populateWithFallbackQuestions(ExamResultReview review) {
+    if (review.questions.isNotEmpty) return review;
+    final fallback = widget.fallbackQuestions;
+    if (fallback == null || fallback.isEmpty) return review;
+
+    final generated = <ExamQuestionReviewItem>[];
+    for (var i = 0; i < fallback.length; i++) {
+      final q = fallback[i];
+      final selectedId = widget.fallbackAnswers?[q.id] ?? q.selectedOptionId;
+
+      String? selectedText;
+      String? selectedLabel;
+      String? correctId;
+      String? correctText;
+      String? correctLabel;
+
+      for (final opt in q.options) {
+        if (opt.id == selectedId) {
+          selectedText = opt.text;
+          selectedLabel = opt.label;
+        }
+      }
+
+      generated.add(
+        ExamQuestionReviewItem(
+          questionId: q.id,
+          order: q.order ?? (i + 1),
+          questionText: q.text,
+          selectedOptionId: selectedId,
+          selectedOptionText: selectedText,
+          selectedOptionLabel: selectedLabel,
+          correctOptionId: correctId,
+          correctOptionText: correctText,
+          correctOptionLabel: correctLabel,
+          isCorrect: false, // will be resolved via _resolveItem if needed
+        ),
+      );
+    }
+
+    return review.copyWith(questions: generated);
   }
 
   Future<void> _loadResult() async {
@@ -88,7 +131,10 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await _service.getExamAttemptResult(widget.attemptId);
+      var result = await _service.getExamAttemptResult(widget.attemptId);
+      if (result.questions.isEmpty) {
+        result = _populateWithFallbackQuestions(result);
+      }
       if (!mounted) return;
       setState(() {
         _result = result;
@@ -106,14 +152,21 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
   /// Silently fetches the full review (with question breakdown) and merges it
   /// with the already-displayed basic result.
   Future<void> _fetchFullReview() async {
+    setState(() => _isLoadingBreakdown = true);
     try {
       final full = await _service.getExamAttemptResult(widget.attemptId);
       if (!mounted) return;
       if (full.questions.isNotEmpty) {
         setState(() => _result = full);
+      } else if (_result != null && _result!.questions.isEmpty) {
+        setState(() => _result = _populateWithFallbackQuestions(_result!));
       }
     } catch (_) {
       // Swallow — the basic result is already shown; breakdown is optional.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingBreakdown = false);
+      }
     }
   }
 
@@ -262,20 +315,84 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               const SizedBox(height: 20),
 
               // ── Question Breakdown ───────────────────────────────────────
-              if (result.questions.isNotEmpty) ...[
-                Text(
-                  'Question Breakdown',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.headlineDark,
-                  ),
+              Text(
+                'Question Breakdown',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headlineDark,
                 ),
-                const SizedBox(height: 10),
+              ),
+              const SizedBox(height: 10),
+              if (result.questions.isNotEmpty) ...[
                 ...result.questions.asMap().entries.map(
                   (entry) => _buildQuestionBreakdownCard(
                     entry.value,
                     entry.key,
+                  ),
+                ),
+              ] else if (_isLoadingBreakdown) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: _cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _borderColor),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.brandPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Loading question breakdown…',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Detailed question breakdown is not available for this exam attempt.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

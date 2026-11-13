@@ -187,6 +187,24 @@ class ExamQuestionReviewItem {
   });
 
   factory ExamQuestionReviewItem.fromJson(Map<String, dynamic> json) {
+    final qObj = json['question'] is Map<String, dynamic>
+        ? json['question'] as Map<String, dynamic>
+        : null;
+
+    final questionId = json['questionId'] as String? ??
+        qObj?['id'] as String? ??
+        json['id'] as String? ??
+        '';
+
+    final order = json['order'] as int? ?? qObj?['order'] as int?;
+
+    final questionText = json['questionText'] as String? ??
+        qObj?['text'] as String? ??
+        qObj?['prompt'] as String? ??
+        json['text'] as String? ??
+        json['prompt'] as String? ??
+        '';
+
     String? selectedOptId = json['selectedOptionId'] as String? ??
         json['userOptionId'] as String?;
     String? selectedOptText = json['selectedOptionText'] as String? ??
@@ -222,9 +240,10 @@ class ExamQuestionReviewItem {
       correctOptText ??= json['correctOption'] as String;
     }
 
-    // Inspect nested options array if present
-    if (json['options'] is List) {
-      for (final opt in json['options']) {
+    // Inspect nested options array if present (in json or in qObj)
+    final rawOptions = (json['options'] ?? qObj?['options']);
+    if (rawOptions is List) {
+      for (final opt in rawOptions) {
         if (opt is Map<String, dynamic>) {
           final optId = opt['id'] as String?;
           final optText = opt['text'] as String?;
@@ -257,12 +276,9 @@ class ExamQuestionReviewItem {
     }
 
     return ExamQuestionReviewItem(
-      questionId: json['questionId'] as String? ?? json['id'] as String? ?? '',
-      order: json['order'] as int?,
-      questionText: json['questionText'] as String? ??
-          json['text'] as String? ??
-          json['prompt'] as String? ??
-          '',
+      questionId: questionId,
+      order: order,
+      questionText: questionText,
       selectedOptionId: selectedOptId,
       selectedOptionText: selectedOptText,
       selectedOptionLabel: selectedOptLabel,
@@ -270,7 +286,8 @@ class ExamQuestionReviewItem {
       correctOptionText: correctOptText,
       correctOptionLabel: correctOptLabel,
       isCorrect: isCorrect,
-      explanation: json['explanation'] as String?,
+      explanation: json['explanation'] as String? ??
+          qObj?['explanation'] as String?,
     );
   }
 }
@@ -301,35 +318,57 @@ class ExamResultReview {
   });
 
   factory ExamResultReview.fromJson(Map<String, dynamic> json) {
-    final rawQuestions =
-        (json['questions'] ?? json['results'] ?? json['review'])
-            as List<dynamic>? ??
-            [];
+    final target = (json['data'] is Map<String, dynamic>)
+        ? json['data'] as Map<String, dynamic>
+        : (json['attempt'] is Map<String, dynamic>)
+            ? json['attempt'] as Map<String, dynamic>
+            : (json['result'] is Map<String, dynamic>)
+                ? json['result'] as Map<String, dynamic>
+                : json;
+
+    final rawQuestions = (target['questions'] ??
+            target['questionBreakdown'] ??
+            target['breakdown'] ??
+            target['answers'] ??
+            target['results'] ??
+            target['review'] ??
+            target['items'] ??
+            target['gradedAnswers']) as List<dynamic>? ??
+        [];
+
     final parsedQuestions = rawQuestions
-        .map((q) => ExamQuestionReviewItem.fromJson(q as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .map((q) => ExamQuestionReviewItem.fromJson(q))
         .toList();
 
-    final score = json['score'] as int? ?? 0;
-    final totalQuestions = json['totalQuestions'] as int? ??
+    final score = target['score'] as int? ?? 0;
+    final totalQuestions = target['totalQuestions'] as int? ??
         (parsedQuestions.isNotEmpty ? parsedQuestions.length : 0);
 
-    double accuracy = (json['accuracy'] as num?)?.toDouble() ?? 0.0;
+    double accuracy = (target['accuracy'] as num?)?.toDouble() ?? 0.0;
     if (accuracy == 0.0 && totalQuestions > 0 && score > 0) {
       accuracy = (score / totalQuestions) * 100.0;
     }
 
     return ExamResultReview(
-      attemptId: json['attemptId'] as String? ?? json['id'] as String? ?? '',
-      examTitle: json['examTitle'] as String? ?? json['title'] as String?,
-      category: json['category'] as String? ?? json['subject'] as String?,
+      attemptId: target['attemptId'] as String? ??
+          target['id'] as String? ??
+          json['attemptId'] as String? ??
+          '',
+      examTitle: target['examTitle'] as String? ??
+          target['title'] as String? ??
+          json['title'] as String?,
+      category: target['category'] as String? ??
+          target['subject'] as String? ??
+          json['category'] as String?,
       score: score,
       totalQuestions: totalQuestions,
       accuracy: accuracy,
-      timeSpentSeconds: json['timeSpentSeconds'] as int? ?? 0,
-      totalDurationSeconds:
-          json['totalDurationSeconds'] as int? ?? json['durationSeconds'] as int?,
-      submittedAt: json['submittedAt'] != null
-          ? DateTime.tryParse(json['submittedAt'] as String)
+      timeSpentSeconds: target['timeSpentSeconds'] as int? ?? 0,
+      totalDurationSeconds: target['totalDurationSeconds'] as int? ??
+          target['durationSeconds'] as int?,
+      submittedAt: target['submittedAt'] != null
+          ? DateTime.tryParse(target['submittedAt'] as String)
           : null,
       questions: parsedQuestions,
     );

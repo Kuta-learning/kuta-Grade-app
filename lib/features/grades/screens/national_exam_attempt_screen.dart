@@ -235,11 +235,18 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
     setState(() {
       _isPaused = true;
     });
+    unawaited(_saveProgress());
+
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
         title: Row(
           children: [
             Container(
@@ -251,26 +258,28 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               child: const Icon(
                 Icons.pause_circle_filled_rounded,
                 color: Color(0xFF2563EB),
-                size: 28,
+                size: 26,
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Exam Paused',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E293B),
+            Expanded(
+              child: Text(
+                'Exam Paused',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headlineDark,
+                ),
               ),
             ),
           ],
         ),
         content: Text(
-          'Your timer is temporarily paused. Progress has been autosaved.',
+          'Your answers have been autosaved. Note: National exam timer continues in the background.',
           style: GoogleFonts.inter(
             fontSize: 14,
             height: 1.5,
-            color: const Color(0xFF64748B),
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [
@@ -284,8 +293,15 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            child: const Text('Submit Now'),
+            child: Text(
+              'Submit Now',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -297,11 +313,19 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
-            child: const Text('Resume Exam'),
+            child: Text(
+              'Resume Exam',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
