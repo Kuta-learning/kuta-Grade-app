@@ -187,8 +187,11 @@ class ExamQuestionReviewItem {
   });
 
   factory ExamQuestionReviewItem.fromJson(Map<String, dynamic> json) {
-    final qObj = json['question'] is Map<String, dynamic>
-        ? json['question'] as Map<String, dynamic>
+    final qRaw = json['question'];
+    final Map<String, dynamic>? qObj = qRaw is Map
+        ? (qRaw is Map<String, dynamic>
+            ? qRaw
+            : qRaw.map((k, v) => MapEntry(k.toString(), v)))
         : null;
 
     final questionId = json['questionId'] as String? ??
@@ -212,13 +215,19 @@ class ExamQuestionReviewItem {
     String? selectedOptLabel = json['selectedOptionLabel'] as String? ??
         json['userOptionLabel'] as String?;
 
-    if (json['selectedOption'] is Map<String, dynamic>) {
-      final so = json['selectedOption'] as Map<String, dynamic>;
+    if (json['selectedOption'] is Map) {
+      final soRaw = json['selectedOption'] as Map;
+      final so = soRaw is Map<String, dynamic>
+          ? soRaw
+          : soRaw.map((k, v) => MapEntry(k.toString(), v));
       selectedOptId ??= so['id'] as String?;
       selectedOptText ??= so['text'] as String?;
       selectedOptLabel ??= so['label'] as String?;
-    } else if (json['userOption'] is Map<String, dynamic>) {
-      final uo = json['userOption'] as Map<String, dynamic>;
+    } else if (json['userOption'] is Map) {
+      final uoRaw = json['userOption'] as Map;
+      final uo = uoRaw is Map<String, dynamic>
+          ? uoRaw
+          : uoRaw.map((k, v) => MapEntry(k.toString(), v));
       selectedOptId ??= uo['id'] as String?;
       selectedOptText ??= uo['text'] as String?;
       selectedOptLabel ??= uo['label'] as String?;
@@ -231,8 +240,11 @@ class ExamQuestionReviewItem {
         json['correct_answer'] as String?;
     String? correctOptLabel = json['correctOptionLabel'] as String?;
 
-    if (json['correctOption'] is Map<String, dynamic>) {
-      final co = json['correctOption'] as Map<String, dynamic>;
+    if (json['correctOption'] is Map) {
+      final coRaw = json['correctOption'] as Map;
+      final co = coRaw is Map<String, dynamic>
+          ? coRaw
+          : coRaw.map((k, v) => MapEntry(k.toString(), v));
       correctOptId ??= co['id'] as String?;
       correctOptText ??= co['text'] as String?;
       correctOptLabel ??= co['label'] as String?;
@@ -244,11 +256,14 @@ class ExamQuestionReviewItem {
     final rawOptions = (json['options'] ?? qObj?['options']);
     if (rawOptions is List) {
       for (final opt in rawOptions) {
-        if (opt is Map<String, dynamic>) {
-          final optId = opt['id'] as String?;
-          final optText = opt['text'] as String?;
-          final optLabel = opt['label'] as String?;
-          final optIsCorrect = opt['isCorrect'] == true;
+        if (opt is Map) {
+          final optMap = opt is Map<String, dynamic>
+              ? opt
+              : opt.map((k, v) => MapEntry(k.toString(), v));
+          final optId = optMap['id'] as String?;
+          final optText = optMap['text'] as String?;
+          final optLabel = optMap['label'] as String?;
+          final optIsCorrect = optMap['isCorrect'] == true;
 
           if (optIsCorrect || (correctOptId != null && optId == correctOptId)) {
             correctOptId ??= optId;
@@ -318,13 +333,23 @@ class ExamResultReview {
   });
 
   factory ExamResultReview.fromJson(Map<String, dynamic> json) {
-    final target = (json['data'] is Map<String, dynamic>)
-        ? json['data'] as Map<String, dynamic>
-        : (json['attempt'] is Map<String, dynamic>)
-            ? json['attempt'] as Map<String, dynamic>
-            : (json['result'] is Map<String, dynamic>)
-                ? json['result'] as Map<String, dynamic>
-                : json;
+    Map<String, dynamic> target = json;
+    if (json['data'] is Map) {
+      final m = json['data'] as Map;
+      target = m is Map<String, dynamic>
+          ? m
+          : m.map((k, v) => MapEntry(k.toString(), v));
+    } else if (json['attempt'] is Map) {
+      final m = json['attempt'] as Map;
+      target = m is Map<String, dynamic>
+          ? m
+          : m.map((k, v) => MapEntry(k.toString(), v));
+    } else if (json['result'] is Map) {
+      final m = json['result'] as Map;
+      target = m is Map<String, dynamic>
+          ? m
+          : m.map((k, v) => MapEntry(k.toString(), v));
+    }
 
     final rawQuestions = (target['questions'] ??
             target['questionBreakdown'] ??
@@ -333,12 +358,19 @@ class ExamResultReview {
             target['results'] ??
             target['review'] ??
             target['items'] ??
-            target['gradedAnswers']) as List<dynamic>? ??
+            target['gradedAnswers'] ??
+            json['questions'] ??
+            json['results'] ??
+            json['review']) as List<dynamic>? ??
         [];
 
     final parsedQuestions = rawQuestions
-        .whereType<Map<String, dynamic>>()
-        .map((q) => ExamQuestionReviewItem.fromJson(q))
+        .whereType<Map>()
+        .map((q) => ExamQuestionReviewItem.fromJson(
+              q is Map<String, dynamic>
+                  ? q
+                  : q.map((k, v) => MapEntry(k.toString(), v)),
+            ))
         .toList();
 
     final score = target['score'] as int? ?? 0;
