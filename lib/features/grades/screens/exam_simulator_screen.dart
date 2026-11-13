@@ -84,7 +84,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   }
 
   /// Loads dashboard data using the centralized CacheManager via NationalExamService.
-  void _loadDashboardWithCache({bool isPullToRefresh = false}) {
+  Future<void> _loadDashboardWithCache({bool isPullToRefresh = false}) {
+    final completer = Completer<void>();
+
     if (_dashboardData == null && !isPullToRefresh) {
       setState(() {
         _isLoading = true;
@@ -100,7 +102,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         )
         .listen(
       (response) {
-        if (!mounted) return;
+        if (!mounted) {
+          if (!completer.isCompleted) completer.complete();
+          return;
+        }
         final data = response.data;
         final authenticatedGrade = _authenticatedGradeLevel();
 
@@ -110,6 +115,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage =
                 'National exams are available for Grades 6, 8, and 12 only.';
           });
+          if (!completer.isCompleted) completer.complete();
           return;
         }
 
@@ -120,6 +126,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage =
                 'The exam content does not match your selected grade.';
           });
+          if (!completer.isCompleted) completer.complete();
           return;
         }
 
@@ -136,9 +143,19 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             'Could not refresh live exam data. Showing cached offline data.',
           );
         }
+
+        // When data has arrived from network or if not pull-to-refresh, complete the spinner
+        if (response.source == CacheSource.network ||
+            response.backgroundError != null ||
+            !isPullToRefresh) {
+          if (!completer.isCompleted) completer.complete();
+        }
       },
       onError: (e) {
-        if (!mounted) return;
+        if (!mounted) {
+          if (!completer.isCompleted) completer.complete();
+          return;
+        }
         final errorMsg = e.toString().replaceFirst('Exception: ', '');
         if (isPullToRefresh) {
           AppSnackBar.showError(
@@ -151,12 +168,15 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             _errorMessage = errorMsg;
           });
         }
+        if (!completer.isCompleted) completer.complete();
       },
     );
+
+    return completer.future;
   }
 
   Future<void> _loadDashboardData({bool isPullToRefresh = false}) async {
-    _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
+    await _loadDashboardWithCache(isPullToRefresh: isPullToRefresh);
   }
 
   int? _authenticatedGradeLevel() {
@@ -253,6 +273,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             children: [
               RefreshIndicator(
                 color: _primaryBlue,
+                backgroundColor: Colors.white,
+                edgeOffset: topPadding,
                 onRefresh: () => _loadDashboardData(isPullToRefresh: true),
                 child: SingleChildScrollView(
                   controller: _scrollController,
