@@ -245,69 +245,69 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         child: Scaffold(
           extendBody: true,
           backgroundColor: _pageBackground,
-          body: RefreshIndicator(
-            color: _primaryBlue,
-            onRefresh: () => _loadDashboardData(isPullToRefresh: true),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: ClampingScrollPhysics(),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ==========================================
+              // PINNED TOP ROYAL BLUE BAR (Sticky Header)
+              // Protects OS status bar icons so they never wash out against white content
+              // ==========================================
+              Container(
+                color: _primaryBlue,
+                padding: EdgeInsets.only(top: topPadding),
+                child: _buildCustomAppBar(context),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ==========================================
-                  // TOP ROYAL BLUE HEADER SECTION
-                  // ==========================================
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height:
-                            topPadding +
-                            (_isLoading && _dashboardData == null
-                                ? 145
-                                : hasBannerExam
-                                ? 195
-                                : 125),
-                        color: _primaryBlue,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: topPadding),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildCustomAppBar(context),
-                            const SizedBox(height: 12),
-                            if (_isLoading && _dashboardData == null) ...[
-                              const ExamHeaderSkeleton(),
-                              const SizedBox(height: 10),
-                            ] else if (_dashboardData != null) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: _buildWelcomeBanner(),
-                              ),
-                              if (hasBannerExam) ...[
-                                const SizedBox(height: 14),
+
+              // ==========================================
+              // SCROLLABLE CONTENT AREA
+              // ==========================================
+              Expanded(
+                child: RefreshIndicator(
+                  color: _primaryBlue,
+                  onRefresh: () => _loadDashboardData(isPullToRefresh: true),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Royal blue banner container for welcome & active exam
+                        Container(
+                          width: double.infinity,
+                          color: _primaryBlue,
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 6),
+                              if (_isLoading && _dashboardData == null) ...[
+                                const ExamHeaderSkeleton(),
+                                const SizedBox(height: 10),
+                              ] else if (_dashboardData != null) ...[
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  child: _buildActiveExamCard(context),
+                                  child: _buildWelcomeBanner(),
                                 ),
+                                if (hasBannerExam) ...[
+                                  const SizedBox(height: 14),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: _buildActiveExamCard(context),
+                                  ),
+                                ],
                               ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
 
-                  // ==========================================
-                  // EXAM SUBJECTS SECTION HEADER
-                  // ==========================================
+                        // ==========================================
+                        // EXAM SUBJECTS SECTION HEADER
+                        // ==========================================
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
                     child: Column(
@@ -416,7 +416,10 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               ),
             ),
           ),
-          bottomNavigationBar: widget.showBottomNav
+        ),
+      ],
+    ),
+    bottomNavigationBar: widget.showBottomNav
               ? GradeBottomNavBar(
                   currentIndex: _selectedBottomNavIndex,
                   onTap: (index) {

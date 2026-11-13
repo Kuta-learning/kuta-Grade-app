@@ -46,6 +46,11 @@ class SharedPrefsStorage implements LocalStorage {
 
   Future<bool?> getBool(String key) async => _p.getBool(key);
 
+  // ── Int ──────────────────────────────────────────────────────────────────
+  Future<void> setInt(String key, {required int value}) => _p.setInt(key, value);
+
+  Future<int?> getInt(String key) async => _p.getInt(key);
+
   // ── Remove / Clear ───────────────────────────────────────────────────────
   @override
   Future<void> remove(String key) => _p.remove(key);

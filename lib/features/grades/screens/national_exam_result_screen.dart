@@ -172,28 +172,6 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
         'Results',
         style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 18),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.bookmark_border_rounded),
-          tooltip: 'Bookmark',
-          onPressed: () {},
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.orange500,
-            child: Text(
-              'P',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -237,19 +215,29 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
   }
 
   Widget _buildBody(ExamResultReview result) {
-    final accuracy = result.accuracy <= 1
-        ? result.accuracy * 100
-        : result.accuracy;
-    final passed = accuracy >= 50;
-    final correctCount = result.questions.isNotEmpty
-        ? result.questions.where((q) => q.isCorrect).length
-        : result.score;
-    final wrongCount = result.questions.isNotEmpty
-        ? result.questions.where((q) => !q.isCorrect).length
-        : (result.totalQuestions - result.score).clamp(0, result.totalQuestions);
     final totalCount = result.totalQuestions > 0
         ? result.totalQuestions
-        : result.questions.length;
+        : (result.questions.isNotEmpty
+            ? result.questions.length
+            : (widget.fallbackQuestions?.length ?? 0));
+
+    double accuracy = result.accuracy;
+    if ((accuracy == 0.0 || accuracy.isNaN) && totalCount > 0 && result.score > 0) {
+      accuracy = (result.score / totalCount) * 100;
+    } else if (accuracy <= 1.0 && accuracy > 0.0) {
+      accuracy = accuracy * 100;
+    }
+
+    final hasAnyQuestionsMarkedCorrect =
+        result.questions.any((q) => q.isCorrect);
+    final correctCount = hasAnyQuestionsMarkedCorrect
+        ? result.questions.where((q) => q.isCorrect).length
+        : result.score;
+    final wrongCount = hasAnyQuestionsMarkedCorrect
+        ? result.questions.where((q) => !q.isCorrect).length
+        : (totalCount - result.score).clamp(0, totalCount);
+
+    final passed = accuracy >= 50;
 
     return Stack(
       children: [
@@ -630,11 +618,99 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
 
   // ── Question Breakdown Card ─────────────────────────────────────────────────
 
+  ExamQuestionReviewItem _resolveItem(ExamQuestionReviewItem item, int index) {
+    ExamQuestion? originalQ;
+    if (widget.fallbackQuestions != null) {
+      try {
+        originalQ = widget.fallbackQuestions!.firstWhere(
+          (q) =>
+              q.id == item.questionId ||
+              (item.order != null && q.order == item.order),
+        );
+      } catch (_) {}
+    }
+
+    String? selectedId = item.selectedOptionId;
+    if ((selectedId == null || selectedId.isEmpty) &&
+        widget.fallbackAnswers != null) {
+      selectedId = widget.fallbackAnswers![item.questionId];
+    }
+    selectedId ??= originalQ?.selectedOptionId;
+
+    String? selectedText = item.selectedOptionText;
+    String? selectedLabel = item.selectedOptionLabel;
+    String? correctId = item.correctOptionId;
+    String? correctText = item.correctOptionText;
+    String? correctLabel = item.correctOptionLabel;
+
+    if (originalQ != null && originalQ.options.isNotEmpty) {
+      // Look up user selected option details
+      if (selectedId != null && selectedId.isNotEmpty) {
+        for (final opt in originalQ.options) {
+          if (opt.id == selectedId) {
+            selectedText ??= opt.text;
+            selectedLabel ??= opt.label;
+            break;
+          }
+        }
+      }
+
+      // Look up correct option details
+      if (correctId != null && correctId.isNotEmpty) {
+        for (final opt in originalQ.options) {
+          if (opt.id == correctId) {
+            correctText ??= opt.text;
+            correctLabel ??= opt.label;
+            break;
+          }
+        }
+      }
+    }
+
+    bool isCorrect = item.isCorrect;
+    if (selectedId != null &&
+        correctId != null &&
+        selectedId.isNotEmpty &&
+        selectedId == correctId) {
+      isCorrect = true;
+    }
+
+    if (isCorrect) {
+      correctId ??= selectedId;
+      correctText ??= selectedText;
+      correctLabel ??= selectedLabel;
+    }
+
+    return ExamQuestionReviewItem(
+      questionId: item.questionId.isNotEmpty
+          ? item.questionId
+          : (originalQ?.id ?? ''),
+      order: item.order ?? originalQ?.order ?? (index + 1),
+      questionText: item.questionText.isNotEmpty
+          ? item.questionText
+          : (originalQ?.text ?? ''),
+      selectedOptionId: selectedId,
+      selectedOptionText: selectedText,
+      selectedOptionLabel: selectedLabel,
+      correctOptionId: correctId,
+      correctOptionText: correctText,
+      correctOptionLabel: correctLabel,
+      isCorrect: isCorrect,
+      explanation: item.explanation,
+    );
+  }
+
   Widget _buildQuestionBreakdownCard(
-    ExamQuestionReviewItem question,
+    ExamQuestionReviewItem rawQuestion,
     int index,
   ) {
+    final question = _resolveItem(rawQuestion, index);
     final qNumber = question.order ?? (index + 1);
+    final hasSelectedAnswer = (question.selectedOptionText != null &&
+            question.selectedOptionText!.trim().isNotEmpty) ||
+        (question.selectedOptionLabel != null &&
+            question.selectedOptionLabel!.trim().isNotEmpty);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -686,8 +762,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Wrong answer row (only if the user got it wrong and selected something)
-          if (!question.isCorrect && question.selectedOptionText != null) ...[
+          // Wrong answer row (only if user got it wrong and made a selection)
+          if (!question.isCorrect && hasSelectedAnswer) ...[
             _buildAnswerRow(
               isCorrect: false,
               label: question.selectedOptionLabel,
@@ -716,9 +792,17 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     final textColor = isCorrect ? _correctGreen : _wrongRed;
     final icon = isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
     final prefix = isCorrect ? 'Correct answer' : 'Your answer';
-    final answerText = label != null && label.isNotEmpty
-        ? '$label. $text'
-        : text;
+
+    String answerText;
+    if (label != null && label.isNotEmpty && text.trim().isNotEmpty) {
+      answerText = '$label. $text';
+    } else if (label != null && label.isNotEmpty) {
+      answerText = 'Option $label';
+    } else if (text.trim().isNotEmpty) {
+      answerText = text;
+    } else {
+      answerText = isCorrect ? 'Correct answer verified' : 'Selected';
+    }
 
     return Container(
       width: double.infinity,

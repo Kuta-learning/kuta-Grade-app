@@ -40,6 +40,10 @@ abstract class StorageKeys {
   /// Serialized JSON string of bookmarked items list.
   static const String bookmarksCache = 'bookmarks_cache';
 
+  /// Generates the storage key for saving the last active question index for an exam attempt.
+  static String examAttemptQuestionIndex(String attemptId) =>
+      'exam_attempt_q_index_$attemptId';
+
   // ── Short Notes & Chapters Cache ──────────────────────────────────────────
   /// Serialized JSON cache of short notes subjects list.
   static const String notesSubjectsCache = 'notes_subjects_cache';

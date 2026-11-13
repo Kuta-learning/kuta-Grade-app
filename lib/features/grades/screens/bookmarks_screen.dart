@@ -8,7 +8,9 @@ import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/bookmark_model.dart';
+import '../models/national_exam_models.dart';
 import '../services/bookmark_service.dart';
+import '../services/national_exam_service.dart';
 import '../widgets/grade_screen_shell.dart';
 
 /// Screen displaying bookmarked subjects, past exam papers, and questions.
@@ -25,6 +27,8 @@ class BookmarksScreen extends StatefulWidget {
 
 class _BookmarksScreenState extends State<BookmarksScreen> {
   late final BookmarkService _service;
+  late final NationalExamService _examService;
+  final Map<String, ExamPaperItem> _examStatusMap = {};
   StreamSubscription? _subscription;
   List<BookmarkItem> _bookmarks = [];
   bool _isLoading = true;
@@ -34,6 +38,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   void initState() {
     super.initState();
     _service = widget.service ?? BookmarkService();
+    _examService = NationalExamService();
     _listenToBookmarks();
   }
 
@@ -49,6 +54,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           _isLoading = false;
           _errorMessage = null;
         });
+        _loadExamStatuses(response.data);
       },
       onError: (error) {
         if (!mounted) return;
@@ -59,6 +65,44 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         });
       },
     );
+  }
+
+  Future<void> _loadExamStatuses(List<BookmarkItem> bookmarks) async {
+    final examItems = bookmarks.where((b) {
+      final t = b.type.toUpperCase();
+      return t.contains('EXAM');
+    }).toList();
+    if (examItems.isEmpty) return;
+
+    final subjectIds = <String>{};
+    for (final b in examItems) {
+      final sId = b.subjectId ?? b.metadata?['subjectId']?.toString();
+      if (sId != null && sId.isNotEmpty) {
+        subjectIds.add(sId);
+      }
+    }
+
+    if (subjectIds.isEmpty) {
+      try {
+        final subjects = await _examService.getSubjects();
+        for (final s in subjects) {
+          subjectIds.add(s.id);
+        }
+      } catch (_) {}
+    }
+
+    for (final sId in subjectIds) {
+      try {
+        final papers = await _examService.getExamsForSubject(sId);
+        for (final p in papers) {
+          _examStatusMap[p.id] = p;
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -93,11 +137,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     }
   }
 
-  void _navigateToItem(BookmarkItem item) {
+  Future<void> _navigateToItem(BookmarkItem item) async {
     final type = item.type.toUpperCase();
 
     if (type.contains('NOTE') || type.contains('CHAPTER')) {
-      context.push(
+      await context.push(
         '${RouteNames.lessonDetail}'
         '?chapterId=${Uri.encodeComponent(item.itemId)}'
         '&subject=${Uri.encodeComponent(item.title)}',
@@ -106,7 +150,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     }
 
     if (type.contains('LESSON') || type.contains('COURSE')) {
-      context.push(
+      await context.push(
         '${RouteNames.courseDetail}'
         '?courseId=${Uri.encodeComponent(item.itemId)}'
         '&title=${Uri.encodeComponent(item.title)}',
@@ -114,12 +158,42 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       return;
     }
 
-    // Default: National Exam Attempt or Quiz
-    context.push(
+    // Default: National Exam (check if completed -> Review, inProgress -> Resume, or Start)
+    ExamPaperItem? paper = _examStatusMap[item.itemId];
+    if (paper == null) {
+      final sId = item.subjectId ?? item.metadata?['subjectId']?.toString();
+      if (sId != null && sId.isNotEmpty) {
+        try {
+          final papers = await _examService.getExamsForSubject(sId);
+          for (final p in papers) {
+            _examStatusMap[p.id] = p;
+          }
+          paper = _examStatusMap[item.itemId];
+        } catch (_) {}
+      }
+    }
+
+    if (!mounted) return;
+
+    if (paper != null &&
+        paper.userStatus == ExamUserStatus.submitted &&
+        paper.attemptId != null &&
+        paper.attemptId!.isNotEmpty) {
+      await context.push(
+        '${RouteNames.nationalExamResult}'
+        '?attemptId=${Uri.encodeComponent(paper.attemptId!)}'
+        '&title=${Uri.encodeComponent(paper.title.isNotEmpty ? paper.title : item.title)}',
+      );
+      if (mounted) _loadExamStatuses(_bookmarks);
+      return;
+    }
+
+    await context.push(
       '${RouteNames.nationalExamAttempt}'
       '?examId=${Uri.encodeComponent(item.itemId)}'
-      '&title=${Uri.encodeComponent(item.title)}',
+      '&title=${Uri.encodeComponent(paper?.title.isNotEmpty == true ? paper!.title : item.title)}',
     );
+    if (mounted) _loadExamStatuses(_bookmarks);
   }
 
   String _resolveSubjectBadge(BookmarkItem item) {
@@ -151,6 +225,17 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     }
     if (type.contains('LESSON') || type.contains('COURSE')) {
       return 'Study Lesson';
+    }
+    final paper = _examStatusMap[item.itemId];
+    if (paper != null) {
+      switch (paper.userStatus) {
+        case ExamUserStatus.submitted:
+          return 'Review';
+        case ExamUserStatus.inProgress:
+          return 'Resume';
+        case ExamUserStatus.notStarted:
+          return 'Start Exam';
+      }
     }
     return 'Start Exam';
   }
@@ -433,7 +518,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.orange500,
+                          color: actionLabel == 'Review'
+                              ? AppColors.borderVariant
+                              : actionLabel == 'Resume'
+                                  ? AppColors.brandBlue
+                                  : AppColors.orange500,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -441,7 +530,9 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: actionLabel == 'Review'
+                                ? AppColors.headlineDark
+                                : Colors.white,
                           ),
                         ),
                       ),
