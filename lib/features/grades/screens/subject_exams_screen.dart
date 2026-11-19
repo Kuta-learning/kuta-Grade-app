@@ -1,0 +1,669 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/route_names.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/rive_loading_widget.dart';
+import '../models/national_exam_models.dart';
+import '../services/bookmark_service.dart';
+import '../services/national_exam_service.dart';
+import '../widgets/grade_screen_shell.dart';
+
+/// Exam status enum indicating student progress for a national exam paper.
+enum ExamPaperStatus { notStarted, inProgress, completed }
+
+/// Unified Subject Exam Papers Screen for all Grades (6, 8, 12).
+/// Displays past official national exam papers matching the exact Figma reference design.
+/// Includes bookmarking functionality with custom [AppSnackBar] notifications.
+class SubjectExamsScreen extends StatefulWidget {
+  final String? subjectId;
+  final String subjectTitle;
+  final String streamTitle;
+  final String subtitle;
+  final BookmarkService? bookmarkService;
+
+  const SubjectExamsScreen({
+    super.key,
+    this.subjectId,
+    this.subjectTitle = 'Mathematics',
+    this.streamTitle = 'NATURAL SCIENCE STREAM',
+    this.subtitle = 'Official National University Entrance Papers',
+    this.bookmarkService,
+  });
+
+  @override
+  State<SubjectExamsScreen> createState() => _SubjectExamsScreenState();
+}
+
+/// Backward compatibility alias for Grade 12 references
+typedef Grade12SubjectExamsScreen = SubjectExamsScreen;
+
+class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
+  late final BookmarkService _bookmarkService;
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<_ExamPaperModel> _papers = [];
+  final Set<String> _bookmarkedExamIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _bookmarkService = widget.bookmarkService ?? BookmarkService();
+    _fetchPapers();
+    _loadBookmarkedExams();
+  }
+
+  /// Silently loads bookmarked exam IDs to mark bookmarked cards.
+  Future<void> _loadBookmarkedExams() async {
+    try {
+      final bookmarks = await _bookmarkService.getBookmarks(type: 'EXAM_QUESTION');
+      if (mounted) {
+        setState(() {
+          _bookmarkedExamIds.clear();
+          for (final b in bookmarks) {
+            _bookmarkedExamIds.add(b.itemId);
+          }
+        });
+      }
+    } catch (_) {
+      // Non-blocking: exam list will still render without prefilled bookmarks
+    }
+  }
+
+  /// Toggles bookmark state for an exam paper with optimistic UI and AppSnackBar.
+  Future<void> _toggleExamBookmark(_ExamPaperModel paper) async {
+    final wasBookmarked = _bookmarkedExamIds.contains(paper.id);
+
+    // 1. Optimistic local update
+    setState(() {
+      if (wasBookmarked) {
+        _bookmarkedExamIds.remove(paper.id);
+      } else {
+        _bookmarkedExamIds.add(paper.id);
+      }
+    });
+
+    try {
+      final result = await _bookmarkService.toggleBookmark(
+        type: 'EXAM_QUESTION',
+        itemId: paper.id,
+        title: '${widget.subjectTitle} - ${paper.displayTitle}',
+        subjectId: widget.subjectId,
+        metadata: {
+          'subject': widget.subjectTitle,
+          'stream': widget.streamTitle,
+        },
+      );
+
+      if (!mounted) return;
+
+      // Sync with server confirmation
+      setState(() {
+        if (result.isBookmarked) {
+          _bookmarkedExamIds.add(paper.id);
+        } else {
+          _bookmarkedExamIds.remove(paper.id);
+        }
+      });
+
+      final msg = result.message.isNotEmpty
+          ? result.message
+          : (result.isBookmarked ? 'Bookmark added' : 'Bookmark removed');
+      AppSnackBar.showSuccess(context, msg);
+    } catch (e) {
+      if (!mounted) return;
+
+      // Rollback optimistic update
+      setState(() {
+        if (wasBookmarked) {
+          _bookmarkedExamIds.add(paper.id);
+        } else {
+          _bookmarkedExamIds.remove(paper.id);
+        }
+      });
+
+      AppSnackBar.showError(
+        context,
+        'Failed to update bookmark: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
+    }
+  }
+
+  /// Loads exam papers from backend. Supports pull-to-refresh.
+  Future<void> _fetchPapers() async {
+    if (widget.subjectId == null || widget.subjectId!.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'No subject ID provided. Please go back and try again.';
+      });
+      return;
+    }
+
+    // Only show full loading state on initial load (not on refresh)
+    if (_papers.isEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final service = NationalExamService();
+      final list = await service.getExamsForSubject(widget.subjectId!);
+      if (mounted) {
+        setState(() {
+          _papers = list.map(_fromBackendPaper).toList();
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  _ExamPaperModel _fromBackendPaper(ExamPaperItem paper) {
+    final duration = paper.durationMinutes;
+    final hours = duration == null ? 0 : duration ~/ 60;
+    final minutes = duration == null ? 0 : duration % 60;
+    final durationStr = duration == null
+        ? ''
+        : minutes > 0
+        ? '${hours}h ${minutes}m'
+        : '${hours}h';
+
+    ExamPaperStatus status;
+    switch (paper.userStatus) {
+      case ExamUserStatus.notStarted:
+        status = ExamPaperStatus.notStarted;
+        break;
+      case ExamUserStatus.inProgress:
+        status = ExamPaperStatus.inProgress;
+        break;
+      case ExamUserStatus.submitted:
+        status = ExamPaperStatus.completed;
+        break;
+    }
+
+    final displayTitle = paper.title.isNotEmpty
+        ? paper.title
+        : paper.year != null
+        ? '${paper.year} National Exam'
+        : 'National Exam';
+
+    return _ExamPaperModel(
+      id: paper.id,
+      displayTitle: displayTitle,
+      duration: durationStr,
+      questionsCount: paper.totalQuestions == null
+          ? ''
+          : '${paper.totalQuestions} Qs',
+      status: status,
+      attemptId: paper.attemptId,
+      score: paper.latestScore != null
+          ? paper.totalQuestions == null
+                ? 'Score: ${paper.latestScore}'
+                : 'Score: ${paper.latestScore}/${paper.totalQuestions}'
+          : null,
+    );
+  }
+
+  void _openExamAttempt(_ExamPaperModel paper) {
+    if (paper.id.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'This exam is unavailable. Please refresh and try again.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamAttempt}'
+      '?examId=${Uri.encodeComponent(paper.id)}'
+      '&title=${Uri.encodeComponent(paper.displayTitle)}',
+    );
+  }
+
+  void _openExamReview(_ExamPaperModel paper) {
+    final attemptId = paper.attemptId;
+    if (attemptId == null || attemptId.isEmpty) {
+      AppSnackBar.showError(
+        context,
+        'The completed exam review is not available yet.',
+      );
+      return;
+    }
+
+    context.push(
+      '${RouteNames.nationalExamResult}'
+      '?attemptId=${Uri.encodeComponent(attemptId)}'
+      '&title=${Uri.encodeComponent(paper.displayTitle)}',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveSubtitle =
+        (widget.subtitle.isEmpty || widget.subtitle == 'Natural Science Track')
+        ? 'Official National University Entrance Papers'
+        : widget.subtitle;
+
+    return GradeScreenShell(
+      title: widget.subjectTitle,
+      streamTitle: widget.streamTitle,
+      subtitle: effectiveSubtitle,
+      onBackPressed: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(RouteNames.examSimulator);
+        }
+      },
+      showBottomNav: false,
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    // Initial loading state with custom Rive animation
+    if (_isLoading && _papers.isEmpty) {
+      return const Center(
+        child: KutaLoadingWidget(size: 140, label: 'Loading Exam Papers...'),
+      );
+    }
+
+    // Error state with retry
+    if (_errorMessage != null && _papers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: AppColors.error,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load exam papers',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _errorMessage ?? 'Please check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _fetchPapers,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Empty state
+    if (_papers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.quiz_outlined,
+              size: 48,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No exam papers found for this subject.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Papers list with pull-to-refresh
+    return RefreshIndicator(
+      color: AppColors.brandPrimary,
+      onRefresh: () async {
+        await Future.wait([
+          _fetchPapers(),
+          _loadBookmarkedExams(),
+        ]);
+      },
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 108),
+        itemCount: _papers.length,
+        itemBuilder: (context, index) {
+          final paper = _papers[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildExamCard(context, paper),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Individual Exam Year Card matching Figma reference
+  Widget _buildExamCard(BuildContext context, _ExamPaperModel paper) {
+    final isBookmarked = _bookmarkedExamIds.contains(paper.id);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.containerHigh, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Left side: Title and Meta details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  paper.displayTitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.22,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildPaperMeta(paper),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Bookmark Toggle Button
+          IconButton(
+            icon: Icon(
+              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              color: isBookmarked ? AppColors.orange500 : const Color(0xFF94A3B8),
+              size: 24,
+            ),
+            tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark exam',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _toggleExamBookmark(paper),
+          ),
+
+          const SizedBox(width: 4),
+
+          // Right side: Action Button
+          _buildActionButton(context, paper),
+        ],
+      ),
+    );
+  }
+
+  /// Meta details row (Clock / Check + timing / score)
+  Widget _buildPaperMeta(_ExamPaperModel paper) {
+    final details = [
+      paper.duration,
+      paper.questionsCount,
+    ].where((detail) => detail.isNotEmpty).join(' • ');
+
+    switch (paper.status) {
+      case ExamPaperStatus.notStarted:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: AppColors.brandBlue,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                details,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.25,
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case ExamPaperStatus.inProgress:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: AppColors.brandBlue,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: details.isEmpty ? '' : '$details • ',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.25,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'In Progress',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.brandBlue,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case ExamPaperStatus.completed:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1.5),
+              child: Icon(
+                Icons.check_circle_outline_rounded,
+                size: 14,
+                color: AppColors.success,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${paper.score ?? ''} • ${paper.duration} ',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.25,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Completed',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.success,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  /// Right action button based on exam paper status
+  Widget _buildActionButton(BuildContext context, _ExamPaperModel paper) {
+    switch (paper.status) {
+      case ExamPaperStatus.notStarted:
+        return InkWell(
+          onTap: () => _openExamAttempt(paper),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.orange500,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Start Exam',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+
+      case ExamPaperStatus.inProgress:
+        return InkWell(
+          onTap: () => _openExamAttempt(paper),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.brandBlue,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Resume',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+
+      case ExamPaperStatus.completed:
+        return InkWell(
+          onTap: () => _openExamReview(paper),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.borderVariant,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Review',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.brandBlue,
+              ),
+            ),
+          ),
+        );
+    }
+  }
+}
+
+/// Model representation for an exam paper year
+class _ExamPaperModel {
+  final String id;
+  final String displayTitle;
+  final String duration;
+  final String questionsCount;
+  final ExamPaperStatus status;
+  final String? attemptId;
+  final String? score;
+
+  const _ExamPaperModel({
+    required this.id,
+    required this.displayTitle,
+    required this.duration,
+    required this.questionsCount,
+    required this.status,
+    this.attemptId,
+    this.score,
+  });
+}

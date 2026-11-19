@@ -1,0 +1,57 @@
+part of 'auth_bloc.dart';
+
+/// Base class for all authentication events.
+sealed class AuthEvent {
+  const AuthEvent();
+}
+
+/// Dispatched on app startup to check if a session exists in local storage.
+final class AuthCheckRequested extends AuthEvent {
+  const AuthCheckRequested();
+}
+
+/// Dispatched when the user submits the registration form.
+final class RegisterRequested extends AuthEvent {
+  final String name;
+  final String email;
+  final String password;
+  final GradeLevel? gradeLevel;
+
+  const RegisterRequested({
+    required this.name,
+    required this.email,
+    required this.password,
+    this.gradeLevel,
+  });
+}
+
+/// Dispatched when the user selects their grade level and optional stream in the onboarding flow.
+final class AcademicProfileUpdated extends AuthEvent {
+  final GradeLevel gradeLevel;
+  final AcademicStream? stream;
+  final UserModel? user;
+
+  const AcademicProfileUpdated({
+    required this.gradeLevel,
+    this.stream,
+    this.user,
+  });
+}
+
+/// Dispatched when the user taps a "Continue with Google" button.
+final class GoogleSignInRequested extends AuthEvent {
+  const GoogleSignInRequested();
+}
+
+/// Dispatched when the user submits the login form.
+final class LoginRequested extends AuthEvent {
+  final String email;
+  final String password;
+
+  const LoginRequested({required this.email, required this.password});
+}
+
+/// Dispatched when the user taps the logout button.
+final class LogoutRequested extends AuthEvent {
+  const LogoutRequested();
+}

@@ -1,0 +1,505 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../storage/shared_prefs_storage.dart';
+import '../storage/storage_keys.dart';
+import '../../features/authentication/bloc/auth_bloc.dart';
+import '../../features/authentication/models/user_model.dart';
+import '../../features/authentication/screens/grade_selection_screen.dart';
+import '../../features/authentication/screens/login_screen.dart';
+import '../../features/authentication/screens/forgot_password_screen.dart';
+import '../../features/authentication/screens/otp_verification_screen.dart';
+import '../../features/authentication/screens/reset_password_screen.dart';
+import '../screens/animation_preview_screen.dart';
+import '../../features/common/screens/onboarding_screen.dart';
+import '../../features/authentication/screens/register_screen.dart';
+import '../../features/common/screens/splash_screen.dart';
+import '../../features/kg/screens/kg_home_screen.dart';
+import '../../features/grades/screens/exam_simulator_screen.dart';
+import '../../features/grades/screens/national_exam_attempt_screen.dart';
+import '../../features/grades/screens/national_exam_result_screen.dart';
+import '../../features/grades/screens/subject_exams_screen.dart';
+import '../../features/grades/screens/bookmarks_screen.dart';
+import '../../features/grades/widgets/grade_screen_shell.dart';
+import '../../features/grades/widgets/intro_overlay/dashboard_intro_overlay.dart';
+import '../../features/profile/screens/profile_screen.dart';
+import '../../features/grades/screens/high_school_notes_screen.dart';
+import '../../features/grades/screens/note_detail_screen.dart';
+import '../../features/grades/screens/lesson_detail_screen.dart';
+import '../../features/grades/screens/courses_screen.dart';
+import '../../features/grades/screens/course_detail_screen.dart';
+import '../../features/grades/screens/chapter_study_screen.dart';
+import '../../features/grades/screens/quiz_screen.dart';
+import '../../features/grades/screens/quiz_result_screen.dart';
+import '../../features/grades/models/national_exam_models.dart';
+import 'route_names.dart';
+
+/// Top-level application router configuration using GoRouter.
+/// Directs users across splash, authentication, KG, and Grade modules.
+class AppRouter {
+  static final GoRouter router = GoRouter(
+    // Default app startup flow (Splash -> Onboarding / Auth / Dashboard)
+    initialLocation: RouteNames.splash,
+    routes: [
+      GoRoute(
+        path: RouteNames.splash,
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.onboarding,
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.login,
+        name: 'login',
+        builder: (context, state) {
+          final prefillEmail = state.uri.queryParameters['email'];
+          final isRegistered =
+              state.uri.queryParameters['registered'] == 'true';
+          return LoginScreen(
+            prefillEmail: prefillEmail,
+            isJustRegistered: isRegistered,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.register,
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.gradeSelection,
+        name: 'gradeSelection',
+        builder: (context, state) {
+          final stepParam = state.uri.queryParameters['step'];
+          final initialStep = int.tryParse(stepParam ?? '1') ?? 1;
+          return GradeSelectionScreen(initialStep: initialStep);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.otpVerification,
+        name: 'otpVerification',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return OtpVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.resetPassword,
+        name: 'resetPassword',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(email: email, resetToken: token);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.kgHome,
+        name: 'kgHome',
+        builder: (context, state) => const KgHomeScreen(),
+      ),
+      // ── Grade Module with Persistent Bottom Navigation Shell ─────
+      ShellRoute(
+        builder: (context, state, child) {
+          return MainGradeAppShell(location: state.uri.path, child: child);
+        },
+        routes: [
+          GoRoute(
+            path: RouteNames.grade12MatricExam,
+            name: 'grade12MatricExam',
+            builder: (context, state) => const ExamSimulatorScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.examSimulator,
+            name: 'examSimulator',
+            builder: (context, state) => const ExamSimulatorScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.subjectDetail,
+            name: 'subjectDetail',
+            builder: (context, state) {
+              final title =
+                  state.uri.queryParameters['subject'] ?? 'Mathematics';
+              final subjectId = state.uri.queryParameters['subjectId'];
+              return SubjectExamsScreen(
+                subjectId: subjectId,
+                subjectTitle: title,
+              );
+            },
+          ),
+          GoRoute(
+            path: RouteNames.subjectExams,
+            name: 'subjectExams',
+            builder: (context, state) {
+              final subject =
+                  state.uri.queryParameters['subject'] ?? 'Mathematics';
+              final subtitle =
+                  state.uri.queryParameters['subtitle'] ??
+                  'Official National University Entrance Papers';
+              final subjectId = state.uri.queryParameters['subjectId'];
+              return SubjectExamsScreen(
+                subjectId: subjectId,
+                subjectTitle: subject,
+                subtitle: subtitle,
+              );
+            },
+          ),
+          GoRoute(
+            path: RouteNames.courses,
+            name: 'courses',
+            builder: (context, state) {
+              final gradeStr = state.uri.queryParameters['gradeLevel'];
+              final grade = gradeStr != null ? int.tryParse(gradeStr) : null;
+              return CoursesScreen(initialGradeLevel: grade);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.bookmarks,
+            name: 'bookmarks',
+            builder: (context, state) => const BookmarksScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.highSchoolNotes,
+            name: 'highSchoolNotes',
+            builder: (context, state) => const HighSchoolNotesScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.profile,
+            name: 'profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
+      ),
+      // ── DEV ONLY: Animation preview ────────────────────────────
+      GoRoute(
+        path: RouteNames.animationPreview,
+        name: 'animationPreview',
+        builder: (context, state) => const AnimationPreviewScreen(),
+      ),
+
+      // ── Note detail screen ─────────────────────────────────────
+      GoRoute(
+        path: RouteNames.noteDetail,
+        name: 'noteDetail',
+        builder: (context, state) {
+          final subject = state.uri.queryParameters['subject'] ?? 'Mathematics';
+          final gradeLevel =
+              state.uri.queryParameters['gradeLevel'] ?? 'Grade 12';
+          final subjectId = state.uri.queryParameters['subjectId'];
+          return NoteDetailScreen(
+            subjectTitle: subject,
+            gradeLevel: gradeLevel,
+            subjectId: subjectId,
+          );
+        },
+      ),
+      // ── Lesson detail (reader) screen ──────────────────────────
+      GoRoute(
+        path: RouteNames.lessonDetail,
+        name: 'lessonDetail',
+        builder: (context, state) {
+          final subject = state.uri.queryParameters['subject'] ?? 'Fractions';
+          final gradeLevel =
+              state.uri.queryParameters['gradeLevel'] ?? 'Grade 8 Math';
+          final chapterTitle =
+              state.uri.queryParameters['chapterTitle'] ??
+              'Equivalence and Simplification';
+          final chapterNumber =
+              state.uri.queryParameters['chapterNumber'] ?? '4.2';
+          final chapterId = state.uri.queryParameters['chapterId'] ?? '';
+          return LessonDetailScreen(
+            subject: subject,
+            gradeLevel: gradeLevel,
+            chapterTitle: chapterTitle,
+            chapterNumber: chapterNumber,
+            chapterId: chapterId,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.courseDetail,
+        name: 'courseDetail',
+        builder: (context, state) {
+          final courseId = state.uri.queryParameters['courseId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'Course Details';
+          final grade =
+              int.tryParse(state.uri.queryParameters['gradeLevel'] ?? '12') ??
+              12;
+          return CourseDetailScreen(
+            courseId: courseId,
+            title: title,
+            gradeLevel: grade,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.chapterStudy,
+        name: 'chapterStudy',
+        builder: (context, state) {
+          final lessonId = state.uri.queryParameters['lessonId'];
+          final chapterId = state.uri.queryParameters['chapterId'];
+          final lessonTitle =
+              state.uri.queryParameters['lessonTitle'] ?? 'Lesson Study';
+          final chapterTitle =
+              state.uri.queryParameters['chapterTitle'] ?? 'Unit Overview';
+          final courseTitle =
+              state.uri.queryParameters['courseTitle'] ?? 'Course';
+          return ChapterStudyScreen(
+            lessonId: lessonId,
+            chapterId: chapterId,
+            lessonTitle: lessonTitle,
+            chapterTitle: chapterTitle,
+            courseTitle: courseTitle,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.quiz,
+        name: 'quiz',
+        builder: (context, state) {
+          final quizId =
+              state.uri.queryParameters['quizId'] ?? 'quiz-12-unit-1';
+          final title =
+              state.uri.queryParameters['title'] ?? 'National Exam Simulator';
+          return QuizScreen(quizId: quizId, title: title);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.quizResult,
+        name: 'quizResult',
+        builder: (context, state) {
+          final attemptId = state.uri.queryParameters['attemptId'] ?? '';
+          final quizId = state.uri.queryParameters['quizId'];
+          final title = state.uri.queryParameters['title'] ?? 'Quiz Assessment';
+          return QuizResultScreen(
+            attemptId: attemptId,
+            quizId: quizId,
+            quizTitle: title,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.nationalExamAttempt,
+        name: 'nationalExamAttempt',
+        builder: (context, state) {
+          final examId = state.uri.queryParameters['examId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'National Exam';
+          return NationalExamAttemptScreen(examId: examId, title: title);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.nationalExamResult,
+        name: 'nationalExamResult',
+        builder: (context, state) {
+          final attemptId = state.uri.queryParameters['attemptId'] ?? '';
+          final title = state.uri.queryParameters['title'] ?? 'National Exam';
+          // Unpack rich data passed via context.pushReplacement(..., extra: {...})
+          // so the result screen can render immediately without an extra network call.
+          ExamResultReview? review;
+          List<ExamQuestion>? questions;
+          Map<String, String>? answers;
+          final extra = state.extra;
+          if (extra is Map<String, dynamic>) {
+            if (extra['review'] is ExamResultReview) {
+              review = extra['review'] as ExamResultReview;
+            }
+            if (extra['questions'] is List<ExamQuestion>) {
+              questions = extra['questions'] as List<ExamQuestion>;
+            }
+            if (extra['answers'] is Map<String, String>) {
+              answers = extra['answers'] as Map<String, String>;
+            }
+          }
+          return NationalExamResultScreen(
+            attemptId: attemptId,
+            title: title,
+            initialReview: review,
+            fallbackQuestions: questions,
+            fallbackAnswers: answers,
+          );
+        },
+      ),
+    ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(child: Text('No route defined for ${state.uri}')),
+    ),
+  );
+
+  /// Resolves which screen the app should route to after the splash screen finishes:
+  /// 1. If the user has NOT seen onboarding -> [RouteNames.onboarding]
+  /// 2. If the user has seen onboarding, but has NOT registered/authenticated -> [RouteNames.register]
+  /// 3. If the user is authenticated, but has NOT selected their grade level -> [RouteNames.gradeSelection]
+  /// 4. If the user is authenticated AND has selected their grade level -> [RouteNames.grade12MatricExam] (or [RouteNames.kgHome])
+  static Future<String> resolveInitialRoute() async {
+    final storage = await SharedPrefsStorage.getInstance();
+
+    // 1. Check if user has completed introductory onboarding slides
+    final hasSeenOnboarding =
+        await storage.getBool(StorageKeys.hasSeenOnboarding) ?? false;
+    if (!hasSeenOnboarding) {
+      return RouteNames.onboarding;
+    }
+
+    // 2. Check if user has registered / logged in (authenticated session)
+    final authUserRaw = await storage.getString(StorageKeys.authUser);
+    final isAuthenticated = authUserRaw != null && authUserRaw.isNotEmpty;
+    if (!isAuthenticated) {
+      return RouteNames.register;
+    }
+
+    // 3. Check if user has completed grade & academic stream selection
+    final user = UserModel.fromJsonString(authUserRaw);
+    final hasSelectedGrade =
+        (await storage.getBool(StorageKeys.hasSelectedGrade) ?? false) ||
+        (user?.onboardingCompleted ?? false);
+    if (!hasSelectedGrade) {
+      return RouteNames.gradeSelection;
+    }
+
+    // 4. User is authenticated and grade is chosen: route to appropriate dashboard / exam screen
+    if (user != null && user.isKgStudent) {
+      return RouteNames.kgHome;
+    }
+    return RouteNames.grade12MatricExam;
+  }
+
+  /// Erases all navigation and session preferences from [SharedPreferences]
+  /// and resets the [AuthBloc] state, redirecting the user back to [RouteNames.onboarding]
+  /// so that the entire first-time user journey can be tested again.
+  static Future<void> resetNavigationData(BuildContext context) async {
+    final storage = await SharedPrefsStorage.getInstance();
+    await storage.clear();
+
+    if (context.mounted) {
+      context.read<AuthBloc>().add(const LogoutRequested());
+      context.go(RouteNames.onboarding);
+    }
+  }
+
+  AppRouter._();
+}
+
+/// Persistent App Shell hosting the unified bottom navigation bar for all Grade module screens.
+/// Also hosts the one-time dashboard intro tour: on the very first visit the
+/// shell shows [DashboardIntroOverlay] (via a non-dismissible dialog route) so
+/// dashboard input stays blocked until the tour is finished or skipped.
+class MainGradeAppShell extends StatefulWidget {
+  final Widget child;
+  final String location;
+
+  const MainGradeAppShell({
+    super.key,
+    required this.child,
+    required this.location,
+  });
+
+  @override
+  State<MainGradeAppShell> createState() => _MainGradeAppShellState();
+}
+
+class _MainGradeAppShellState extends State<MainGradeAppShell> {
+  /// Global keys for the 4 bottom-nav tabs, visited in tour order:
+  /// Exams, Notes, Practice, Profile.
+  final List<GlobalKey> _navItemKeys =
+      List.generate(4, (_) => GlobalKey(debugLabel: 'introNavItem'));
+
+  bool _introShown = false;
+
+  int _calculateIndex(String location) {
+    if (location.startsWith(RouteNames.profile)) {
+      return 3;
+    }
+    if (location.startsWith(RouteNames.highSchoolNotes) ||
+        location.startsWith(RouteNames.noteDetail)) {
+      return 1;
+    }
+    if (location.startsWith(RouteNames.subjectDetail)) {
+      return 1;
+    }
+    if (location.startsWith(RouteNames.courses) ||
+        location.startsWith(RouteNames.courseDetail) ||
+        location.startsWith(RouteNames.chapterStudy)) {
+      return 2;
+    }
+    // 0 is for exams (examSimulator, grade12MatricExam, subjectExams, bookmarks)
+    return 0;
+  }
+
+  void _onItemTapped(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go(RouteNames.examSimulator);
+        break;
+      case 1:
+        context.go(RouteNames.highSchoolNotes);
+        break;
+      case 2:
+        context.go(RouteNames.courses);
+        break;
+      case 3:
+        context.go(RouteNames.profile);
+        break;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Wait for the first frame so the nav-bar GlobalKeys are attached and
+    // measurable before the spotlight positions are resolved.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowIntro());
+  }
+
+  Future<void> _maybeShowIntro() async {
+    if (_introShown || !mounted) return;
+
+    final storage = SharedPrefsStorage.instanceOrNull;
+    if (storage == null) return; // Widget tests / early shutdown: skip tour.
+
+    final hasSeenIntro =
+        await storage.getBool(StorageKeys.hasSeenDashboardIntro) ?? false;
+    if (hasSeenIntro || !mounted) return;
+
+    _introShown = true;
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      barrierLabel: 'Dashboard intro tour',
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: DashboardIntroOverlay(
+            steps: DashboardIntroOverlay.defaultSteps(_navItemKeys),
+            onComplete: () => Navigator.of(dialogContext).pop(),
+          ),
+        );
+      },
+    );
+
+    // Persist the once-ever flag on finish OR skip.
+    await storage.setBool(StorageKeys.hasSeenDashboardIntro, value: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.transparent,
+      body: widget.child,
+      bottomNavigationBar: GradeBottomNavBar(
+        currentIndex: _calculateIndex(widget.location),
+        onTap: (index) => _onItemTapped(context, index),
+        itemKeys: _navItemKeys,
+      ),
+    );
+  }
+}
