@@ -45,40 +45,82 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     return int.tryParse(match.group(0)!);
   }
 
+  bool _isStateForCurrentScreen(
+    SubjectNotesDetailLoaded state,
+    String lookupId,
+    int? gradeNumber,
+  ) {
+    final matchesSubject = state.subjectId.isEmpty ||
+        state.subjectId == lookupId ||
+        state.subjectId == widget.subjectTitle ||
+        state.detail.subjectId == lookupId ||
+        state.detail.subjectTitle.toLowerCase() ==
+            widget.subjectTitle.toLowerCase();
+
+    final stateGradeNum = state.gradeLevel ??
+        state.detail.selectedGrade ??
+        _parseGradeNumber(state.detail.gradeLevel);
+
+    final matchesGrade = gradeNumber == null ||
+        stateGradeNum == null ||
+        stateGradeNum == gradeNumber;
+
+    return matchesSubject && matchesGrade;
+  }
+
+  SubjectNotesDetail? _getActiveDetail(
+    NotesState? state,
+    String lookupId,
+    int? gradeNumber,
+  ) {
+    if (state is SubjectNotesDetailLoaded &&
+        _isStateForCurrentScreen(state, lookupId, gradeNumber)) {
+      return state.detail;
+    }
+    if (_detail != null) {
+      final detailGradeNum = _detail!.selectedGrade ??
+          _parseGradeNumber(_detail!.gradeLevel);
+      if (gradeNumber == null ||
+          detailGradeNum == null ||
+          detailGradeNum == gradeNumber) {
+        return _detail;
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedGrade = widget.gradeLevel;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
-          ? widget.subjectId!
-          : widget.subjectTitle;
-      final gradeNumber = _parseGradeNumber(widget.gradeLevel);
-      try {
-        final bloc = context.read<NotesBloc>();
-        // Build a grade-scoped cache key to match the bloc's storage key.
-        final gradeSuffix =
-            gradeNumber != null ? '_grade_$gradeNumber' : '';
-        final gradeScopedKey =
-            '${StorageKeys.notesSubjectDetailCache(lookupId)}$gradeSuffix';
-        final cached =
-            bloc.cacheManager.getMemoryCached<SubjectNotesDetail>(
-              gradeScopedKey,
-            ) ??
-            bloc.getCachedDetail(lookupId) ??
-            bloc.getCachedDetail(widget.subjectTitle);
-        if (cached != null) {
-          setState(() => _detail = cached);
-        } else {
-          bloc.add(
-            LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
-          );
+    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
+        ? widget.subjectId!
+        : widget.subjectTitle;
+    final gradeNumber = _parseGradeNumber(widget.gradeLevel);
+
+    try {
+      final bloc = context.read<NotesBloc>();
+      final cached = bloc.getCachedDetail(lookupId, gradeLevel: gradeNumber);
+      if (cached != null) {
+        final cachedGrade =
+            cached.selectedGrade ?? _parseGradeNumber(cached.gradeLevel);
+        if (gradeNumber == null ||
+            cachedGrade == null ||
+            cachedGrade == gradeNumber) {
+          _detail = cached;
         }
-      } catch (_) {
-        // BlocProvider unavailable — error shown via NotesError state
       }
-    });
+      bloc.add(
+        LoadSubjectNotesDetail(
+          lookupId,
+          gradeLevel: gradeNumber,
+          forceRefresh: true,
+        ),
+      );
+    } catch (_) {
+      // BlocProvider unavailable — error shown via NotesError state
+    }
   }
 
   void _onDownloadAll() {
@@ -106,16 +148,6 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       '&chapterNumber=${Uri.encodeComponent(chapter.chapterNumber)}'
       '&chapterId=${Uri.encodeComponent(chapter.id)}',
     );
-    if (!mounted) return;
-    final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
-        ? widget.subjectId!
-        : widget.subjectTitle;
-    final gradeNumber = _parseGradeNumber(_selectedGrade);
-    try {
-      context.read<NotesBloc>().add(
-        LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
-      );
-    } catch (_) {}
   }
 
   void _onDownloadChapter(ChapterNoteItem chapter) {
@@ -135,7 +167,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final gradeNumber = _parseGradeNumber(_selectedGrade);
     try {
       context.read<NotesBloc>().add(
-        LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
+        LoadSubjectNotesDetail(
+          lookupId,
+          gradeLevel: gradeNumber,
+          forceRefresh: true,
+        ),
       );
     } catch (_) {}
   }
@@ -306,10 +342,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               // 2. Hero Subject Card
               Builder(
                 builder: (context) {
-                  final activeDetail =
-                      _detail ??
-                      bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle);
+                  final gradeNumber = _parseGradeNumber(_selectedGrade);
+                  final activeDetail = _getActiveDetail(
+                    bloc?.state,
+                    lookupId,
+                    gradeNumber,
+                  );
                   final totalCount =
                       activeDetail?.totalChapters ??
                       activeDetail?.chapters.length ??
@@ -317,12 +355,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   final subtitle = totalCount > 0
                       ? '$totalCount Chapters Available • PDF & Interactive Reader'
                       : 'Study Guides & Interactive Reader';
-                  final sizeText = activeDetail?.totalFileSize ?? '24 MB';
+                  final sizeText = activeDetail?.totalFileSize ?? '';
 
                   return _SubjectHeroCard(
                     title: '${widget.subjectTitle} - $_selectedGrade',
                     subtitle: subtitle,
-                    downloadButtonText: 'Download All Notes ($sizeText)',
+                    downloadButtonText: sizeText.isNotEmpty
+                        ? 'Download All Notes ($sizeText)'
+                        : 'Download All Notes',
                     onDownloadAll: _onDownloadAll,
                   );
                 },
@@ -332,10 +372,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               // 3. Section Title & Filter Icon Row
               Builder(
                 builder: (context) {
-                  final activeDetail =
-                      _detail ??
-                      bloc?.getCachedDetail(lookupId) ??
-                      bloc?.getCachedDetail(widget.subjectTitle);
+                  final gradeNumber = _parseGradeNumber(_selectedGrade);
+                  final activeDetail = _getActiveDetail(
+                    bloc?.state,
+                    lookupId,
+                    gradeNumber,
+                  );
                   final showing = activeDetail?.chapters.length ?? 0;
                   final total = activeDetail?.totalChapters ?? showing;
 
@@ -384,7 +426,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               if (bloc != null)
                 BlocConsumer<NotesBloc, NotesState>(
                   listener: (context, state) {
-                    if (state is SubjectNotesDetailLoaded) {
+                    final gradeNumber = _parseGradeNumber(_selectedGrade);
+                    if (state is SubjectNotesDetailLoaded &&
+                        _isStateForCurrentScreen(state, lookupId, gradeNumber)) {
                       setState(() {
                         _detail = state.detail;
                         if (state.detail.gradeLevel.isNotEmpty) {
@@ -394,20 +438,18 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     }
                   },
                   builder: (context, state) {
-                    final detail = (state is SubjectNotesDetailLoaded)
-                        ? state.detail
-                        : (_detail ??
-                              bloc?.getCachedDetail(lookupId) ??
-                              bloc?.getCachedDetail(widget.subjectTitle));
+                    final gradeNumber = _parseGradeNumber(_selectedGrade);
+                    final detail = _getActiveDetail(
+                      state,
+                      lookupId,
+                      gradeNumber,
+                    );
 
                     if (detail != null && detail.chapters.isNotEmpty) {
                       return _buildChaptersList(detail.chapters);
                     }
                     if (state is NotesError && detail == null) {
                       return _buildErrorState(state.message);
-                    }
-                    if (state is NotesLoading && _detail == null) {
-                      return const NotesLoadingSkeleton(itemCount: 4);
                     }
                     if (detail != null && detail.chapters.isEmpty) {
                       return _buildEmptyState();
@@ -557,7 +599,7 @@ class _SubjectHeroCard extends StatelessWidget {
   const _SubjectHeroCard({
     required this.title,
     required this.subtitle,
-    this.downloadButtonText = 'Download All Notes (42 MB)',
+    this.downloadButtonText = 'Download All Notes',
     required this.onDownloadAll,
   });
 

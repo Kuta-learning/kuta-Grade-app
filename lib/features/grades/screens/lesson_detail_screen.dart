@@ -44,23 +44,25 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        final bloc = context.read<NotesBloc>();
-        final cached = bloc.getCachedLesson(widget.chapterId);
-        if (cached != null) {
-          setState(() => _lesson = cached);
-        }
-        // Always forceRefresh to fetch fresh backend content, diagrams, resources
-        bloc.add(
-          LoadChapterLessonDetail(widget.chapterId, forceRefresh: true),
-        );
-        // Send reading progress to backend: POST /short-notes/chapters/:chapterId/progress {"isRead": true}
-        bloc.add(UpdateChapterProgressEvent(widget.chapterId, isRead: true));
-      } catch (_) {
-        // BlocProvider unavailable — error shown via NotesError state
+    try {
+      final bloc = context.read<NotesBloc>();
+      final cached = bloc.getCachedLesson(widget.chapterId);
+      if (cached != null &&
+          cached.chapterId.isNotEmpty &&
+          cached.chapterId == widget.chapterId) {
+        _lesson = cached;
+      } else {
+        _lesson = null;
       }
-    });
+      // Always forceRefresh to fetch fresh backend content, diagrams, resources
+      bloc.add(
+        LoadChapterLessonDetail(widget.chapterId, forceRefresh: true),
+      );
+      // Send reading progress to backend: POST /short-notes/chapters/:chapterId/progress {"isRead": true}
+      bloc.add(UpdateChapterProgressEvent(widget.chapterId, isRead: true));
+    } catch (_) {
+      // BlocProvider unavailable — error shown via NotesError state
+    }
   }
 
   void _onDownloadResource(LessonResource res) {
@@ -158,26 +160,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ? BlocConsumer<NotesBloc, NotesState>(
                 listener: (context, state) {
                   if (state is LessonDetailLoaded &&
-                      (state.chapterId.isEmpty ||
-                          state.chapterId == widget.chapterId)) {
+                      state.chapterId == widget.chapterId) {
                     setState(() => _lesson = state.lesson);
                   }
                 },
                 builder: (context, state) {
                   final isMatchingLoaded = state is LessonDetailLoaded &&
-                      (state.chapterId.isEmpty ||
-                          state.chapterId == widget.chapterId);
+                      state.chapterId == widget.chapterId;
 
                   final lesson = isMatchingLoaded
                       ? state.lesson
-                      : (_lesson ?? bloc?.getCachedLesson(widget.chapterId));
+                      : ((_lesson?.chapterId == widget.chapterId)
+                          ? _lesson
+                          : null);
 
-                  if (state is NotesLoading && lesson == null) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: NotesLoadingSkeleton(itemCount: 3),
-                    );
-                  }
                   if (lesson != null) {
                     return _buildContent(lesson);
                   }
@@ -190,7 +186,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   );
                 },
               )
-            : (_lesson != null
+            : ((_lesson?.chapterId == widget.chapterId)
                   ? _buildContent(_lesson!)
                   : const Padding(
                       padding: EdgeInsets.all(16.0),
