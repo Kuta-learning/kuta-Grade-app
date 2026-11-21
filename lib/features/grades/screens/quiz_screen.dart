@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/quiz_models.dart';
 import '../services/mock_courses_service.dart';
-
 
 /// Assessment and Quiz Screen for Grades 6, 8, and 12.
 /// Connects to GET /quizzes/:quizId and POST /quizzes/:quizId/submit.
@@ -64,9 +63,9 @@ class _QuizScreenState extends State<QuizScreen> {
       _localAnswers[questionId] = optionId;
     });
     try {
-      context
-          .read<CoursesBloc>()
-          .add(SelectQuizOptionEvent(questionId, optionId));
+      context.read<CoursesBloc>().add(
+        SelectQuizOptionEvent(questionId, optionId),
+      );
     } catch (_) {}
   }
 
@@ -84,18 +83,20 @@ class _QuizScreenState extends State<QuizScreen> {
     } catch (_) {
       // Local simulated fallback
       final answers = _localAnswers.entries
-          .map((e) => QuizAnswerSubmissionItem(
-                questionId: e.key,
-                selectedOptionId: e.value,
-              ))
+          .map(
+            (e) => QuizAnswerSubmissionItem(
+              questionId: e.key,
+              selectedOptionId: e.value,
+            ),
+          )
           .toList();
       MockCoursesService()
           .submitQuiz(widget.quizId, QuizSubmissionRequest(answers: answers))
           .then((resp) {
-        if (mounted) {
-          _navigateToResult(resp.attemptId);
-        }
-      });
+            if (mounted) {
+              _navigateToResult(resp.attemptId);
+            }
+          });
     }
   }
 
@@ -132,7 +133,11 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                       tooltip: 'Back',
                       onPressed: () {
                         if (context.canPop()) {
@@ -146,7 +151,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     Expanded(
                       child: Text(
                         _quiz?.title ?? widget.title,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyPoppins,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -178,11 +184,12 @@ class _QuizScreenState extends State<QuizScreen> {
                 final displayQuiz = (state is QuizLoaded)
                     ? state.quiz
                     : (_quiz ??
-                        bloc?.getCachedQuiz(widget.quizId) ??
-                        _fallbackQuiz);
+                          bloc?.getCachedQuiz(widget.quizId) ??
+                          _fallbackQuiz);
 
-                final isSubmitting =
-                    (state is QuizLoaded) ? state.isSubmitting : false;
+                final isSubmitting = (state is QuizLoaded)
+                    ? state.isSubmitting
+                    : false;
 
                 if (displayQuiz != null) {
                   return _buildQuizContent(displayQuiz, isSubmitting);
@@ -204,13 +211,13 @@ class _QuizScreenState extends State<QuizScreen> {
               },
             )
           : (_quiz != null || _fallbackQuiz != null
-              ? _buildQuizContent((_quiz ?? _fallbackQuiz)!, false)
-              : const Center(
-                  child: KutaLoadingWidget(
-                    size: 130,
-                    label: 'Loading Quiz Questions...',
-                  ),
-                )),
+                ? _buildQuizContent((_quiz ?? _fallbackQuiz)!, false)
+                : const Center(
+                    child: KutaLoadingWidget(
+                      size: 130,
+                      label: 'Loading Quiz Questions...',
+                    ),
+                  )),
     );
   }
 
@@ -222,12 +229,16 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.quiz_outlined,
-                  size: 48, color: AppColors.textSecondary),
+              const Icon(
+                Icons.quiz_outlined,
+                size: 48,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No questions available for this quiz.',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.headlineDark,
@@ -257,15 +268,18 @@ class _QuizScreenState extends State<QuizScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F1FC),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Question ${_currentQuestionIndex + 1} of $totalQuestions',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.brandPrimary,
@@ -274,12 +288,16 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
               Row(
                 children: [
-                  const Icon(Icons.timer_outlined,
-                      size: 16, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.timer_outlined,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${quiz.timeLimitMinutes} mins',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
@@ -298,8 +316,9 @@ class _QuizScreenState extends State<QuizScreen> {
               value: (_currentQuestionIndex + 1) / totalQuestions,
               minHeight: 5,
               backgroundColor: const Color(0xFFF1F5F9),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.accentHover),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentHover,
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -319,7 +338,8 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             child: Text(
               currentQuestion.questionText,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 15.5,
                 height: 1.5,
                 fontWeight: FontWeight.w600,
@@ -360,7 +380,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                     child: Text(
                       'Previous',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF475569),
@@ -399,13 +420,15 @@ class _QuizScreenState extends State<QuizScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
                           isLastQuestion ? 'Submit Quiz' : 'Next Question',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -460,17 +483,18 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: isSelected
                     ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : (option.label != null
-                        ? Center(
-                            child: Text(
-                              option.label!,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF64748B),
+                          ? Center(
+                              child: Text(
+                                option.label!,
+                                style: const TextStyle(
+                                  fontFamily: AppTypography.fontFamilyOpenSans,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF64748B),
+                                ),
                               ),
-                            ),
-                          )
-                        : null),
+                            )
+                          : null),
               ),
               const SizedBox(width: 14),
 
@@ -478,11 +502,11 @@ class _QuizScreenState extends State<QuizScreen> {
               Expanded(
                 child: Text(
                   option.optionText,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13.5,
                     height: 1.4,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected
                         ? AppColors.brandPrimary
                         : const Color(0xFF1E293B),

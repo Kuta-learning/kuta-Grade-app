@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/cache/cache_response.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
 import '../../../core/router/route_names.dart';
@@ -60,7 +60,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   late final ScrollController _scrollController = ScrollController();
 
   StreamSubscription<CacheResponse<NationalExamDashboardModel>>?
-      _dashboardSubscription;
+  _dashboardSubscription;
 
   @override
   void initState() {
@@ -101,76 +101,76 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           expectedGradeLevel: _authenticatedGradeLevel(),
         )
         .listen(
-      (response) {
-        if (!mounted) {
-          if (!completer.isCompleted) completer.complete();
-          return;
-        }
-        final data = response.data;
-        final authenticatedGrade = _authenticatedGradeLevel();
+          (response) {
+            if (!mounted) {
+              if (!completer.isCompleted) completer.complete();
+              return;
+            }
+            final data = response.data;
+            final authenticatedGrade = _authenticatedGradeLevel();
 
-        if (!_supportsNationalExams(data.student.gradeLevel)) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage =
-                'National exams are available for Grades 6, 8, and 12 only.';
-          });
-          if (!completer.isCompleted) completer.complete();
-          return;
-        }
+            if (!_supportsNationalExams(data.student.gradeLevel)) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage =
+                    'National exams are available for Grades 6, 8, and 12 only.';
+              });
+              if (!completer.isCompleted) completer.complete();
+              return;
+            }
 
-        if (authenticatedGrade != null &&
-            data.student.gradeLevel != authenticatedGrade) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage =
-                'The exam content does not match your selected grade.';
-          });
-          if (!completer.isCompleted) completer.complete();
-          return;
-        }
+            if (authenticatedGrade != null &&
+                data.student.gradeLevel != authenticatedGrade) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage =
+                    'The exam content does not match your selected grade.';
+              });
+              if (!completer.isCompleted) completer.complete();
+              return;
+            }
 
-        setState(() {
-          _dashboardData = data;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-        _showWelcomeSnackbarOnce();
+            setState(() {
+              _dashboardData = data;
+              _isLoading = false;
+              _errorMessage = null;
+            });
+            _showWelcomeSnackbarOnce();
 
-        if (response.backgroundError != null && isPullToRefresh) {
-          AppSnackBar.showError(
-            context,
-            'Could not refresh live exam data. Showing cached offline data.',
-          );
-        }
+            if (response.backgroundError != null && isPullToRefresh) {
+              AppSnackBar.showError(
+                context,
+                'Could not refresh live exam data. Showing cached offline data.',
+              );
+            }
 
-        // When data has arrived from network or if not pull-to-refresh, complete the spinner
-        if (response.source == CacheSource.network ||
-            response.backgroundError != null ||
-            !isPullToRefresh) {
-          if (!completer.isCompleted) completer.complete();
-        }
-      },
-      onError: (e) {
-        if (!mounted) {
-          if (!completer.isCompleted) completer.complete();
-          return;
-        }
-        final errorMsg = e.toString().replaceFirst('Exception: ', '');
-        if (isPullToRefresh) {
-          AppSnackBar.showError(
-            context,
-            'Could not refresh live exam data. Showing cached offline data.',
-          );
-        } else if (_dashboardData == null) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = errorMsg;
-          });
-        }
-        if (!completer.isCompleted) completer.complete();
-      },
-    );
+            // When data has arrived from network or if not pull-to-refresh, complete the spinner
+            if (response.source == CacheSource.network ||
+                response.backgroundError != null ||
+                !isPullToRefresh) {
+              if (!completer.isCompleted) completer.complete();
+            }
+          },
+          onError: (e) {
+            if (!mounted) {
+              if (!completer.isCompleted) completer.complete();
+              return;
+            }
+            final errorMsg = e.toString().replaceFirst('Exception: ', '');
+            if (isPullToRefresh) {
+              AppSnackBar.showError(
+                context,
+                'Could not refresh live exam data. Showing cached offline data.',
+              );
+            } else if (_dashboardData == null) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage = errorMsg;
+              });
+            }
+            if (!completer.isCompleted) completer.complete();
+          },
+        );
 
     return completer.future;
   }
@@ -210,7 +210,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     if (student != null) {
       if (student.name.trim().isNotEmpty) resolvedName = student.name.trim();
       if (student.gradeLevel > 0) resolvedGrade = student.gradeLevel;
-      if (student.stream.trim().isNotEmpty) resolvedStream = student.stream.trim();
+      if (student.stream.trim().isNotEmpty)
+        resolvedStream = student.stream.trim();
     }
 
     if (resolvedName == null || resolvedGrade == null) {
@@ -227,19 +228,25 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
     }
 
     // Do NOT trigger with hardcoded fallback if data hasn't finished loading yet
-    if (resolvedName == null && resolvedGrade == null && _dashboardData == null) {
+    if (resolvedName == null &&
+        resolvedGrade == null &&
+        _dashboardData == null) {
       return;
     }
 
     await storage.setBool(StorageKeys.hasSeenWelcomeSnackbar, value: true);
     if (!mounted) return;
 
-    final name = (resolvedName != null && resolvedName.isNotEmpty) ? resolvedName : 'Student';
+    final name = (resolvedName != null && resolvedName.isNotEmpty)
+        ? resolvedName
+        : 'Student';
     final grade = resolvedGrade ?? 12;
 
     final String subtitle;
     if (grade == 12 && resolvedStream != null && resolvedStream.isNotEmpty) {
-      final streamName = resolvedStream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural';
+      final streamName = resolvedStream.toUpperCase() == 'SOCIAL'
+          ? 'Social'
+          : 'Natural';
       subtitle = 'Grade 12 • $streamName Science';
     } else {
       subtitle = 'Grade $grade';
@@ -348,7 +355,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                               children: [
                                 Text(
                                   'Exam Subjects',
-                                  style: GoogleFonts.inter(
+                                  style: const TextStyle(
+                                    fontFamily: AppTypography.fontFamilyPoppins,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
                                     color: _textPrimary,
@@ -357,7 +365,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                                 ),
                                 Text(
                                   '${_dashboardData?.subjects.length ?? _displaySubjects.length} Subjects',
-                                  style: GoogleFonts.inter(
+                                  style: const TextStyle(
+                                    fontFamily:
+                                        AppTypography.fontFamilyOpenSans,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w500,
                                     color: const Color(0xFF2563EB),
@@ -368,7 +378,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Tap a subject to practice real past national exam papers by year.',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: _textSecondary,
@@ -385,7 +396,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                       if (_isLoading && _dashboardData == null) ...[
                         Builder(
                           builder: (context) {
-                            final screenHeight = MediaQuery.of(context).size.height;
+                            final screenHeight = MediaQuery.of(
+                              context,
+                            ).size.height;
                             final bottomNavHeight =
                                 kBottomNavigationBarHeight +
                                 MediaQuery.of(context).padding.bottom;
@@ -394,7 +407,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                             final remainingHeight =
                                 screenHeight - headerHeight - bottomNavHeight;
                             return SizedBox(
-                              height: remainingHeight > 200 ? remainingHeight : 200,
+                              height: remainingHeight > 200
+                                  ? remainingHeight
+                                  : 200,
                               child: const Padding(
                                 padding: EdgeInsets.only(bottom: 150),
                                 child: Center(
@@ -419,7 +434,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                           child: Center(
                             child: Text(
                               'No exam subjects found for your grade level.',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 13,
                                 color: _textSecondary,
                               ),
@@ -457,8 +473,7 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                       ? _scrollController.offset
                       : 0.0;
                   // Only appear when scrolling past the blue area
-                  final double opacity =
-                      ((offset - 20) / 60.0).clamp(0.0, 1.0);
+                  final double opacity = ((offset - 20) / 60.0).clamp(0.0, 1.0);
                   if (opacity <= 0.0) return const SizedBox.shrink();
 
                   return Positioned(
@@ -522,7 +537,9 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
   Widget _buildWelcomeBanner() {
     final student = _dashboardData?.student;
     String? resolvedName = student?.name.trim();
-    int? resolvedGrade = student != null && student.gradeLevel > 0 ? student.gradeLevel : null;
+    int? resolvedGrade = student != null && student.gradeLevel > 0
+        ? student.gradeLevel
+        : null;
     String? resolvedStream = student?.stream.trim();
 
     if (resolvedName == null || resolvedName.isEmpty || resolvedGrade == null) {
@@ -538,12 +555,18 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
       } catch (_) {}
     }
 
-    final name = resolvedName != null && resolvedName.isNotEmpty ? resolvedName : 'Student';
+    final name = resolvedName != null && resolvedName.isNotEmpty
+        ? resolvedName
+        : 'Student';
     final gradeLevel = resolvedGrade ?? 12;
 
     final String trackSubtitle;
-    if (gradeLevel == 12 && resolvedStream != null && resolvedStream.isNotEmpty) {
-      final streamDisplay = resolvedStream.toUpperCase() == 'SOCIAL' ? 'Social' : 'Natural';
+    if (gradeLevel == 12 &&
+        resolvedStream != null &&
+        resolvedStream.isNotEmpty) {
+      final streamDisplay = resolvedStream.toUpperCase() == 'SOCIAL'
+          ? 'Social'
+          : 'Natural';
       trackSubtitle = 'Grade 12 $streamDisplay Science';
     } else {
       trackSubtitle = 'Grade $gradeLevel';
@@ -565,7 +588,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
         children: [
           Text(
             'Welcome back, $name!',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 17,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -575,7 +599,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
           const SizedBox(height: 3),
           Text(
             trackSubtitle,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
               color: Colors.white.withValues(alpha: 0.85),
@@ -644,7 +669,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyPoppins,
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
                         color: _textPrimary,
@@ -665,7 +691,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                         Flexible(
                           child: Text(
                             remainingTime,
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: _textSecondary,
@@ -688,7 +715,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                 ),
                 child: Text(
                   badge,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF475569),
@@ -720,7 +748,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
               Expanded(
                 child: Text(
                   paperSubtitle,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: _textSecondary,
@@ -747,7 +776,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     children: [
                       Text(
                         actionText,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
@@ -850,7 +880,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     children: [
                       Text(
                         subject.title,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyPoppins,
                           fontSize: 14.5,
                           fontWeight: FontWeight.w600,
                           color: _textPrimary,
@@ -862,7 +893,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                       const SizedBox(height: 3),
                       Text(
                         subject.subtitle,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: _textSecondary,
@@ -891,7 +923,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                       ),
                       Text(
                         subject.progressText,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 10.5,
                           fontWeight: FontWeight.w500,
                           color: _textPrimary,
@@ -935,7 +968,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                         Flexible(
                           child: Text(
                             subject.historyText,
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF475569),
@@ -961,7 +995,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
                     const SizedBox(width: 4),
                     Text(
                       subject.questionsText,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF475569),
@@ -1001,7 +1036,8 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             const SizedBox(height: 16),
             Text(
               'Failed to load Exam Simulator',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: _textPrimary,
@@ -1011,7 +1047,11 @@ class _ExamSimulatorScreenState extends State<ExamSimulatorScreen> {
             Text(
               _errorMessage ?? 'Please check your connection and try again.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 13, color: _textSecondary),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                fontSize: 13,
+                color: _textSecondary,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(

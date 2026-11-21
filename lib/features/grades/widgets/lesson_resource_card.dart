@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../models/note_models.dart';
 
 /// Card presenting a downloadable lesson resource document or worksheet matching the screenshot.
@@ -17,13 +17,14 @@ class LessonResourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPdf = resource.title.toLowerCase().endsWith('.pdf') ||
+    final isPdf =
+        resource.title.toLowerCase().endsWith('.pdf') ||
         resource.fileType.toLowerCase().contains('pdf');
 
-    final iconBgColor =
-        isPdf ? const Color(0xFFFFECEF) : const Color(0xFFE8F1FC);
-    final iconColor =
-        isPdf ? const Color(0xFFDC2626) : const Color(0xFF2563EB);
+    final iconBgColor = isPdf
+        ? const Color(0xFFFFECEF)
+        : const Color(0xFFE8F1FC);
+    final iconColor = isPdf ? const Color(0xFFDC2626) : const Color(0xFF2563EB);
 
     return Container(
       width: double.infinity,
@@ -31,10 +32,7 @@ class LessonResourceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
       ),
       child: Row(
         children: [
@@ -61,7 +59,8 @@ class LessonResourceCard extends StatelessWidget {
               children: [
                 Text(
                   resource.title,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -73,7 +72,8 @@ class LessonResourceCard extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '${resource.fileSize} • ${resource.fileType}',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,

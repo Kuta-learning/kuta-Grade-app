@@ -13,7 +13,8 @@ class QuizQuestionOption {
   factory QuizQuestionOption.fromJson(Map<String, dynamic> json) {
     return QuizQuestionOption(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
-      optionText: json['optionText'] as String? ??
+      optionText:
+          json['optionText'] as String? ??
           json['text'] as String? ??
           json['title'] as String? ??
           '',
@@ -22,10 +23,10 @@ class QuizQuestionOption {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'optionText': optionText,
-        if (label != null) 'label': label,
-      };
+    'id': id,
+    'optionText': optionText,
+    if (label != null) 'label': label,
+  };
 }
 
 class QuizQuestionModel {
@@ -47,7 +48,8 @@ class QuizQuestionModel {
     final rawOptions = json['options'] as List<dynamic>? ?? [];
     return QuizQuestionModel(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
-      questionText: json['questionText'] as String? ??
+      questionText:
+          json['questionText'] as String? ??
           json['text'] as String? ??
           json['prompt'] as String? ??
           '',
@@ -60,12 +62,12 @@ class QuizQuestionModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'questionText': questionText,
-        'explanation': explanation,
-        'points': points,
-        'options': options.map((o) => o.toJson()).toList(),
-      };
+    'id': id,
+    'questionText': questionText,
+    'explanation': explanation,
+    'points': points,
+    'options': options.map((o) => o.toJson()).toList(),
+  };
 }
 
 /// Full quiz data returned by GET /quizzes/:quizId.
@@ -104,7 +106,8 @@ class QuizDetailModel {
       description: json['description'] as String?,
       courseId: json['courseId'] as String?,
       lessonId: json['lessonId'] as String?,
-      timeLimitMinutes: json['timeLimitMinutes'] as int? ??
+      timeLimitMinutes:
+          json['timeLimitMinutes'] as int? ??
           json['durationMinutes'] as int? ??
           15,
       passingScore: json['passingScore'] as int? ?? 70,
@@ -114,16 +117,16 @@ class QuizDetailModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'courseId': courseId,
-        'lessonId': lessonId,
-        'timeLimitMinutes': timeLimitMinutes,
-        'passingScore': passingScore,
-        'totalQuestions': totalQuestions,
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'courseId': courseId,
+    'lessonId': lessonId,
+    'timeLimitMinutes': timeLimitMinutes,
+    'passingScore': passingScore,
+    'totalQuestions': totalQuestions,
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
 }
 
 /// Answer item for quiz submission.
@@ -137,9 +140,9 @@ class QuizAnswerSubmissionItem {
   });
 
   Map<String, dynamic> toJson() => {
-        'questionId': questionId,
-        'selectedOptionId': selectedOptionId,
-      };
+    'questionId': questionId,
+    'selectedOptionId': selectedOptionId,
+  };
 
   factory QuizAnswerSubmissionItem.fromJson(Map<String, dynamic> json) {
     return QuizAnswerSubmissionItem(
@@ -156,8 +159,8 @@ class QuizSubmissionRequest {
   const QuizSubmissionRequest({required this.answers});
 
   Map<String, dynamic> toJson() => {
-        'answers': answers.map((a) => a.toJson()).toList(),
-      };
+    'answers': answers.map((a) => a.toJson()).toList(),
+  };
 }
 
 /// Response returned by POST /quizzes/:quizId/submit.
@@ -180,7 +183,8 @@ class QuizSubmissionResponse {
 
   factory QuizSubmissionResponse.fromJson(Map<String, dynamic> json) {
     final s = json['score'] as int? ?? 0;
-    final ts = json['totalScore'] as int? ?? json['totalQuestions'] as int? ?? 1;
+    final ts =
+        json['totalScore'] as int? ?? json['totalQuestions'] as int? ?? 1;
     double p = 0.0;
     if (json['percentage'] != null) {
       final rawP = json['percentage'];
@@ -190,7 +194,8 @@ class QuizSubmissionResponse {
     }
 
     return QuizSubmissionResponse(
-      attemptId: json['attemptId'] as String? ??
+      attemptId:
+          json['attemptId'] as String? ??
           json['id'] as String? ??
           json['_id'] as String? ??
           '',
@@ -203,13 +208,13 @@ class QuizSubmissionResponse {
   }
 
   Map<String, dynamic> toJson() => {
-        'attemptId': attemptId,
-        'score': score,
-        'totalScore': totalScore,
-        'percentage': percentage,
-        'passed': passed,
-        'message': message,
-      };
+    'attemptId': attemptId,
+    'score': score,
+    'totalScore': totalScore,
+    'percentage': percentage,
+    'passed': passed,
+    'message': message,
+  };
 }
 
 /// Single reviewed question item returned by GET /quizzes/attempts/:attemptId.
@@ -236,11 +241,13 @@ class QuizQuestionReviewItem {
     final rawOptions = json['options'] as List<dynamic>? ?? [];
     return QuizQuestionReviewItem(
       questionId: json['questionId'] as String? ?? json['id'] as String? ?? '',
-      questionText: json['questionText'] as String? ??
+      questionText:
+          json['questionText'] as String? ??
           json['text'] as String? ??
           json['prompt'] as String? ??
           '',
-      selectedOptionId: json['selectedOptionId'] as String? ??
+      selectedOptionId:
+          json['selectedOptionId'] as String? ??
           json['userOptionId'] as String?,
       correctOptionId: json['correctOptionId'] as String?,
       isCorrect: json['isCorrect'] as bool? ?? false,
@@ -252,14 +259,14 @@ class QuizQuestionReviewItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'questionId': questionId,
-        'questionText': questionText,
-        'selectedOptionId': selectedOptionId,
-        'correctOptionId': correctOptionId,
-        'isCorrect': isCorrect,
-        'explanation': explanation,
-        'options': options.map((o) => o.toJson()).toList(),
-      };
+    'questionId': questionId,
+    'questionText': questionText,
+    'selectedOptionId': selectedOptionId,
+    'correctOptionId': correctOptionId,
+    'isCorrect': isCorrect,
+    'explanation': explanation,
+    'options': options.map((o) => o.toJson()).toList(),
+  };
 }
 
 /// Full quiz review returned by GET /quizzes/attempts/:attemptId.
@@ -289,9 +296,13 @@ class QuizAttemptReviewModel {
   });
 
   factory QuizAttemptReviewModel.fromJson(Map<String, dynamic> json) {
-    final rawQuestions = (json['questions'] ?? json['results']) as List<dynamic>? ?? [];
+    final rawQuestions =
+        (json['questions'] ?? json['results']) as List<dynamic>? ?? [];
     final s = json['score'] as int? ?? 0;
-    final ts = json['totalScore'] as int? ?? json['totalQuestions'] as int? ?? rawQuestions.length;
+    final ts =
+        json['totalScore'] as int? ??
+        json['totalQuestions'] as int? ??
+        rawQuestions.length;
     double p = 0.0;
     if (json['percentage'] != null) {
       final rawP = json['percentage'];
@@ -311,22 +322,23 @@ class QuizAttemptReviewModel {
       timeSpentSeconds: json['timeSpentSeconds'] as int?,
       completedAt: json['completedAt'] as String?,
       questions: rawQuestions
-          .map((q) => QuizQuestionReviewItem.fromJson(q as Map<String, dynamic>))
+          .map(
+            (q) => QuizQuestionReviewItem.fromJson(q as Map<String, dynamic>),
+          )
           .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'quizId': quizId,
-        'quizTitle': quizTitle,
-        'score': score,
-        'totalScore': totalScore,
-        'percentage': percentage,
-        'passed': passed,
-        'timeSpentSeconds': timeSpentSeconds,
-        'completedAt': completedAt,
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'id': id,
+    'quizId': quizId,
+    'quizTitle': quizTitle,
+    'score': score,
+    'totalScore': totalScore,
+    'percentage': percentage,
+    'passed': passed,
+    'timeSpentSeconds': timeSpentSeconds,
+    'completedAt': completedAt,
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
 }
-

@@ -6,11 +6,7 @@ class SubjectCard extends StatelessWidget {
   final SubjectModel subject;
   final VoidCallback? onTap;
 
-  const SubjectCard({
-    super.key,
-    required this.subject,
-    this.onTap,
-  });
+  const SubjectCard({super.key, required this.subject, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +18,14 @@ class SubjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(subject.name, style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                subject.name,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text('${subject.completedChapters} / ${subject.totalChapters} Chapters'),
+              Text(
+                '${subject.completedChapters} / ${subject.totalChapters} Chapters',
+              ),
             ],
           ),
         ),

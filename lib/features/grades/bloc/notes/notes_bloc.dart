@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/cache/cache_manager.dart';
 import '../../../../core/cache/cache_response.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/storage/storage_keys.dart';
 import '../../models/note_models.dart';
 import '../../services/notes_service.dart';
@@ -21,10 +22,12 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   String? _cachedCurriculumType;
   int? _cachedStudentGrade;
   final Set<String> _inProgressDownloads = {};
+  int _subjectDetailRequestId = 0;
+  int _chapterLessonRequestId = 0;
 
   NotesBloc(this._notesService, {CacheManager? cacheManager})
-      : _cacheManager = cacheManager ?? CacheManager.instance,
-        super(const NotesInitial()) {
+    : _cacheManager = cacheManager ?? CacheManager.instance,
+      super(const NotesInitial()) {
     on<LoadNotesSubjects>(_onLoadNotesSubjects);
     on<ToggleSubjectExpand>(_onToggleSubjectExpand);
     on<SelectGradeLevel>(_onSelectGradeLevel);
@@ -59,10 +62,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       );
 
   /// Retrieves cached LessonDetail directly from [CacheManager]'s L1 memory.
-  LessonDetail? getCachedLesson(String id) =>
-      _cacheManager.getMemoryCached<LessonDetail>(
-        StorageKeys.notesChapterLessonCache(id),
-      );
+  LessonDetail? getCachedLesson(String id) => _cacheManager
+      .getMemoryCached<LessonDetail>(StorageKeys.notesChapterLessonCache(id));
 
   Future<void> _onLoadNotesSubjects(
     LoadNotesSubjects event,
@@ -137,10 +138,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     }
   }
 
-  void _onSelectGradeLevel(
-    SelectGradeLevel event,
-    Emitter<NotesState> emit,
-  ) {
+  void _onSelectGradeLevel(SelectGradeLevel event, Emitter<NotesState> emit) {
     final newMap = Map<int, String>.from(_cachedSelectedGrades);
     newMap[event.subjectIndex] = event.gradeName;
     _cachedSelectedGrades = newMap;
@@ -155,28 +153,45 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadSubjectNotesDetail event,
     Emitter<NotesState> emit,
   ) async {
-    final key = StorageKeys.notesSubjectDetailCache(event.subjectId);
-    final hasMemory =
-        _cacheManager.getMemoryCached<SubjectNotesDetail>(key) != null;
-    if (!hasMemory) {
-      emit(const NotesLoading());
-    }
+    final requestId = ++_subjectDetailRequestId;
+
+    // Include gradeLevel in the cache key so Grade 10 and Grade 12 data
+    // for the same subject are stored separately and never cross-contaminate.
+    final cacheKeySuffix =
+        event.gradeLevel != null ? '_grade_${event.gradeLevel}' : '';
+    final key =
+        '${StorageKeys.notesSubjectDetailCache(event.subjectId)}$cacheKeySuffix';
+
+    // Immediately emit loading state to clear previous grade/subject data
+    emit(const NotesLoading());
 
     try {
       await emit.forEach<CacheResponse<SubjectNotesDetail>>(
         _cacheManager.watch<SubjectNotesDetail>(
           key: key,
-          ttl: const Duration(minutes: 10),
-          networkFetch: () =>
-              _notesService.getSubjectNotesDetails(event.subjectId),
+          ttl: const Duration(minutes: 5),
+          forceRefresh: event.forceRefresh,
+          networkFetch: () => _notesService.getSubjectNotesDetails(
+            event.subjectId,
+            gradeLevel: event.gradeLevel,
+          ),
           fromJson: SubjectNotesDetail.fromJsonString,
           toJson: (d) => d.toJsonString(),
         ),
-        onData: (response) => SubjectNotesDetailLoaded(detail: response.data),
+        onData: (response) {
+          if (requestId != _subjectDetailRequestId) return const NotesLoading();
+          return SubjectNotesDetailLoaded(
+            detail: response.data,
+            subjectId: event.subjectId,
+            gradeLevel: event.gradeLevel,
+          );
+        },
         onError: (e, _) => NotesError(e.toString()),
       );
     } catch (e) {
-      emit(NotesError(e.toString()));
+      if (requestId == _subjectDetailRequestId) {
+        emit(NotesError(e.toString()));
+      }
     }
   }
 
@@ -184,28 +199,36 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     LoadChapterLessonDetail event,
     Emitter<NotesState> emit,
   ) async {
+    final requestId = ++_chapterLessonRequestId;
     final key = StorageKeys.notesChapterLessonCache(event.chapterId);
-    final hasMemory =
-        _cacheManager.getMemoryCached<LessonDetail>(key) != null;
-    if (!hasMemory) {
-      emit(const NotesLoading());
-    }
+
+    // Immediately emit loading state to clear previous lesson data
+    emit(const NotesLoading());
 
     try {
       await emit.forEach<CacheResponse<LessonDetail>>(
         _cacheManager.watch<LessonDetail>(
           key: key,
-          ttl: const Duration(minutes: 10),
+          ttl: const Duration(minutes: 5),
+          forceRefresh: event.forceRefresh,
           networkFetch: () =>
               _notesService.getChapterNoteDetail(event.chapterId),
           fromJson: LessonDetail.fromJsonString,
           toJson: (l) => l.toJsonString(),
         ),
-        onData: (response) => LessonDetailLoaded(lesson: response.data),
+        onData: (response) {
+          if (requestId != _chapterLessonRequestId) return const NotesLoading();
+          return LessonDetailLoaded(
+            lesson: response.data,
+            chapterId: event.chapterId,
+          );
+        },
         onError: (e, _) => NotesError(e.toString()),
       );
     } catch (e) {
-      emit(NotesError(e.toString()));
+      if (requestId == _chapterLessonRequestId) {
+        emit(NotesError(e.toString()));
+      }
     }
   }
 
@@ -240,16 +263,27 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     _inProgressDownloads.add(event.chapterId);
 
     try {
-      final url = await _notesService.downloadChapterPdf(event.chapterId);
+      String url = '';
+      if (event.pdfUrl != null && event.pdfUrl!.trim().isNotEmpty) {
+        url = event.pdfUrl!.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          final base = ApiEndpoints.baseUrl
+              .trimRight()
+              .replaceAll(RegExp(r'/api$'), '');
+          final path = url.startsWith('/') ? url : '/$url';
+          url = '$base$path';
+        }
+      } else {
+        url = await _notesService.downloadChapterPdf(event.chapterId);
+      }
+
       if (state is SubjectNotesDetailLoaded) {
         final current = state as SubjectNotesDetailLoaded;
-        emit(current.copyWith(
-          activeDownloadMessage: 'Opening download: $url',
-        ));
+        emit(current.copyWith(activeDownloadMessage: 'Opening download: $url'));
       }
       if (url.isNotEmpty) {
         final uri = Uri.tryParse(url);
-        if (uri != null) {
+        if (uri != null && uri.isAbsolute) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
       }

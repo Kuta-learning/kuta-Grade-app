@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 
 /// Card presenting key learning objectives with bullet checkmarks.
 class LearningObjectivesCard extends StatelessWidget {
@@ -37,7 +37,8 @@ class LearningObjectivesCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Learning Objectives',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -65,7 +66,8 @@ class LearningObjectivesCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       obj,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12.5,
                         height: 1.45,
                         fontWeight: FontWeight.w400,
@@ -82,4 +84,3 @@ class LearningObjectivesCard extends StatelessWidget {
     );
   }
 }
-

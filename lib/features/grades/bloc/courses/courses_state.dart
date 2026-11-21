@@ -16,10 +16,7 @@ class CoursesLoaded extends CoursesState {
   final List<CourseModel> courses;
   final int gradeLevel;
 
-  const CoursesLoaded({
-    required this.courses,
-    required this.gradeLevel,
-  });
+  const CoursesLoaded({required this.courses, required this.gradeLevel});
 }
 
 class CourseDetailLoading extends CoursesState {
@@ -105,4 +102,3 @@ class CoursesError extends CoursesState {
 
   const CoursesError(this.message);
 }
-

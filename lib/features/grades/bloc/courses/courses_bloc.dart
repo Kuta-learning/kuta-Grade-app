@@ -46,7 +46,9 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
 
     emit(const CoursesLoading());
     try {
-      final courses = await _coursesService.getCoursesForGrade(event.gradeLevel);
+      final courses = await _coursesService.getCoursesForGrade(
+        event.gradeLevel,
+      );
       _cachedCourses[event.gradeLevel] = courses;
       emit(CoursesLoaded(courses: courses, gradeLevel: event.gradeLevel));
     } catch (e) {
@@ -105,7 +107,9 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
         await _coursesService.completeLesson(event.lessonId);
         final updatedLesson = current.lesson.copyWith(isCompleted: true);
         _cachedLessons[event.lessonId] = updatedLesson;
-        emit(CourseLessonDetailLoaded(lesson: updatedLesson, isCompleting: false));
+        emit(
+          CourseLessonDetailLoaded(lesson: updatedLesson, isCompleting: false),
+        );
       } catch (_) {
         emit(current.copyWith(isCompleting: false));
       }
@@ -157,10 +161,12 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
       emit(current.copyWith(isSubmitting: true));
 
       final answers = _quizAnswers.entries
-          .map((e) => QuizAnswerSubmissionItem(
-                questionId: e.key,
-                selectedOptionId: e.value,
-              ))
+          .map(
+            (e) => QuizAnswerSubmissionItem(
+              questionId: e.key,
+              selectedOptionId: e.value,
+            ),
+          )
           .toList();
 
       try {
@@ -181,11 +187,12 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
   ) async {
     emit(const QuizReviewLoading());
     try {
-      final review = await _coursesService.getQuizAttemptReview(event.attemptId);
+      final review = await _coursesService.getQuizAttemptReview(
+        event.attemptId,
+      );
       emit(QuizReviewLoaded(review: review));
     } catch (e) {
       emit(CoursesError(e.toString()));
     }
   }
 }
-

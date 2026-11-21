@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/constants/app_typography.dart';
 import '../models/note_models.dart';
 
 /// Card presenting an individual numbered study or practice step matching the design screenshot.
@@ -15,7 +15,9 @@ class LessonStepCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Soft grey container matching screenshot
+        color: const Color(
+          0xFFF1F5F9,
+        ), // Soft grey container matching screenshot
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -32,7 +34,8 @@ class LessonStepCard extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               '${step.number}',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -47,7 +50,8 @@ class LessonStepCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: RichText(
                 text: TextSpan(
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13.5,
                     height: 1.45,
                     color: const Color(0xFF334155),
@@ -76,7 +80,9 @@ class LessonStepCard extends StatelessWidget {
               text: parts[i],
               style: TextStyle(
                 fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-                color: isBold ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                color: isBold
+                    ? const Color(0xFF0F172A)
+                    : const Color(0xFF334155),
               ),
             ),
           );

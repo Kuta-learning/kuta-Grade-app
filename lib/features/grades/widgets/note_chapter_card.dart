@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../models/note_models.dart';
 
 /// Reusable card displaying an individual chapter note item with Read and Download actions.
@@ -34,14 +34,18 @@ class NoteChapterCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.orange500,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   chapter.chapterNumber,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -50,7 +54,10 @@ class NoteChapterCard extends StatelessWidget {
               ),
               if (chapter.isCompleted)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(10),
@@ -67,7 +74,8 @@ class NoteChapterCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         'Read',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF2E7D32),
@@ -83,61 +91,80 @@ class NoteChapterCard extends StatelessWidget {
           // Chapter title
           Text(
             chapter.title,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 15.5,
               fontWeight: FontWeight.w700,
               color: AppColors.headlineDark,
               letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 5),
-
-          // Description
-          Text(
-            chapter.description,
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              height: 1.45,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+          Builder(
+            builder: (context) {
+              final cleanDesc = chapter.description
+                  .replaceAll(RegExp(r'!\[([^\]]*)\]\(([^)]+)\)'), '')
+                  .trim();
+              if (cleanDesc.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text(
+                  cleanDesc,
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
+                    fontSize: 12.5,
+                    height: 1.45,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              );
+            },
+          ),
+          if (chapter.pageCount.isNotEmpty || chapter.fileSize.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            // Meta row (Page count & file size)
+            Row(
+              children: [
+                if (chapter.pageCount.isNotEmpty) ...[
+                  const Icon(
+                    Icons.menu_book_outlined,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    chapter.pageCount,
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+                if (chapter.pageCount.isNotEmpty &&
+                    chapter.fileSize.isNotEmpty)
+                  const SizedBox(width: 12),
+                if (chapter.fileSize.isNotEmpty) ...[
+                  const Icon(
+                    Icons.description_outlined,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    chapter.fileSize,
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-
-          // Meta row (Page count & file size)
-          Row(
-            children: [
-              const Icon(
-                Icons.menu_book_outlined,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                chapter.pageCount,
-                style: GoogleFonts.inter(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Icon(
-                Icons.description_outlined,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                chapter.fileSize,
-                style: GoogleFonts.inter(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
+          ],
           const SizedBox(height: 14),
 
           // Action buttons row (Read & Download)
@@ -151,21 +178,26 @@ class NoteChapterCard extends StatelessWidget {
                   child: Container(
                     height: 35,
                     decoration: BoxDecoration(
-                      color: chapter.isCompleted ? const Color(0xFF2E7D32) : AppColors.orange500,
+                      color: chapter.isCompleted
+                          ? const Color(0xFF2E7D32)
+                          : AppColors.orange500,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          chapter.isCompleted ? Icons.check_circle_outline : Icons.menu_book_outlined,
+                          chapter.isCompleted
+                              ? Icons.check_circle_outline
+                              : Icons.menu_book_outlined,
                           size: 14,
                           color: Colors.white,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           chapter.isCompleted ? 'Completed' : 'Read',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -200,7 +232,8 @@ class NoteChapterCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           'Download',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.headlineDark,
@@ -218,4 +251,3 @@ class NoteChapterCard extends StatelessWidget {
     );
   }
 }
-

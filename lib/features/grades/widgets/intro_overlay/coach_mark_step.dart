@@ -15,7 +15,11 @@ class CoachMarkStep {
   /// [GlobalKey] of the widget to spotlight. Null = full-screen welcome step.
   final GlobalKey? targetKey;
 
-  const CoachMarkStep({required this.title, required this.body, this.targetKey});
+  const CoachMarkStep({
+    required this.title,
+    required this.body,
+    this.targetKey,
+  });
 
   /// Resolves the global screen-space rectangle of [targetKey].
   ///

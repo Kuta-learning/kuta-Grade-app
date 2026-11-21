@@ -27,4 +27,3 @@ abstract class CoursesService {
   /// Fetches the attempt results, score, and question review.
   Future<QuizAttemptReviewModel> getQuizAttemptReview(String attemptId);
 }
-

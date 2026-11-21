@@ -4,7 +4,8 @@ import 'dart:convert';
 class BookmarkItem {
   final String id;
   final String? studentId;
-  final String type; // EXAM_QUESTION, NOTE_CHAPTER, COURSE_LESSON, QUIZ_QUESTION
+  final String
+  type; // EXAM_QUESTION, NOTE_CHAPTER, COURSE_LESSON, QUIZ_QUESTION
   final String itemId;
   final String title;
   final String? subjectId;
@@ -43,15 +44,15 @@ class BookmarkItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'studentId': ?studentId,
-        'type': type,
-        'itemId': itemId,
-        'title': title,
-        'subjectId': ?subjectId,
-        'metadata': ?metadata,
-        'createdAt': ?createdAt?.toIso8601String(),
-      };
+    'id': id,
+    'studentId': ?studentId,
+    'type': type,
+    'itemId': itemId,
+    'title': title,
+    'subjectId': ?subjectId,
+    'metadata': ?metadata,
+    'createdAt': ?createdAt?.toIso8601String(),
+  };
 
   static String encodeList(List<BookmarkItem> items) =>
       jsonEncode(items.map((e) => e.toJson()).toList());

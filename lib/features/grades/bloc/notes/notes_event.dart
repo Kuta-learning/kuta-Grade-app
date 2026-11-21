@@ -28,13 +28,22 @@ final class SelectGradeLevel extends NotesEvent {
 /// Requests full notes summary and chapters list for a subject view.
 final class LoadSubjectNotesDetail extends NotesEvent {
   final String subjectId;
-  const LoadSubjectNotesDetail(this.subjectId);
+  /// Grade level to filter chapters (e.g. 10 for Grade 10).
+  /// Null means fetch for the student's own grade (default backend behaviour).
+  final int? gradeLevel;
+  final bool forceRefresh;
+  const LoadSubjectNotesDetail(
+    this.subjectId, {
+    this.gradeLevel,
+    this.forceRefresh = false,
+  });
 }
 
 /// Requests reader lesson details for an individual chapter.
 final class LoadChapterLessonDetail extends NotesEvent {
   final String chapterId;
-  const LoadChapterLessonDetail(this.chapterId);
+  final bool forceRefresh;
+  const LoadChapterLessonDetail(this.chapterId, {this.forceRefresh = false});
 }
 
 /// Updates progress state when a user finishes reading a chapter.
@@ -47,5 +56,6 @@ final class UpdateChapterProgressEvent extends NotesEvent {
 /// Requests download URL for chapter notes PDF.
 final class DownloadChapterPdfEvent extends NotesEvent {
   final String chapterId;
-  const DownloadChapterPdfEvent(this.chapterId);
+  final String? pdfUrl;
+  const DownloadChapterPdfEvent(this.chapterId, {this.pdfUrl});
 }

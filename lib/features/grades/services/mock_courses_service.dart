@@ -88,7 +88,8 @@ class MockCoursesService implements CoursesService {
         courseId: courseId,
         chapterNumber: 1,
         title: 'Unit 1: Foundations and Core Principles',
-        description: 'Key definitions, conceptual frameworks, and preliminary problem sets.',
+        description:
+            'Key definitions, conceptual frameworks, and preliminary problem sets.',
         isCompleted: true,
         lessons: [
           CourseLessonItemModel(
@@ -118,7 +119,8 @@ class MockCoursesService implements CoursesService {
         courseId: courseId,
         chapterNumber: 2,
         title: 'Unit 2: Analytical Methods & Applications',
-        description: 'Systematic derivations, worked examples, and practical calculations.',
+        description:
+            'Systematic derivations, worked examples, and practical calculations.',
         isCompleted: false,
         lessons: [
           CourseLessonItemModel(
@@ -222,14 +224,16 @@ class MockCoursesService implements CoursesService {
           title: 'Functions_Core_Principles_Summary.pdf',
           fileType: 'PDF',
           fileSize: '1.8 MB',
-          fileUrl: 'https://kuta-learning.onrender.com/api/resources/principles.pdf',
+          fileUrl:
+              'https://kuta-learning.onrender.com/api/resources/principles.pdf',
         ),
         LessonResourceItemModel(
           id: 'res-2',
           title: 'Unit1_Practice_Worksheet.pdf',
           fileType: 'PDF',
           fileSize: '950 KB',
-          fileUrl: 'https://kuta-learning.onrender.com/api/resources/worksheet.pdf',
+          fileUrl:
+              'https://kuta-learning.onrender.com/api/resources/worksheet.pdf',
         ),
       ],
     );
@@ -247,7 +251,8 @@ class MockCoursesService implements CoursesService {
     return QuizDetailModel(
       id: quizId,
       title: 'Unit 1 Assessment Quiz',
-      description: 'Test your understanding of core concepts and principles from Unit 1.',
+      description:
+          'Test your understanding of core concepts and principles from Unit 1.',
       timeLimitMinutes: 15,
       passingScore: 70,
       totalQuestions: 4,
@@ -260,16 +265,31 @@ class MockCoursesService implements CoursesService {
               'By definition, a relation is a function if and only if each element of the domain maps to exactly one element in the range.',
           points: 1,
           options: [
-            QuizQuestionOption(id: 'opt-1-a', optionText: 'Every input produces exactly one unique output', label: 'A'),
-            QuizQuestionOption(id: 'opt-1-b', optionText: 'Inputs can produce multiple outputs simultaneously', label: 'B'),
-            QuizQuestionOption(id: 'opt-1-c', optionText: 'The range must equal the codomain', label: 'C'),
-            QuizQuestionOption(id: 'opt-1-d', optionText: 'The derivative must exist everywhere', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-1-a',
+              optionText: 'Every input produces exactly one unique output',
+              label: 'A',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-b',
+              optionText: 'Inputs can produce multiple outputs simultaneously',
+              label: 'B',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-c',
+              optionText: 'The range must equal the codomain',
+              label: 'C',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-d',
+              optionText: 'The derivative must exist everywhere',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionModel(
           id: 'q-2',
-          questionText:
-              'What is the domain of f(x) = √(x - 4)?',
+          questionText: 'What is the domain of f(x) = √(x - 4)?',
           explanation:
               'For the square root to yield a real number, the radicand x - 4 must be greater than or equal to 0, hence x ≥ 4.',
           points: 1,
@@ -277,7 +297,11 @@ class MockCoursesService implements CoursesService {
             QuizQuestionOption(id: 'opt-2-a', optionText: 'x ≥ 4', label: 'A'),
             QuizQuestionOption(id: 'opt-2-b', optionText: 'x > 4', label: 'B'),
             QuizQuestionOption(id: 'opt-2-c', optionText: 'x ≤ 4', label: 'C'),
-            QuizQuestionOption(id: 'opt-2-d', optionText: 'All real numbers', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-2-d',
+              optionText: 'All real numbers',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionModel(
@@ -288,10 +312,26 @@ class MockCoursesService implements CoursesService {
               'Continuity at a point requires lim x->c f(x) = f(c), which also implies f(c) is defined and the limit exists.',
           points: 1,
           options: [
-            QuizQuestionOption(id: 'opt-3-a', optionText: 'lim x->c f(x) = f(c)', label: 'A'),
-            QuizQuestionOption(id: 'opt-3-b', optionText: 'f\'(c) = 0', label: 'B'),
-            QuizQuestionOption(id: 'opt-3-c', optionText: 'f(c) > 0', label: 'C'),
-            QuizQuestionOption(id: 'opt-3-d', optionText: 'f(x) is linear everywhere', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-3-a',
+              optionText: 'lim x->c f(x) = f(c)',
+              label: 'A',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-b',
+              optionText: 'f\'(c) = 0',
+              label: 'B',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-c',
+              optionText: 'f(c) > 0',
+              label: 'C',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-d',
+              optionText: 'f(x) is linear everywhere',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionModel(
@@ -360,10 +400,26 @@ class MockCoursesService implements CoursesService {
           explanation:
               'Every input in the domain corresponds to exactly one output in the range.',
           options: [
-            QuizQuestionOption(id: 'opt-1-a', optionText: 'Every input produces exactly one unique output', label: 'A'),
-            QuizQuestionOption(id: 'opt-1-b', optionText: 'Inputs can produce multiple outputs simultaneously', label: 'B'),
-            QuizQuestionOption(id: 'opt-1-c', optionText: 'The range must equal the codomain', label: 'C'),
-            QuizQuestionOption(id: 'opt-1-d', optionText: 'The derivative must exist everywhere', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-1-a',
+              optionText: 'Every input produces exactly one unique output',
+              label: 'A',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-b',
+              optionText: 'Inputs can produce multiple outputs simultaneously',
+              label: 'B',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-c',
+              optionText: 'The range must equal the codomain',
+              label: 'C',
+            ),
+            QuizQuestionOption(
+              id: 'opt-1-d',
+              optionText: 'The derivative must exist everywhere',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionReviewItem(
@@ -377,7 +433,11 @@ class MockCoursesService implements CoursesService {
             QuizQuestionOption(id: 'opt-2-a', optionText: 'x ≥ 4', label: 'A'),
             QuizQuestionOption(id: 'opt-2-b', optionText: 'x > 4', label: 'B'),
             QuizQuestionOption(id: 'opt-2-c', optionText: 'x ≤ 4', label: 'C'),
-            QuizQuestionOption(id: 'opt-2-d', optionText: 'All real numbers', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-2-d',
+              optionText: 'All real numbers',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionReviewItem(
@@ -389,10 +449,26 @@ class MockCoursesService implements CoursesService {
           isCorrect: true,
           explanation: 'lim x->c f(x) must equal the evaluated value f(c).',
           options: [
-            QuizQuestionOption(id: 'opt-3-a', optionText: 'lim x->c f(x) = f(c)', label: 'A'),
-            QuizQuestionOption(id: 'opt-3-b', optionText: 'f\'(c) = 0', label: 'B'),
-            QuizQuestionOption(id: 'opt-3-c', optionText: 'f(c) > 0', label: 'C'),
-            QuizQuestionOption(id: 'opt-3-d', optionText: 'f(x) is linear everywhere', label: 'D'),
+            QuizQuestionOption(
+              id: 'opt-3-a',
+              optionText: 'lim x->c f(x) = f(c)',
+              label: 'A',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-b',
+              optionText: 'f\'(c) = 0',
+              label: 'B',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-c',
+              optionText: 'f(c) > 0',
+              label: 'C',
+            ),
+            QuizQuestionOption(
+              id: 'opt-3-d',
+              optionText: 'f(x) is linear everywhere',
+              label: 'D',
+            ),
           ],
         ),
         QuizQuestionReviewItem(
@@ -415,4 +491,3 @@ class MockCoursesService implements CoursesService {
     );
   }
 }
-

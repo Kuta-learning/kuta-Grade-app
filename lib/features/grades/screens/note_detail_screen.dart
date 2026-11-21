@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/storage/storage_keys.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/grades_bloc.dart';
 import '../models/note_models.dart';
@@ -36,6 +37,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late String _selectedGrade;
   SubjectNotesDetail? _detail;
 
+  /// Parses the numeric grade from a string like "Grade 10" → 10.
+  /// Returns null if the string doesn't contain a recognisable integer.
+  int? _parseGradeNumber(String gradeLabel) {
+    final match = RegExp(r'\d+').firstMatch(gradeLabel);
+    if (match == null) return null;
+    return int.tryParse(match.group(0)!);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -45,15 +54,26 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
           ? widget.subjectId!
           : widget.subjectTitle;
+      final gradeNumber = _parseGradeNumber(widget.gradeLevel);
       try {
         final bloc = context.read<NotesBloc>();
+        // Build a grade-scoped cache key to match the bloc's storage key.
+        final gradeSuffix =
+            gradeNumber != null ? '_grade_$gradeNumber' : '';
+        final gradeScopedKey =
+            '${StorageKeys.notesSubjectDetailCache(lookupId)}$gradeSuffix';
         final cached =
+            bloc.cacheManager.getMemoryCached<SubjectNotesDetail>(
+              gradeScopedKey,
+            ) ??
             bloc.getCachedDetail(lookupId) ??
             bloc.getCachedDetail(widget.subjectTitle);
         if (cached != null) {
           setState(() => _detail = cached);
         } else {
-          bloc.add(LoadSubjectNotesDetail(lookupId));
+          bloc.add(
+            LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
+          );
         }
       } catch (_) {
         // BlocProvider unavailable — error shown via NotesError state
@@ -90,8 +110,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
         ? widget.subjectId!
         : widget.subjectTitle;
+    final gradeNumber = _parseGradeNumber(_selectedGrade);
     try {
-      context.read<NotesBloc>().add(LoadSubjectNotesDetail(lookupId));
+      context.read<NotesBloc>().add(
+        LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
+      );
     } catch (_) {}
   }
 
@@ -109,8 +132,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final lookupId = widget.subjectId != null && widget.subjectId!.isNotEmpty
         ? widget.subjectId!
         : widget.subjectTitle;
+    final gradeNumber = _parseGradeNumber(_selectedGrade);
     try {
-      context.read<NotesBloc>().add(LoadSubjectNotesDetail(lookupId));
+      context.read<NotesBloc>().add(
+        LoadSubjectNotesDetail(lookupId, gradeLevel: gradeNumber),
+      );
     } catch (_) {}
   }
 
@@ -167,7 +193,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       children: [
                         Text(
                           'Notes',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
@@ -177,7 +204,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             '>',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 10,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
@@ -187,7 +215,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         Flexible(
                           child: Text(
                             widget.subjectTitle,
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 11,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
@@ -200,7 +229,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             '>',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 10,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
@@ -209,7 +239,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         ),
                         Text(
                           _selectedGrade,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.orange900,
@@ -248,7 +279,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         const SizedBox(width: 5),
                         Text(
                           _selectedGrade,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.headlineDark,
@@ -315,7 +347,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         children: [
                           Text(
                             'Chapter Notes',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyPoppins,
                               fontSize: 16.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.headlineDark,
@@ -326,7 +359,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                             const SizedBox(width: 6),
                             Text(
                               '(Showing $showing of $total)',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.textSecondary,
@@ -413,7 +447,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           const SizedBox(height: 12),
           Text(
             'No notes uploaded yet for $_selectedGrade',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.headlineDark,
@@ -422,7 +457,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           const SizedBox(height: 4),
           Text(
             'Check back soon or choose another grade level.',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -456,7 +492,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           const SizedBox(height: 12),
           Text(
             'Unable to load notes',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.headlineDark,
@@ -466,7 +503,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           const SizedBox(height: 4),
           Text(
             cleanMessage,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -531,7 +569,8 @@ class _SubjectHeroCard extends StatelessWidget {
     if (norm.contains('math')) {
       watermarkWidget = Text(
         'Σ',
-        style: GoogleFonts.inter(
+        style: const TextStyle(
+          fontFamily: AppTypography.fontFamilyOpenSans,
           fontSize: 60,
           fontWeight: FontWeight.w700,
           color: const Color(0xFFFDE8DE),
@@ -609,7 +648,8 @@ class _SubjectHeroCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
@@ -619,7 +659,8 @@ class _SubjectHeroCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,
@@ -650,7 +691,8 @@ class _SubjectHeroCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           downloadButtonText,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,
                             letterSpacing: -0.1,

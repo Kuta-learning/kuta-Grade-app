@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../bloc/grades_bloc.dart';
@@ -13,6 +13,7 @@ import '../models/note_models.dart';
 import '../widgets/learning_objectives_card.dart';
 import '../widgets/lesson_resource_card.dart';
 import '../widgets/lesson_step_card.dart';
+import '../widgets/markdown_content_view.dart';
 import '../widgets/notes_loading_skeleton.dart';
 
 /// Lesson Detail screen — displays interactive lesson content (objectives, body text,
@@ -26,11 +27,11 @@ class LessonDetailScreen extends StatefulWidget {
 
   const LessonDetailScreen({
     super.key,
-    this.chapterTitle = 'Equivalence and Simplification',
-    this.chapterNumber = '4.2',
-    this.subject = 'Fractions',
-    this.gradeLevel = 'Grade 8 Math',
-    this.chapterId = 'chap-4-2',
+    this.chapterTitle = '',
+    this.chapterNumber = '',
+    this.subject = '',
+    this.gradeLevel = '',
+    this.chapterId = '',
   });
 
   @override
@@ -49,9 +50,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         final cached = bloc.getCachedLesson(widget.chapterId);
         if (cached != null) {
           setState(() => _lesson = cached);
-        } else {
-          bloc.add(LoadChapterLessonDetail(widget.chapterId));
         }
+        // Always forceRefresh to fetch fresh backend content, diagrams, resources
+        bloc.add(
+          LoadChapterLessonDetail(widget.chapterId, forceRefresh: true),
+        );
         // Send reading progress to backend: POST /short-notes/chapters/:chapterId/progress {"isRead": true}
         bloc.add(UpdateChapterProgressEvent(widget.chapterId, isRead: true));
       } catch (_) {
@@ -66,13 +69,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       'Downloading ${res.title} (${res.fileSize})...',
     );
     try {
-      context.read<NotesBloc>().add(DownloadChapterPdfEvent(widget.chapterId));
+      context.read<NotesBloc>().add(
+        DownloadChapterPdfEvent(
+          widget.chapterId,
+          pdfUrl: res.downloadUrl.isNotEmpty ? res.downloadUrl : null,
+        ),
+      );
     } catch (_) {}
   }
 
   void _retry() {
     try {
-      context.read<NotesBloc>().add(LoadChapterLessonDetail(widget.chapterId));
+      context.read<NotesBloc>().add(
+        LoadChapterLessonDetail(widget.chapterId, forceRefresh: true),
+      );
     } catch (_) {}
   }
 
@@ -117,7 +127,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     const SizedBox(width: 4),
                     Text(
                       widget.subject,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyPoppins,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -146,15 +157,27 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         child: bloc != null
             ? BlocConsumer<NotesBloc, NotesState>(
                 listener: (context, state) {
-                  if (state is LessonDetailLoaded) {
+                  if (state is LessonDetailLoaded &&
+                      (state.chapterId.isEmpty ||
+                          state.chapterId == widget.chapterId)) {
                     setState(() => _lesson = state.lesson);
                   }
                 },
                 builder: (context, state) {
-                  final lesson = (state is LessonDetailLoaded)
+                  final isMatchingLoaded = state is LessonDetailLoaded &&
+                      (state.chapterId.isEmpty ||
+                          state.chapterId == widget.chapterId);
+
+                  final lesson = isMatchingLoaded
                       ? state.lesson
                       : (_lesson ?? bloc?.getCachedLesson(widget.chapterId));
 
+                  if (state is NotesLoading && lesson == null) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: NotesLoadingSkeleton(itemCount: 3),
+                    );
+                  }
                   if (lesson != null) {
                     return _buildContent(lesson);
                   }
@@ -177,31 +200,25 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  String _formatContent(String raw) {
-    var text = raw.replaceAll('\r\n', '\n');
-    text = text.replaceAll(RegExp(r'^#{1,6}\s*', multiLine: true), '');
-    text = text.replaceAll('**', '');
-    text = text.replaceAllMapped(
-      RegExp(r'\$([^$]+)\$'),
-      (match) => match.group(1) ?? '',
-    );
-    return text.trim();
-  }
-
   Widget _buildContent(LessonDetail lesson) {
-    final content = _formatContent(lesson.bodyText);
+    // Raw body text — includes markdown image syntax that MarkdownContentView will parse.
+    final rawBody = lesson.bodyText.trim();
     final heading = lesson.sectionHeading.isNotEmpty
         ? lesson.sectionHeading
         : 'Chapter Content';
     final progress = lesson.progressPercent.clamp(0.0, 1.0).toDouble();
     final resourceCount = lesson.resources.length;
 
+    // Determine if there is any textual content (excluding embedded images)
+    // so we know whether to show the "no content" placeholder.
+    final hasContent = rawBody.isNotEmpty || lesson.diagrams.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ChapterHeaderCard(lesson: lesson),
 
-        if (content.isEmpty && lesson.diagrams.isEmpty)
+        if (!hasContent)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
             child: Container(
@@ -216,7 +233,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
               child: Text(
                 'No note content is available for this chapter yet.',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -233,29 +251,25 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           ),
 
-        if (content.isNotEmpty || lesson.diagrams.isNotEmpty)
+        // Main body content — MarkdownContentView renders embedded images
+        // and text sections from the same raw string.
+        if (hasContent)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 20, 14, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SectionHeading(text: heading),
-                if (content.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    content,
-                    style: GoogleFonts.inter(
-                      fontSize: 13.5,
-                      height: 1.55,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-                if (lesson.diagrams.isNotEmpty) const SizedBox(height: 16),
-                for (final diagram in lesson.diagrams) ...[
-                  _DiagramCard(diagram: diagram),
-                  const SizedBox(height: 14),
+                const SizedBox(height: 10),
+                MarkdownContentView(content: rawBody),
+                // Render any separately provided diagram objects
+                // (e.g. top-level imageUrl on the chapter or note-level images).
+                if (lesson.diagrams.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  for (final diagram in lesson.diagrams) ...[
+                    _DiagramCard(diagram: diagram),
+                    const SizedBox(height: 14),
+                  ],
                 ],
               ],
             ),
@@ -268,8 +282,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             children: [
               if (lesson.steps.isNotEmpty) ...[
                 Text(
-                  'Steps to Simplify',
-                  style: GoogleFonts.inter(
+                  lesson.sectionHeading.isNotEmpty
+                      ? '${lesson.sectionHeading} Steps'
+                      : 'Lesson Steps',
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1E5B94),
@@ -297,7 +314,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   children: [
                     Text(
                       'Lesson Resources',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyPoppins,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.headlineDark,
@@ -306,7 +324,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                     Text(
                       '$resourceCount ${resourceCount == 1 ? 'File' : 'Files'}',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.orange900,
@@ -330,7 +349,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 children: [
                   Text(
                     'Lesson Progress',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
@@ -338,7 +358,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   ),
                   Text(
                     '${(progress * 100).round()}% Read',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.orange900,
@@ -392,7 +413,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             const SizedBox(height: 12),
             Text(
               'Unable to load this chapter',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.headlineDark,
@@ -402,7 +424,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             const SizedBox(height: 4),
             Text(
               cleanMessage,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 12,
                 color: AppColors.textSecondary,
               ),
@@ -494,7 +517,8 @@ class _ChapterHeaderCard extends StatelessWidget {
                           ),
                           child: Text(
                             'Chapter ${lesson.chapterNumber}',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.orange900,
@@ -507,7 +531,8 @@ class _ChapterHeaderCard extends StatelessWidget {
                       if (lesson.gradeLevel.isNotEmpty)
                         Text(
                           lesson.gradeLevel,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
@@ -518,7 +543,8 @@ class _ChapterHeaderCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   lesson.chapterTitle,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
@@ -529,7 +555,8 @@ class _ChapterHeaderCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     lesson.chapterSubtitle,
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textSecondary,
@@ -558,7 +585,8 @@ class _SectionHeading extends StatelessWidget {
       children: [
         Text(
           text,
-          style: GoogleFonts.inter(
+          style: const TextStyle(
+            fontFamily: AppTypography.fontFamilyPoppins,
             fontSize: 17.5,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF1E5B94),
@@ -587,6 +615,10 @@ class _DiagramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imgUrl = diagram.imageAssetOrUrl;
+    final isNetwork =
+        imgUrl.startsWith('http://') || imgUrl.startsWith('https://');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -604,23 +636,54 @@ class _DiagramCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              diagram.imageAssetOrUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
-            ),
+            child: isNetwork
+                ? Image.network(
+                    imgUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                  )
+                : Image.asset(
+                    imgUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
+                  ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            diagram.title,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF4A3E38),
+          if (diagram.title.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              diagram.title,
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4A3E38),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
+          ],
+          if (diagram.caption.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              diagram.caption,
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );

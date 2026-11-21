@@ -17,11 +17,13 @@ class DefaultGradeLearningService implements GradeLearningService {
   final CoursesService _coursesService;
 
   DefaultGradeLearningService({CoursesService? coursesService})
-      : _coursesService = coursesService ?? MockCoursesService();
+    : _coursesService = coursesService ?? MockCoursesService();
 
   @override
   Future<List<SubjectModel>> getSubjectsForGrade(GradeLevel gradeLevel) async {
-    final courses = await _coursesService.getCoursesForGrade(gradeLevel.numericValue);
+    final courses = await _coursesService.getCoursesForGrade(
+      gradeLevel.numericValue,
+    );
     return courses
         .map(
           (c) => SubjectModel(

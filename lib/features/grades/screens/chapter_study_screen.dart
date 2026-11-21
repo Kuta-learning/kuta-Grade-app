@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
@@ -122,7 +122,11 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                       tooltip: 'Back',
                       onPressed: () {
                         if (context.canPop()) {
@@ -136,7 +140,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
                     Expanded(
                       child: Text(
                         widget.lessonTitle,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyPoppins,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -161,15 +166,17 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
                 }
               },
               builder: (context, state) {
-                final displayLesson = (state is CourseLessonDetailLoaded &&
+                final displayLesson =
+                    (state is CourseLessonDetailLoaded &&
                         state.lesson.id == _activeLessonId)
                     ? state.lesson
                     : (_lesson ??
-                        bloc?.getCachedLesson(_activeLessonId) ??
-                        _fallbackLesson);
+                          bloc?.getCachedLesson(_activeLessonId) ??
+                          _fallbackLesson);
 
-                final isCompleting =
-                    (state is CourseLessonDetailLoaded) ? state.isCompleting : false;
+                final isCompleting = (state is CourseLessonDetailLoaded)
+                    ? state.isCompleting
+                    : false;
 
                 if (displayLesson != null) {
                   return _buildLessonView(displayLesson, isCompleting);
@@ -191,18 +198,17 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
               },
             )
           : (_lesson != null || _fallbackLesson != null
-              ? _buildLessonView((_lesson ?? _fallbackLesson)!, false)
-              : const Center(
-                  child: KutaLoadingWidget(
-                    size: 130,
-                    label: 'Loading Lesson Content...',
-                  ),
-                )),
+                ? _buildLessonView((_lesson ?? _fallbackLesson)!, false)
+                : const Center(
+                    child: KutaLoadingWidget(
+                      size: 130,
+                      label: 'Loading Lesson Content...',
+                    ),
+                  )),
     );
   }
 
-  Widget _buildLessonView(
-      LessonDetailContentModel lesson, bool isCompleting) {
+  Widget _buildLessonView(LessonDetailContentModel lesson, bool isCompleting) {
     if (lesson.isLocked) {
       return Center(
         child: Padding(
@@ -226,7 +232,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
               const SizedBox(height: 16),
               Text(
                 'Lesson Locked',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -235,7 +242,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
               const SizedBox(height: 8),
               Text(
                 'Please complete previous lessons in "${widget.chapterTitle}" to unlock this module.',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 14,
                   height: 1.45,
                   color: AppColors.textSecondary,
@@ -262,7 +270,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
             ),
             child: Text(
               '${widget.courseTitle} • ${widget.chapterTitle}',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.brandPrimary,
@@ -274,7 +283,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
           // Lesson Title & Duration
           Text(
             lesson.title,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.headlineDark,
@@ -284,12 +294,16 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.access_time_rounded,
-                  size: 15, color: AppColors.textSecondary),
+              const Icon(
+                Icons.access_time_rounded,
+                size: 15,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${lesson.durationMinutes ?? 15} minutes estimated reading',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 12.5,
                   color: AppColors.textSecondary,
                 ),
@@ -297,8 +311,10 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
               if (lesson.isCompleted) ...[
                 const SizedBox(width: 12),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFD1FAE5),
                     borderRadius: BorderRadius.circular(6),
@@ -306,11 +322,16 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check, size: 12, color: Color(0xFF065F46)),
+                      const Icon(
+                        Icons.check,
+                        size: 12,
+                        color: Color(0xFF065F46),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Completed',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF065F46),
@@ -345,7 +366,8 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
             ),
             child: Text(
               lesson.content,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 14,
                 height: 1.6,
                 fontWeight: FontWeight.w400,
@@ -360,8 +382,9 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              onPressed:
-                  (lesson.isCompleted || isCompleting) ? null : _onCompleteLesson,
+              onPressed: (lesson.isCompleted || isCompleting)
+                  ? null
+                  : _onCompleteLesson,
               icon: isCompleting
                   ? const SizedBox(
                       width: 18,
@@ -381,9 +404,10 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
                 lesson.isCompleted
                     ? 'Lesson Completed'
                     : isCompleting
-                        ? 'Saving Progress...'
-                        : 'Mark as Completed',
-                style: GoogleFonts.inter(
+                    ? 'Saving Progress...'
+                    : 'Mark as Completed',
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -408,10 +432,14 @@ class _ChapterStudyScreenState extends State<ChapterStudyScreen> {
               height: 48,
               child: OutlinedButton.icon(
                 onPressed: () => _onOpenQuiz(lesson.quizId!),
-                icon: const Icon(Icons.quiz_outlined, color: AppColors.orange900),
+                icon: const Icon(
+                  Icons.quiz_outlined,
+                  color: AppColors.orange900,
+                ),
                 label: Text(
                   'Take Associated Quiz',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.orange900,

@@ -20,7 +20,7 @@ class ApiCoursesService implements CoursesService {
   final ApiClient _apiClient;
 
   ApiCoursesService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   @override
   Future<List<CourseModel>> getCoursesForGrade(int gradeLevel) async {
@@ -104,7 +104,8 @@ class ApiCoursesService implements CoursesService {
             lessonMap = map;
           }
         }
-        if (lessonMap != null) return LessonDetailContentModel.fromJson(lessonMap);
+        if (lessonMap != null)
+          return LessonDetailContentModel.fromJson(lessonMap);
       }
       throw Exception('Failed to load lesson');
     } on DioException catch (e) {
@@ -184,7 +185,8 @@ class ApiCoursesService implements CoursesService {
             resultMap = map;
           }
         }
-        if (resultMap != null) return QuizSubmissionResponse.fromJson(resultMap);
+        if (resultMap != null)
+          return QuizSubmissionResponse.fromJson(resultMap);
       }
       throw Exception('Failed to submit quiz');
     } on DioException catch (e) {
@@ -214,7 +216,8 @@ class ApiCoursesService implements CoursesService {
             reviewMap = map;
           }
         }
-        if (reviewMap != null) return QuizAttemptReviewModel.fromJson(reviewMap);
+        if (reviewMap != null)
+          return QuizAttemptReviewModel.fromJson(reviewMap);
       }
       throw Exception('Failed to load quiz review');
     } on DioException catch (e) {
