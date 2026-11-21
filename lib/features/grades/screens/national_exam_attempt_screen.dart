@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
@@ -109,7 +109,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         initialIndex = attempt.currentQuestionIndex!;
       } else {
         try {
-          final storage = SharedPrefsStorage.instanceOrNull ??
+          final storage =
+              SharedPrefsStorage.instanceOrNull ??
               await SharedPrefsStorage.getInstance();
           final saved = await storage.getInt(
             StorageKeys.examAttemptQuestionIndex(attempt.attemptId),
@@ -265,7 +266,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             Expanded(
               child: Text(
                 'Exam Paused',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -276,7 +278,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         ),
         content: Text(
           'Your answers have been autosaved. Note: National exam timer continues in the background.',
-          style: GoogleFonts.inter(
+          style: const TextStyle(
+            fontFamily: AppTypography.fontFamilyOpenSans,
             fontSize: 14,
             height: 1.5,
             color: AppColors.textSecondary,
@@ -297,7 +300,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             ),
             child: Text(
               'Submit Now',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -321,7 +325,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             ),
             child: Text(
               'Resume Exam',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -343,13 +348,17 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Submit exam?',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontFamily: AppTypography.fontFamilyPoppins,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           unanswered > 0
               ? '$unanswered of ${attempt.questions.length} questions remain unanswered. Are you sure you want to finalize and grade your attempt?'
               : 'All questions have been answered. Ready to submit?',
-          style: GoogleFonts.inter(
+          style: const TextStyle(
+            fontFamily: AppTypography.fontFamilyOpenSans,
             fontSize: 14,
             height: 1.5,
             color: const Color(0xFF64748B),
@@ -360,7 +369,10 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(
               'Keep working',
-              style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
           ElevatedButton(
@@ -398,7 +410,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
 
   Future<void> _saveQuestionPosition(String attemptId, int index) async {
     try {
-      final storage = SharedPrefsStorage.instanceOrNull ??
+      final storage =
+          SharedPrefsStorage.instanceOrNull ??
           await SharedPrefsStorage.getInstance();
       await storage.setInt(
         StorageKeys.examAttemptQuestionIndex(attemptId),
@@ -435,7 +448,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             Expanded(
               child: Text(
                 'Leave Exam?',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -446,7 +460,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         ),
         content: Text(
           'Your timer and answers will continue saving in the background. You can resume at any time from Exam Simulator.',
-          style: GoogleFonts.inter(
+          style: const TextStyle(
+            fontFamily: AppTypography.fontFamilyOpenSans,
             fontSize: 14,
             height: 1.5,
             color: AppColors.textSecondary,
@@ -464,7 +479,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             ),
             child: Text(
               'Stay',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -483,7 +499,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             ),
             child: Text(
               'Leave',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),
@@ -560,8 +577,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                 ),
               )
             : _errorMessage != null && _attempt == null
-                ? _buildErrorState()
-                : _buildAttemptContent(),
+            ? _buildErrorState()
+            : _buildAttemptContent(),
       ),
     );
   }
@@ -580,7 +597,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         widget.title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.inter(
+        style: const TextStyle(
+          fontFamily: AppTypography.fontFamilyPoppins,
           fontWeight: FontWeight.w600,
           fontSize: 16.5,
           color: Colors.white,
@@ -632,7 +650,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             const SizedBox(height: 12),
             Text(
               'Unable to start this exam',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: AppColors.headlineDark,
@@ -642,7 +661,10 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             Text(
               _errorMessage ?? 'Please try again.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -678,7 +700,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               Text(
                 'No questions are available for this exam.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.headlineDark,
@@ -703,8 +726,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
     final answeredCount = _selectedAnswers.length;
     final flaggedCount = _flaggedQuestionIds.length;
     final unansweredCount = max(0, totalQuestions - answeredCount);
-    final percentComplete =
-        ((_currentQuestionIndex + 1) / totalQuestions * 100).round();
+    final percentComplete = ((_currentQuestionIndex + 1) / totalQuestions * 100)
+        .round();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
@@ -721,7 +744,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             children: [
               Text(
                 'Question ${_currentQuestionIndex + 1} of $totalQuestions',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1E293B),
@@ -729,7 +753,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               ),
               Text(
                 '$percentComplete% Complete',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF2563EB),
@@ -763,14 +788,22 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             const SizedBox(height: 10),
             Text(
               _saveError!,
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.error),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                fontSize: 12,
+                color: AppColors.error,
+              ),
             ),
           ],
           if (_errorMessage != null) ...[
             const SizedBox(height: 10),
             Text(
               _errorMessage!,
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.error),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                fontSize: 12,
+                color: AppColors.error,
+              ),
             ),
           ],
           const SizedBox(height: 16),
@@ -804,7 +837,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                 ),
                 label: Text(
                   'Clear Selection',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF64748B),
@@ -867,7 +901,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                 children: [
                   Text(
                     'Remaining',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF64748B),
@@ -875,7 +910,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                   ),
                   Text(
                     _formatRemainingTime(_remainingSeconds),
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF1E293B),
@@ -895,7 +931,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               const SizedBox(width: 4),
               Text(
                 _formatElapsedTime(elapsedSeconds),
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF2563EB),
@@ -941,7 +978,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               const SizedBox(width: 6),
               Text(
                 isFlagged ? 'Flagged' : 'Flag Question',
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isFlagged
@@ -988,7 +1026,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               const SizedBox(width: 8),
               Text(
                 'Pause',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -1017,15 +1056,15 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
         children: [
           Text(
             question.text,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 15.5,
               height: 1.5,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1E293B),
             ),
           ),
-          if (question.imageUrl != null &&
-              question.imageUrl!.isNotEmpty) ...[
+          if (question.imageUrl != null && question.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: 14),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -1083,7 +1122,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                 child: Center(
                   child: Text(
                     label,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: isSelected
@@ -1097,11 +1137,11 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               Expanded(
                 child: Text(
                   option.text,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 14.5,
                     height: 1.4,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected
                         ? const Color(0xFF1E293B)
                         : const Color(0xFF334155),
@@ -1163,8 +1203,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
             onPressed: _isSubmitting
                 ? null
                 : isLastQuestion
-                    ? _confirmSubmit
-                    : () => _setQuestionIndex(_currentQuestionIndex + 1),
+                ? _confirmSubmit
+                : () => _setQuestionIndex(_currentQuestionIndex + 1),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF97316),
               foregroundColor: Colors.white,
@@ -1188,7 +1228,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                     children: [
                       Text(
                         isLastQuestion ? 'Submit Exam' : 'Next Question',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1246,7 +1287,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Question Palette',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyPoppins,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF1E293B),
@@ -1256,7 +1298,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
               ),
               Text(
                 'Section 1 of 1',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF2563EB),
@@ -1346,7 +1389,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                       Center(
                         child: Text(
                           '${index + 1}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: textColor,
@@ -1389,7 +1433,8 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
                   _paletteExpanded
                       ? 'Show fewer questions ⌃'
                       : 'View all $totalQuestions Questions ⌄',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF2563EB),
@@ -1420,15 +1465,13 @@ class _NationalExamAttemptScreenState extends State<NationalExamAttemptScreen> {
           Container(
             width: 7,
             height: 7,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: dotColor,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
           ),
           const SizedBox(width: 5),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: textColor,

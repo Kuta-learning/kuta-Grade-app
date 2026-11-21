@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../bloc/grades_bloc.dart';
@@ -104,8 +104,9 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                 }
               },
               builder: (context, state) {
-                final displayReview =
-                    (state is QuizReviewLoaded) ? state.review : (_review ?? _fallbackReview);
+                final displayReview = (state is QuizReviewLoaded)
+                    ? state.review
+                    : (_review ?? _fallbackReview);
 
                 if (displayReview != null) {
                   return _buildContent(displayReview);
@@ -127,13 +128,13 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               },
             )
           : (_review != null || _fallbackReview != null
-              ? _buildContent((_review ?? _fallbackReview)!)
-              : const Center(
-                  child: KutaLoadingWidget(
-                    size: 130,
-                    label: 'Loading Quiz Results...',
-                  ),
-                )),
+                ? _buildContent((_review ?? _fallbackReview)!)
+                : const Center(
+                    child: KutaLoadingWidget(
+                      size: 130,
+                      label: 'Loading Quiz Results...',
+                    ),
+                  )),
     );
   }
 
@@ -175,7 +176,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                   child: Center(
                     child: Text(
                       '$percentage%',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: passed
@@ -188,7 +190,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                 const SizedBox(height: 14),
                 Text(
                   passed ? 'Quiz Passed!' : 'Needs More Practice',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
@@ -197,7 +200,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Score: ${review.score} / ${review.totalScore} correct answers',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13.5,
                     color: AppColors.textSecondary,
                   ),
@@ -216,7 +220,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                         ),
                         child: Text(
                           'Retake Quiz',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColors.brandPrimary,
@@ -242,7 +247,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                         ),
                         child: Text(
                           'Continue',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -260,7 +266,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           // Question-by-Question Review Header
           Text(
             'Answer Review',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.headlineDark,
@@ -279,8 +286,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     );
   }
 
-  Widget _buildQuestionReviewCard(
-      int index, QuizQuestionReviewItem item) {
+  Widget _buildQuestionReviewCard(int index, QuizQuestionReviewItem item) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -321,7 +327,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               Expanded(
                 child: Text(
                   'Question $index',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
@@ -333,7 +340,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           const SizedBox(height: 8),
           Text(
             item.questionText,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 13.5,
               height: 1.45,
               fontWeight: FontWeight.w500,
@@ -360,12 +368,17 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
+                  const Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Color(0xFF64748B),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       item.explanation!,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         height: 1.4,
                         color: const Color(0xFF475569),
@@ -382,7 +395,9 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
   }
 
   Widget _buildOptionRow(
-      QuizQuestionOption option, QuizQuestionReviewItem item) {
+    QuizQuestionOption option,
+    QuizQuestionReviewItem item,
+  ) {
     final isSelected = option.id == item.selectedOptionId;
     final isCorrect = option.id == item.correctOptionId;
 
@@ -412,7 +427,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           if (option.label != null) ...[
             Text(
               '${option.label}. ',
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: textCol,
@@ -422,10 +438,12 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           Expanded(
             child: Text(
               option.optionText,
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 12.5,
-                fontWeight:
-                    (isSelected || isCorrect) ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: (isSelected || isCorrect)
+                    ? FontWeight.w600
+                    : FontWeight.w400,
                 color: textCol,
               ),
             ),
@@ -439,4 +457,3 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     );
   }
 }
-

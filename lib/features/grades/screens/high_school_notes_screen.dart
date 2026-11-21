@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/storage/shared_prefs_storage.dart';
 import '../../../core/storage/storage_keys.dart';
@@ -23,10 +23,7 @@ import '../widgets/notes_loading_skeleton.dart';
 class HighSchoolNotesScreen extends StatefulWidget {
   final bool showBottomNav;
 
-  const HighSchoolNotesScreen({
-    super.key,
-    this.showBottomNav = false,
-  });
+  const HighSchoolNotesScreen({super.key, this.showBottomNav = false});
 
   @override
   State<HighSchoolNotesScreen> createState() => _HighSchoolNotesScreenState();
@@ -38,7 +35,9 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
   String? _curriculumType;
   int _studentGrade = 12;
   Set<int> _expandedIndices = {0}; // Mathematics expanded by default (Grade 12)
-  Map<int, String> _selectedGrades = {0: 'Grade 12'}; // Grade 12 selected by default
+  Map<int, String> _selectedGrades = {
+    0: 'Grade 12',
+  }; // Grade 12 selected by default
 
   @override
   void initState() {
@@ -99,9 +98,9 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
               _studentGrade = cachedGrade;
             });
             try {
-              context
-                  .read<NotesBloc>()
-                  .add(const LoadNotesSubjects(forceRefresh: true));
+              context.read<NotesBloc>().add(
+                const LoadNotesSubjects(forceRefresh: true),
+              );
             } catch (_) {}
           }
         }
@@ -213,7 +212,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
     // source of truth for the curriculum title so it is correct even before
     // the API responds — avoids briefly showing "High School Curriculum" for
     // primary grade students.
-    final curriculumTitle = currentCurriculum ??
+    final curriculumTitle =
+        currentCurriculum ??
         (isPrimary ? 'Primary School Curriculum' : 'High School Curriculum');
 
     return Scaffold(
@@ -245,7 +245,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                 isPrimary
                     ? 'Select a subject to access\nsummarized study guides & cheat sheets.'
                     : 'Select a subject and grade to access\nsummarized study guides & cheat sheets.',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13.5,
                   height: 1.45,
                   fontWeight: FontWeight.w400,
@@ -265,8 +266,9 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                           _studentGrade = state.studentGrade!;
                         }
                         _expandedIndices = Set<int>.from(state.expandedIndices);
-                        _selectedGrades =
-                            Map<int, String>.from(state.selectedGrades);
+                        _selectedGrades = Map<int, String>.from(
+                          state.selectedGrades,
+                        );
                       });
                     }
                   },
@@ -277,14 +279,14 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                     final displayExpanded = (state is NotesSubjectsLoaded)
                         ? state.expandedIndices
                         : (_expandedIndices.isNotEmpty
-                            ? _expandedIndices
-                            : (bloc?.cachedExpanded ?? const {0}));
+                              ? _expandedIndices
+                              : (bloc?.cachedExpanded ?? const {0}));
                     final displaySelected = (state is NotesSubjectsLoaded)
                         ? state.selectedGrades
                         : (_selectedGrades.isNotEmpty
-                            ? _selectedGrades
-                            : (bloc?.cachedSelectedGrades ??
-                                const {0: 'Grade 12'}));
+                              ? _selectedGrades
+                              : (bloc?.cachedSelectedGrades ??
+                                    const {0: 'Grade 12'}));
 
                     final subjectCount = displaySubjects?.length ?? 0;
                     final subjectCountText = subjectCount > 0
@@ -301,7 +303,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                           children: [
                             Text(
                               curriculumTitle,
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyPoppins,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.headlineDark,
@@ -310,7 +313,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                             ),
                             Text(
                               subjectCountText,
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
@@ -320,7 +324,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                         ),
                         const SizedBox(height: 14),
 
-                        if (displaySubjects != null && displaySubjects.isNotEmpty)
+                        if (displaySubjects != null &&
+                            displaySubjects.isNotEmpty)
                           _buildSubjectList(
                             displaySubjects,
                             displayExpanded,
@@ -344,7 +349,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                   children: [
                     Text(
                       curriculumTitle,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyPoppins,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.headlineDark,
@@ -353,7 +359,8 @@ class _HighSchoolNotesScreenState extends State<HighSchoolNotesScreen> {
                     ),
                     Text(
                       '${_subjects!.length} Subjects',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -445,19 +452,26 @@ class _SubjectCard extends StatelessWidget {
     final grades = subject.grades.isNotEmpty
         ? subject.grades
         : (isPrimary
-            ? [
-                NoteGradeOption(
-                  name: 'Grade $studentGrade',
-                  chapters: '${subject.totalChapters} Chapters',
-                  gradeLevel: studentGrade,
-                )
-              ]
-            : const [
-                NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-                NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
-                NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
-                NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
-              ]);
+              ? [
+                  NoteGradeOption(
+                    name: 'Grade $studentGrade',
+                    chapters: subject.totalChapters > 0
+                        ? '${subject.totalChapters} Chapters'
+                        : '',
+                    gradeLevel: studentGrade,
+                  ),
+                ]
+              : subject.availableGrades.isNotEmpty
+              ? subject.availableGrades
+                    .map(
+                      (g) => NoteGradeOption(
+                        name: 'Grade $g',
+                        chapters: '',
+                        gradeLevel: g,
+                      ),
+                    )
+                    .toList()
+              : const <NoteGradeOption>[]);
 
     return Container(
       decoration: BoxDecoration(
@@ -477,9 +491,7 @@ class _SubjectCard extends StatelessWidget {
             // Header Row (Tappable: directly navigates if primary, expands if high school)
             InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: isPrimary
-                  ? () => onOpenPrimary?.call(subject)
-                  : onToggle,
+              onTap: isPrimary ? () => onOpenPrimary?.call(subject) : onToggle,
               child: Row(
                 children: [
                   _buildIcon(subject),
@@ -490,7 +502,8 @@ class _SubjectCard extends StatelessWidget {
                       children: [
                         Text(
                           subject.name,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyPoppins,
                             fontSize: 16.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.headlineDark,
@@ -501,7 +514,8 @@ class _SubjectCard extends StatelessWidget {
                           const SizedBox(height: 3),
                           Text(
                             subject.gradeBadge ?? 'Grade $studentGrade',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textSecondary,
@@ -511,7 +525,8 @@ class _SubjectCard extends StatelessWidget {
                           const SizedBox(height: 3),
                           Text(
                             'Tap to choose Grade 9–12',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
@@ -533,8 +548,8 @@ class _SubjectCard extends StatelessWidget {
                       isPrimary
                           ? Icons.chevron_right_rounded
                           : (isExpanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded),
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded),
                       color: const Color(0xFF475569),
                       size: 20,
                     ),
@@ -548,7 +563,8 @@ class _SubjectCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'Select  grade level:',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
                   color: AppColors.authBrown,
@@ -595,7 +611,8 @@ class _SubjectCard extends StatelessWidget {
       iconColor = const Color(0xFF341100);
       iconWidget = Text(
         'Σ',
-        style: GoogleFonts.inter(
+        style: TextStyle(
+          fontFamily: AppTypography.fontFamilyOpenSans,
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: iconColor,
@@ -604,7 +621,11 @@ class _SubjectCard extends StatelessWidget {
     } else if (normName.contains('physic')) {
       bgColor = const Color(0xFFDBE9FF);
       iconColor = const Color(0xFF1A56DB);
-      iconWidget = Icon(Icons.offline_bolt_outlined, color: iconColor, size: 24);
+      iconWidget = Icon(
+        Icons.offline_bolt_outlined,
+        color: iconColor,
+        size: 24,
+      );
     } else if (normName.contains('chem')) {
       bgColor = const Color(0xFF6BFF8F);
       iconColor = const Color(0xFF003914);
@@ -627,7 +648,8 @@ class _SubjectCard extends StatelessWidget {
       iconWidget = subject.isSymbol
           ? Text(
               subject.symbol ?? 'Σ',
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: iconColor,
@@ -663,12 +685,15 @@ class _GradeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Warm peach background when selected, light grey when unselected matching screenshot
-    final bgColor =
-        isSelected ? const Color(0xFFFFDBCA) : const Color(0xFFF1F5F9);
-    final titleColor =
-        isSelected ? AppColors.buttonTextBrown : AppColors.headlineDark;
-    final subtitleColor =
-        isSelected ? AppColors.orange900 : AppColors.textSecondary;
+    final bgColor = isSelected
+        ? const Color(0xFFFFDBCA)
+        : const Color(0xFFF1F5F9);
+    final titleColor = isSelected
+        ? AppColors.buttonTextBrown
+        : AppColors.headlineDark;
+    final subtitleColor = isSelected
+        ? AppColors.orange900
+        : AppColors.textSecondary;
 
     return InkWell(
       onTap: onTap,
@@ -689,7 +714,8 @@ class _GradeTile extends StatelessWidget {
               children: [
                 Text(
                   grade.name,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: titleColor,
@@ -703,15 +729,18 @@ class _GradeTile extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              grade.chapters,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: subtitleColor,
+            if (grade.chapters.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                grade.chapters,
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: subtitleColor,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

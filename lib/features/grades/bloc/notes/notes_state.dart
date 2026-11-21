@@ -51,20 +51,29 @@ final class NotesSubjectsLoaded extends NotesState {
 /// Loaded state for NoteDetailScreen containing chapters, pages, and download URL.
 final class SubjectNotesDetailLoaded extends NotesState {
   final SubjectNotesDetail detail;
+  final String subjectId;
+  final int? gradeLevel;
   final String? activeDownloadMessage;
 
   const SubjectNotesDetailLoaded({
     required this.detail,
+    this.subjectId = '',
+    this.gradeLevel,
     this.activeDownloadMessage,
   });
 
   SubjectNotesDetailLoaded copyWith({
     SubjectNotesDetail? detail,
+    String? subjectId,
+    int? gradeLevel,
     String? activeDownloadMessage,
   }) {
     return SubjectNotesDetailLoaded(
       detail: detail ?? this.detail,
-      activeDownloadMessage: activeDownloadMessage ?? this.activeDownloadMessage,
+      subjectId: subjectId ?? this.subjectId,
+      gradeLevel: gradeLevel ?? this.gradeLevel,
+      activeDownloadMessage:
+          activeDownloadMessage ?? this.activeDownloadMessage,
     );
   }
 }
@@ -72,19 +81,23 @@ final class SubjectNotesDetailLoaded extends NotesState {
 /// Loaded state for LessonDetailScreen containing interactive lesson objectives, diagrams, and steps.
 final class LessonDetailLoaded extends NotesState {
   final LessonDetail lesson;
+  final String chapterId;
   final bool isProgressSaving;
 
   const LessonDetailLoaded({
     required this.lesson,
+    this.chapterId = '',
     this.isProgressSaving = false,
   });
 
   LessonDetailLoaded copyWith({
     LessonDetail? lesson,
+    String? chapterId,
     bool? isProgressSaving,
   }) {
     return LessonDetailLoaded(
       lesson: lesson ?? this.lesson,
+      chapterId: chapterId ?? this.chapterId,
       isProgressSaving: isProgressSaving ?? this.isProgressSaving,
     );
   }
@@ -95,4 +108,3 @@ final class NotesError extends NotesState {
   final String message;
   const NotesError(this.message);
 }
-

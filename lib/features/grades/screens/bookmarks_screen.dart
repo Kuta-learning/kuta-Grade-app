@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
@@ -47,24 +47,23 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     _subscription = _service
         .streamBookmarks(maxStale: const Duration(minutes: 1))
         .listen(
-      (response) {
-        if (!mounted) return;
-        setState(() {
-          _bookmarks = response.data;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-        _loadExamStatuses(response.data);
-      },
-      onError: (error) {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _errorMessage =
-              error.toString().replaceFirst('Exception: ', '');
-        });
-      },
-    );
+          (response) {
+            if (!mounted) return;
+            setState(() {
+              _bookmarks = response.data;
+              _isLoading = false;
+              _errorMessage = null;
+            });
+            _loadExamStatuses(response.data);
+          },
+          onError: (error) {
+            if (!mounted) return;
+            setState(() {
+              _isLoading = false;
+              _errorMessage = error.toString().replaceFirst('Exception: ', '');
+            });
+          },
+        );
   }
 
   Future<void> _loadExamStatuses(List<BookmarkItem> bookmarks) async {
@@ -259,8 +258,18 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     if (parts.isEmpty && item.createdAt != null) {
       final dt = item.createdAt!;
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       parts.add('Saved on ${months[dt.month - 1]} ${dt.day}');
     }
@@ -284,10 +293,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   Widget _buildBody() {
     if (_isLoading && _bookmarks.isEmpty) {
       return const Center(
-        child: KutaLoadingWidget(
-          size: 130,
-          label: 'Loading Bookmarks...',
-        ),
+        child: KutaLoadingWidget(size: 130, label: 'Loading Bookmarks...'),
       );
     }
 
@@ -314,7 +320,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               const SizedBox(height: 16),
               Text(
                 'Unable to load bookmarks',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -324,7 +331,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -375,7 +383,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               const SizedBox(height: 16),
               Text(
                 'No bookmarks yet',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -385,7 +394,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               Text(
                 'Tap the bookmark icon on any exam paper or note to save it here for fast revision.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -442,7 +452,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       ),
                       child: Text(
                         badge,
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.brandPrimary,
@@ -468,7 +479,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 // Title
                 Text(
                   item.title,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -496,7 +508,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           Expanded(
                             child: Text(
                               meta,
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
@@ -521,13 +534,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           color: actionLabel == 'Review'
                               ? AppColors.borderVariant
                               : actionLabel == 'Resume'
-                                  ? AppColors.brandBlue
-                                  : AppColors.orange500,
+                              ? AppColors.brandBlue
+                              : AppColors.orange500,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           actionLabel,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: actionLabel == 'Review'

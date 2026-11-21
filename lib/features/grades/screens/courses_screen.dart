@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/router/route_names.dart';
@@ -91,8 +91,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
   /// Fetches the authenticated student's actual grade from the backend `/auth/me` endpoint.
   Future<void> _fetchStudentGradeFromApi() async {
     if (_isResolvingGrade) return;
-    final isTesting =
-        WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    final isTesting = WidgetsBinding.instance.runtimeType.toString().contains(
+      'Test',
+    );
     if (isTesting) return;
     _isResolvingGrade = true;
 
@@ -124,7 +125,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
           } else if (rawGrade != null) {
             liveGrade = int.tryParse(rawGrade.toString());
           }
-          if (liveGrade != null && liveGrade > 0 && liveGrade != _studentGrade) {
+          if (liveGrade != null &&
+              liveGrade > 0 &&
+              liveGrade != _studentGrade) {
             _updateStudentGrade(liveGrade);
           }
         }
@@ -228,7 +231,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   children: [
                     Text(
                       'Grade $_studentGrade Courses',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyPoppins,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.headlineDark,
@@ -237,7 +241,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
                     ),
                     Text(
                       'Active Term',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.brandPrimary,
@@ -266,7 +271,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           ),
                         );
                       }
-                      final cached = bloc?.getCachedCourses(_studentGrade) ??
+                      final cached =
+                          bloc?.getCachedCourses(_studentGrade) ??
                           _fallbackCourses;
                       if (cached != null && cached.isNotEmpty) {
                         return _buildCourseList(cached);
@@ -334,7 +340,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 const SizedBox(width: 6),
                 Text(
                   'Grade $_studentGrade',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.brandPrimary,
@@ -347,7 +354,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
           Expanded(
             child: Text(
               'Enrolled Curriculum & Practice',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -372,12 +380,16 @@ class _CoursesScreenState extends State<CoursesScreen> {
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              const Icon(Icons.school_outlined,
-                  size: 48, color: AppColors.textSecondary),
+              const Icon(
+                Icons.school_outlined,
+                size: 48,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No courses available for Grade $_studentGrade',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppColors.headlineDark,
@@ -396,10 +408,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final course = gradeCourses[index];
-        return _CourseCard(
-          course: course,
-          onTap: () => _onOpenCourse(course),
-        );
+        return _CourseCard(course: course, onTap: () => _onOpenCourse(course));
       },
     );
   }
@@ -414,7 +423,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
             const SizedBox(height: 12),
             Text(
               'Failed to load courses',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.headlineDark,
@@ -423,7 +433,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
             const SizedBox(height: 6),
             Text(
               message,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
@@ -438,7 +449,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text('Try Again', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -451,10 +465,7 @@ class _CourseCard extends StatelessWidget {
   final CourseModel course;
   final VoidCallback onTap;
 
-  const _CourseCard({
-    required this.course,
-    required this.onTap,
-  });
+  const _CourseCard({required this.course, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +501,8 @@ class _CourseCard extends StatelessWidget {
                       children: [
                         Text(
                           course.title,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyPoppins,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: AppColors.headlineDark,
@@ -500,7 +512,8 @@ class _CourseCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           course.description,
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 12.5,
                             height: 1.4,
                             fontWeight: FontWeight.w400,
@@ -527,7 +540,8 @@ class _CourseCard extends StatelessWidget {
                 children: [
                   Text(
                     '${course.totalChapters} Chapters • ${course.totalLessons} Lessons',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
@@ -535,7 +549,8 @@ class _CourseCard extends StatelessWidget {
                   ),
                   Text(
                     '$percentInt% Completed',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: percentInt == 100

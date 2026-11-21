@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../models/national_exam_models.dart';
@@ -190,8 +190,18 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     final timeStr = '$hour:$minute $period';
     if (isToday) return 'Submitted today at $timeStr';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return 'Submitted on ${months[dt.month - 1]} ${dt.day} at $timeStr';
   }
@@ -223,7 +233,11 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       leading: const BackButton(),
       title: Text(
         'Results',
-        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 18),
+        style: const TextStyle(
+          fontFamily: AppTypography.fontFamilyPoppins,
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+        ),
       ),
     );
   }
@@ -243,7 +257,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             const SizedBox(height: 12),
             Text(
               'Unable to load exam results',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyPoppins,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: AppColors.headlineDark,
@@ -253,7 +268,10 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             Text(
               _errorMessage ?? 'Please try again.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -271,18 +289,21 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
     final totalCount = result.totalQuestions > 0
         ? result.totalQuestions
         : (result.questions.isNotEmpty
-            ? result.questions.length
-            : (widget.fallbackQuestions?.length ?? 0));
+              ? result.questions.length
+              : (widget.fallbackQuestions?.length ?? 0));
 
     double accuracy = result.accuracy;
-    if ((accuracy == 0.0 || accuracy.isNaN) && totalCount > 0 && result.score > 0) {
+    if ((accuracy == 0.0 || accuracy.isNaN) &&
+        totalCount > 0 &&
+        result.score > 0) {
       accuracy = (result.score / totalCount) * 100;
     } else if (accuracy <= 1.0 && accuracy > 0.0) {
       accuracy = accuracy * 100;
     }
 
-    final hasAnyQuestionsMarkedCorrect =
-        result.questions.any((q) => q.isCorrect);
+    final hasAnyQuestionsMarkedCorrect = result.questions.any(
+      (q) => q.isCorrect,
+    );
     final correctCount = hasAnyQuestionsMarkedCorrect
         ? result.questions.where((q) => q.isCorrect).length
         : result.score;
@@ -317,7 +338,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               // ── Question Breakdown ───────────────────────────────────────
               Text(
                 'Question Breakdown',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -360,7 +382,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Loading question breakdown…',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -389,7 +412,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                       Expanded(
                         child: Text(
                           'Detailed question breakdown is not available for this exam attempt.',
-                          style: GoogleFonts.inter(
+                          style: const TextStyle(
+                            fontFamily: AppTypography.fontFamilyOpenSans,
                             fontSize: 13,
                             color: AppColors.textSecondary,
                           ),
@@ -428,7 +452,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                   const SizedBox(width: 6),
                   Text(
                     'Done',
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -475,7 +500,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           if (category.isNotEmpty)
             Text(
               category,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 12,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -490,7 +516,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               Expanded(
                 child: Text(
                   examTitle,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColors.headlineDark,
@@ -500,8 +527,10 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: passed ? _passedBg : _failedBg,
                   borderRadius: BorderRadius.circular(20),
@@ -519,7 +548,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                     const SizedBox(width: 4),
                     Text(
                       passed ? 'PASSED' : 'FAILED',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: passed ? _passedGreen : _failedRed,
@@ -543,25 +573,34 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               const SizedBox(width: 4),
               Text(
                 submittedLabel,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
               ),
               if (durationLabel != null) ...[
-                const Text(' • ', style: TextStyle(color: AppColors.textSecondary)),
+                const Text(
+                  ' • ',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
                 Text(
                   'Duration: $spentLabel / $durationLabel',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ] else ...[
-                const Text(' • ', style: TextStyle(color: AppColors.textSecondary)),
+                const Text(
+                  ' • ',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
                 Text(
                   'Time spent: $spentLabel',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -612,7 +651,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                     children: [
                       Text(
                         'Total Score',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
@@ -624,7 +664,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                           children: [
                             TextSpan(
                               text: '${result.score}',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.headlineDark,
@@ -632,7 +673,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                             ),
                             TextSpan(
                               text: ' / $totalCount',
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamilyOpenSans,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textSecondary,
@@ -660,7 +702,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                     children: [
                       Text(
                         'Overall Accuracy',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
@@ -669,7 +712,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                       const SizedBox(height: 4),
                       Text(
                         '${accuracy.round()}%',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
                           color: AppColors.orange500,
@@ -691,7 +735,11 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Row(
               children: [
-                _buildStatColumn('Total', '$totalCount', AppColors.headlineDark),
+                _buildStatColumn(
+                  'Total',
+                  '$totalCount',
+                  AppColors.headlineDark,
+                ),
                 _buildStatDivider(),
                 _buildStatColumn('Correct', '$correctCount', _correctGreen),
                 _buildStatDivider(),
@@ -710,7 +758,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
         children: [
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: valueColor,
@@ -719,7 +768,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 12,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -731,11 +781,7 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
   }
 
   Widget _buildStatDivider() {
-    return Container(
-      width: 1,
-      height: 36,
-      color: _borderColor,
-    );
+    return Container(width: 1, height: 36, color: _borderColor);
   }
 
   // ── Question Breakdown Card ─────────────────────────────────────────────────
@@ -821,7 +867,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       } else if (selectedText != null &&
           correctText != null &&
           selectedText.trim().isNotEmpty &&
-          selectedText.trim().toLowerCase() == correctText.trim().toLowerCase()) {
+          selectedText.trim().toLowerCase() ==
+              correctText.trim().toLowerCase()) {
         isCorrect = true;
       }
     }
@@ -871,12 +918,14 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
       wrongCount: wrongCount,
     );
     final qNumber = question.order ?? (index + 1);
-    final hasSelectedAnswer = (question.selectedOptionText != null &&
+    final hasSelectedAnswer =
+        (question.selectedOptionText != null &&
             question.selectedOptionText!.trim().isNotEmpty) ||
         (question.selectedOptionLabel != null &&
             question.selectedOptionLabel!.trim().isNotEmpty);
 
-    final isSelectedSameAsCorrect = (question.selectedOptionText != null &&
+    final isSelectedSameAsCorrect =
+        (question.selectedOptionText != null &&
             question.correctOptionText != null &&
             question.selectedOptionText!.trim().toLowerCase() ==
                 question.correctOptionText!.trim().toLowerCase()) ||
@@ -889,7 +938,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
             question.selectedOptionId == question.correctOptionId);
 
     // Red wrong row ONLY appears if question is genuinely wrong AND user's answer is NOT identical to correct answer
-    final showWrongRow = !question.isCorrect &&
+    final showWrongRow =
+        !question.isCorrect &&
         !isSelectedSameAsCorrect &&
         wrongCount > 0 &&
         hasSelectedAnswer;
@@ -915,7 +965,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           // Q number label
           Text(
             'Q$qNumber',
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
@@ -936,7 +987,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
               question.questionText,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13.5,
                 color: AppColors.textPrimary,
                 height: 1.5,
@@ -959,7 +1011,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
           _buildAnswerRow(
             isCorrect: true,
             label: question.correctOptionLabel ?? question.selectedOptionLabel,
-            text: (question.correctOptionText != null &&
+            text:
+                (question.correctOptionText != null &&
                     question.correctOptionText!.trim().isNotEmpty)
                 ? question.correctOptionText!
                 : (question.selectedOptionText ?? ''),
@@ -1008,7 +1061,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                 children: [
                   TextSpan(
                     text: '$prefix: ',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: textColor,
@@ -1016,7 +1070,8 @@ class _NationalExamResultScreenState extends State<NationalExamResultScreen> {
                   ),
                   TextSpan(
                     text: answerText,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 13,
                       color: textColor,
                     ),

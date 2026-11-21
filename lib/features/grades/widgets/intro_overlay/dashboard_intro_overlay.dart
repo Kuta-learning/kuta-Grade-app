@@ -21,40 +21,44 @@ class DashboardIntroOverlay extends StatefulWidget {
   /// Called once, when the tour finishes (last step) or is skipped.
   final VoidCallback onComplete;
 
-  const DashboardIntroOverlay({super.key, required this.steps, required this.onComplete});
+  const DashboardIntroOverlay({
+    super.key,
+    required this.steps,
+    required this.onComplete,
+  });
 
   /// The shared global keys for the 4 bottom-nav tabs, in the order the tour
   /// should visit them. Provided by [GradeBottomNavBar.itemKeys].
   static List<CoachMarkStep> defaultSteps(List<GlobalKey> navItemKeys) => [
-        const CoachMarkStep(
-          title: 'Welcome to Kuta!',
-          body:
-              'A quick 4-stop tour of your dashboard. Use Next to move along, '
-              'or Skip if you prefer to explore on your own.',
-        ),
-        CoachMarkStep(
-          title: 'Exams',
-          body:
-              'Start here for national exam simulators, past papers and '
-              'bookmarked questions.',
-          targetKey: navItemKeys[0],
-        ),
-        CoachMarkStep(
-          title: 'Notes',
-          body: 'Short notes and chapter lessons for every high-school subject.',
-          targetKey: navItemKeys[1],
-        ),
-        CoachMarkStep(
-          title: 'Practice',
-          body: 'Practice courses and chapter-by-chapter study sessions.',
-          targetKey: navItemKeys[2],
-        ),
-        CoachMarkStep(
-          title: 'Profile',
-          body: 'Your profile, progress stats and app settings live here.',
-          targetKey: navItemKeys[3],
-        ),
-      ];
+    const CoachMarkStep(
+      title: 'Welcome to Kuta!',
+      body:
+          'A quick 4-stop tour of your dashboard. Use Next to move along, '
+          'or Skip if you prefer to explore on your own.',
+    ),
+    CoachMarkStep(
+      title: 'Exams',
+      body:
+          'Start here for national exam simulators, past papers and '
+          'bookmarked questions.',
+      targetKey: navItemKeys[0],
+    ),
+    CoachMarkStep(
+      title: 'Notes',
+      body: 'Short notes and chapter lessons for every high-school subject.',
+      targetKey: navItemKeys[1],
+    ),
+    CoachMarkStep(
+      title: 'Practice',
+      body: 'Practice courses and chapter-by-chapter study sessions.',
+      targetKey: navItemKeys[2],
+    ),
+    CoachMarkStep(
+      title: 'Profile',
+      body: 'Your profile, progress stats and app settings live here.',
+      targetKey: navItemKeys[3],
+    ),
+  ];
 
   @override
   State<DashboardIntroOverlay> createState() => _DashboardIntroOverlayState();
@@ -74,15 +78,22 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.18), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.18),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward().whenComplete(_measureCard);
 
     // Drives the flowing dashes of the connector line.
-    _dashController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
-      ..repeat();
+    _dashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
     WidgetsBinding.instance.addPostFrameCallback(_measureCard);
   }
 
@@ -126,73 +137,77 @@ class _DashboardIntroOverlayState extends State<DashboardIntroOverlay>
 
     return Material(
       type: MaterialType.transparency,
-      child: Stack(children: [
-        // 1. Dark blurred scrim, clipped so the spotlight hole stays sharp.
-        if (hole != null)
-          Positioned.fill(
-            child: ClipPath(
-              clipper: _SpotlightClipper(hole: hole, screen: screen),
+      child: Stack(
+        children: [
+          // 1. Dark blurred scrim, clipped so the spotlight hole stays sharp.
+          if (hole != null)
+            Positioned.fill(
+              child: ClipPath(
+                clipper: _SpotlightClipper(hole: hole, screen: screen),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: const ColoredBox(color: Colors.black54),
+                ),
+              ),
+            )
+          else
+            Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: const ColoredBox(color: Colors.black54),
               ),
             ),
-          )
-        else
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: const ColoredBox(color: Colors.black54),
-            ),
-          ),
 
-        // 2. Glowing border around the spotlight hole.
-        if (hole != null)
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _SpotlightBorderPainter(hole: hole),
-              size: screen,
-            ),
-          ),
-
-        // 3. Flowing dashed connector from the card edge to the spotlight.
-        if (hole != null && _cardRect != null)
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _ConnectorPainter(
-                from: Offset(_cardRect!.center.dx, _cardRect!.bottom + 6),
-                to: hole.center - Offset(0, hole.shortestSide / 2 + 12 + 10),
-                dash: _dashController,
+          // 2. Glowing border around the spotlight hole.
+          if (hole != null)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _SpotlightBorderPainter(hole: hole),
+                size: screen,
               ),
             ),
-          ),
 
-        // 4. Coach card, always centered on screen so the spotlight hole at
-        // the nav bar stays fully visible (animated fade + slide per step).
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space6),
-            child: Center(
-              child: SlideTransition(
-                position: _slide,
-                child: FadeTransition(
-                  opacity: _fade,
-                  child: _CoachCard(
-                    key: _cardKey,
-                    title: step.title,
-                    body: step.body,
-                    stepCount: steps.length,
-                    currentStep: _index,
-                    isLast: _isLastStep,
-                    onNext: _goNext,
-                    onSkip: _skip,
+          // 3. Flowing dashed connector from the card edge to the spotlight.
+          if (hole != null && _cardRect != null)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _ConnectorPainter(
+                  from: Offset(_cardRect!.center.dx, _cardRect!.bottom + 6),
+                  to: hole.center - Offset(0, hole.shortestSide / 2 + 12 + 10),
+                  dash: _dashController,
+                ),
+              ),
+            ),
+
+          // 4. Coach card, always centered on screen so the spotlight hole at
+          // the nav bar stays fully visible (animated fade + slide per step).
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space6,
+              ),
+              child: Center(
+                child: SlideTransition(
+                  position: _slide,
+                  child: FadeTransition(
+                    opacity: _fade,
+                    child: _CoachCard(
+                      key: _cardKey,
+                      title: step.title,
+                      body: step.body,
+                      stepCount: steps.length,
+                      currentStep: _index,
+                      isLast: _isLastStep,
+                      onNext: _goNext,
+                      onSkip: _skip,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -209,11 +224,7 @@ class _SpotlightClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path()..addRect(Offset.zero & size);
-    return Path.combine(
-      PathOperation.difference,
-      path,
-      _holePath(),
-    );
+    return Path.combine(PathOperation.difference, path, _holePath());
   }
 
   Path _holePath() =>
@@ -222,7 +233,8 @@ class _SpotlightClipper extends CustomClipper<Path> {
   double get _radius => hole.shortestSide / 2 + 12;
 
   @override
-  bool shouldReclip(_SpotlightClipper old) => old.hole != hole || old.screen != screen;
+  bool shouldReclip(_SpotlightClipper old) =>
+      old.hole != hole || old.screen != screen;
 }
 
 /// Soft white glow + crisp circular ring drawn around the spotlight hole.
@@ -269,11 +281,8 @@ class _ConnectorPainter extends CustomPainter {
   final Offset to;
   final Animation<double> dash;
 
-  _ConnectorPainter({
-    required this.from,
-    required this.to,
-    required this.dash,
-  }) : super(repaint: dash);
+  _ConnectorPainter({required this.from, required this.to, required this.dash})
+    : super(repaint: dash);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -366,7 +375,9 @@ class _CoachCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTypography.headlineMd.copyWith(color: AppColors.textPrimary),
+            style: AppTypography.headlineMd.copyWith(
+              color: AppColors.textPrimary,
+            ),
           ),
           AppSpacing.vGap2,
           Text(
@@ -414,7 +425,9 @@ class _CoachCard extends StatelessWidget {
                     horizontal: AppSpacing.space4,
                     vertical: AppSpacing.s2,
                   ),
-                  shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLg),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadius.roundedLg,
+                  ),
                 ),
                 onPressed: onNext,
                 child: Text(

@@ -18,10 +18,26 @@ class MockNotesService implements NotesService {
         isSymbol: true,
         symbol: 'Σ',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '10 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '12 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '14 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '8 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '10 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '12 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '14 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
       // Physics — blue icon (matches screenshot)
@@ -32,10 +48,26 @@ class MockNotesService implements NotesService {
         iconColor: Color(0xFF1A56DB),
         iconDataName: 'offline_bolt_outlined',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '7 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '8 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '7 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '8 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '10 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '12 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
       // Chemistry — green icon (matches screenshot)
@@ -46,10 +78,26 @@ class MockNotesService implements NotesService {
         iconColor: Color(0xFF065F46),
         iconDataName: 'science_outlined',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '6 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '8 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '6 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '8 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '10 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '12 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
       // Biology — warm orange/amber icon (matches screenshot)
@@ -60,10 +108,26 @@ class MockNotesService implements NotesService {
         iconColor: Color(0xFF9A3412),
         iconDataName: 'psychology_outlined',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '6 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '7 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '9 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '11 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '6 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '7 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '9 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '11 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
       // English — blue icon (matches screenshot)
@@ -74,10 +138,26 @@ class MockNotesService implements NotesService {
         iconColor: Color(0xFF1A56DB),
         iconDataName: 'menu_book_rounded',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '8 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '9 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '10 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '12 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '8 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '9 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '10 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '12 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
       // Civics & Ethics — warm brown icon (matches screenshot)
@@ -88,17 +168,36 @@ class MockNotesService implements NotesService {
         iconColor: Color(0xFF584237),
         iconDataName: 'balance_rounded',
         grades: [
-          NoteGradeOption(name: 'Grade 9', chapters: '5 Chapters', gradeLevel: 9),
-          NoteGradeOption(name: 'Grade 10', chapters: '6 Chapters', gradeLevel: 10),
-          NoteGradeOption(name: 'Grade 11', chapters: '8 Chapters', gradeLevel: 11),
-          NoteGradeOption(name: 'Grade 12', chapters: '10 Chapters', gradeLevel: 12),
+          NoteGradeOption(
+            name: 'Grade 9',
+            chapters: '5 Chapters',
+            gradeLevel: 9,
+          ),
+          NoteGradeOption(
+            name: 'Grade 10',
+            chapters: '6 Chapters',
+            gradeLevel: 10,
+          ),
+          NoteGradeOption(
+            name: 'Grade 11',
+            chapters: '8 Chapters',
+            gradeLevel: 11,
+          ),
+          NoteGradeOption(
+            name: 'Grade 12',
+            chapters: '10 Chapters',
+            gradeLevel: 12,
+          ),
         ],
       ),
     ];
   }
 
   @override
-  Future<SubjectNotesDetail> getSubjectNotesDetails(String subjectId) async {
+  Future<SubjectNotesDetail> getSubjectNotesDetails(
+    String subjectId, {
+    int? gradeLevel,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 150));
     final norm = subjectId.toLowerCase();
 
@@ -539,8 +638,7 @@ class MockNotesService implements NotesService {
         LessonStep(
           number: 2,
           title: '',
-          text:
-              'Divide both the numerator and the denominator by the GCF.',
+          text: 'Divide both the numerator and the denominator by the GCF.',
         ),
         LessonStep(
           number: 3,

@@ -17,11 +17,9 @@ class BookmarkService {
   final ApiClient _apiClient;
   final CacheManager _cacheManager;
 
-  BookmarkService({
-    ApiClient? apiClient,
-    CacheManager? cacheManager,
-  })  : _apiClient = apiClient ?? ApiClient(),
-        _cacheManager = cacheManager ?? CacheManager.instance;
+  BookmarkService({ApiClient? apiClient, CacheManager? cacheManager})
+    : _apiClient = apiClient ?? ApiClient(),
+      _cacheManager = cacheManager ?? CacheManager.instance;
 
   /// Fetches bookmarks from the live REST API.
   Future<List<BookmarkItem>> getBookmarks({
@@ -31,10 +29,7 @@ class BookmarkService {
     int limit = 50,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
       if (type != null && type.isNotEmpty) {
         queryParams['type'] = type;
       }
@@ -57,8 +52,7 @@ class BookmarkService {
         }
 
         return list
-            .map((item) =>
-                BookmarkItem.fromJson(item as Map<String, dynamic>))
+            .map((item) => BookmarkItem.fromJson(item as Map<String, dynamic>))
             .toList();
       }
       return [];
@@ -67,7 +61,8 @@ class BookmarkService {
           ? (dioErr.response!.data as Map)['message']
           : null;
       throw Exception(
-          serverMsg ?? dioErr.message ?? 'Failed to fetch bookmarks');
+        serverMsg ?? dioErr.message ?? 'Failed to fetch bookmarks',
+      );
     } catch (e) {
       throw Exception('Failed to fetch bookmarks: $e');
     }
@@ -119,13 +114,13 @@ class BookmarkService {
 
       if (response.data != null && response.data is Map<String, dynamic>) {
         final toggleResult = BookmarkToggleResponse.fromJson(
-            response.data as Map<String, dynamic>);
+          response.data as Map<String, dynamic>,
+        );
 
         // Invalidate bookmark caches so subsequent reads or screens fetch fresh data
         await _cacheManager.invalidate(StorageKeys.bookmarksCache);
         if (type.isNotEmpty) {
-          await _cacheManager
-              .invalidate('${StorageKeys.bookmarksCache}_$type');
+          await _cacheManager.invalidate('${StorageKeys.bookmarksCache}_$type');
         }
 
         return toggleResult;
@@ -136,7 +131,8 @@ class BookmarkService {
           ? (dioErr.response!.data as Map)['message']
           : null;
       throw Exception(
-          serverMsg ?? dioErr.message ?? 'Failed to toggle bookmark');
+        serverMsg ?? dioErr.message ?? 'Failed to toggle bookmark',
+      );
     } catch (e) {
       throw Exception('Failed to toggle bookmark: $e');
     }
@@ -150,10 +146,7 @@ class BookmarkService {
     try {
       final response = await _apiClient.client.get(
         ApiEndpoints.bookmarkCheck,
-        queryParameters: {
-          'type': type,
-          'itemId': itemId,
-        },
+        queryParameters: {'type': type, 'itemId': itemId},
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -178,7 +171,8 @@ class BookmarkService {
           ? (dioErr.response!.data as Map)['message']
           : null;
       throw Exception(
-          serverMsg ?? dioErr.message ?? 'Failed to delete bookmark');
+        serverMsg ?? dioErr.message ?? 'Failed to delete bookmark',
+      );
     } catch (e) {
       throw Exception('Failed to delete bookmark: $e');
     }

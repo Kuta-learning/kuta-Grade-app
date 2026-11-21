@@ -21,9 +21,10 @@ class _ExamHeaderSkeletonState extends State<ExamHeaderSkeleton>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
-    _opacityAnim = Tween<double>(begin: 0.35, end: 0.75).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacityAnim = Tween<double>(
+      begin: 0.35,
+      end: 0.75,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -66,7 +67,9 @@ class _ExamHeaderSkeletonState extends State<ExamHeaderSkeleton>
                   width: 110,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: _opacityAnim.value * 0.7),
+                    color: Colors.white.withValues(
+                      alpha: _opacityAnim.value * 0.7,
+                    ),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

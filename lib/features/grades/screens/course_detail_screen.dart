@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
 import '../bloc/grades_bloc.dart';
@@ -64,7 +64,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         SnackBar(
           content: Text(
             'Complete preceding lessons to unlock "${lesson.title}".',
-            style: GoogleFonts.inter(),
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyOpenSans,
+            ),
           ),
           backgroundColor: AppColors.headlineDark,
           duration: const Duration(seconds: 2),
@@ -129,12 +131,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 }
               },
               builder: (context, state) {
-                final displayCourse = (state is CourseDetailLoaded &&
+                final displayCourse =
+                    (state is CourseDetailLoaded &&
                         state.course.id == widget.courseId)
                     ? state.course
                     : (_course ??
-                        bloc?.getCachedCourse(widget.courseId) ??
-                        _fallbackCourse);
+                          bloc?.getCachedCourse(widget.courseId) ??
+                          _fallbackCourse);
 
                 if (displayCourse != null) {
                   return _buildContent(displayCourse);
@@ -156,13 +159,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               },
             )
           : (_course != null || _fallbackCourse != null
-              ? _buildContent((_course ?? _fallbackCourse)!)
-              : const Center(
-                  child: KutaLoadingWidget(
-                    size: 130,
-                    label: 'Loading Course Structure...',
-                  ),
-                )),
+                ? _buildContent((_course ?? _fallbackCourse)!)
+                : const Center(
+                    child: KutaLoadingWidget(
+                      size: 130,
+                      label: 'Loading Course Structure...',
+                    ),
+                  )),
     );
   }
 
@@ -192,7 +195,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               children: [
                 Text(
                   course.title,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.headlineDark,
@@ -202,7 +206,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 const SizedBox(height: 6),
                 Text(
                   course.description,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyOpenSans,
                     fontSize: 13,
                     height: 1.45,
                     fontWeight: FontWeight.w400,
@@ -215,7 +220,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   children: [
                     Text(
                       'Overall Completion',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -223,7 +229,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     ),
                     Text(
                       '$percentInt%',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.orange900,
@@ -238,8 +245,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     value: progress,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFF1F5F9),
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.accentHover),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.accentHover,
+                    ),
                   ),
                 ),
               ],
@@ -253,7 +261,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             children: [
               Text(
                 'Course Curriculum',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.headlineDark,
@@ -262,7 +271,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
               Text(
                 '${course.chapters.length} Units',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.brandPrimary,
@@ -300,7 +310,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           title: Text(
             chapter.title,
-            style: GoogleFonts.inter(
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamilyPoppins,
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.headlineDark,
@@ -311,7 +322,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     chapter.description!,
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -342,7 +354,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             if (chapter.lessons.any((l) => l.quizId != null)) ...[
               Container(
                 margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(12),
@@ -370,7 +385,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         children: [
                           Text(
                             'Unit ${chapter.chapterNumber} Assessment Quiz',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyPoppins,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AppColors.buttonTextBrown,
@@ -378,7 +394,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           ),
                           Text(
                             'Timed test with instant evaluation',
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamilyOpenSans,
                               fontSize: 11,
                               color: AppColors.authBrown,
                             ),
@@ -391,12 +408,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         final quizId = chapter.lessons
                             .firstWhere((l) => l.quizId != null)
                             .quizId!;
-                        _onOpenQuiz(quizId, 'Unit ${chapter.chapterNumber} Quiz');
+                        _onOpenQuiz(
+                          quizId,
+                          'Unit ${chapter.chapterNumber} Quiz',
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.orange500,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         shape: RoundedRectangleBorder(
@@ -405,7 +427,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ),
                       child: Text(
                         'Take Quiz',
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamilyOpenSans,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -423,7 +446,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   Widget _buildLessonTile(
-      CourseLessonItemModel lesson, CourseChapterModel chapter) {
+    CourseLessonItemModel lesson,
+    CourseChapterModel chapter,
+  ) {
     final isLocked = lesson.isLocked;
     final isCompleted = lesson.isCompleted;
 
@@ -441,22 +466,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 color: isCompleted
                     ? const Color(0xFFD1FAE5)
                     : isLocked
-                        ? const Color(0xFFF1F5F9)
-                        : const Color(0xFFDBE9FF),
+                    ? const Color(0xFFF1F5F9)
+                    : const Color(0xFFDBE9FF),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isCompleted
                     ? Icons.check_circle_rounded
                     : isLocked
-                        ? Icons.lock_outline_rounded
-                        : Icons.play_arrow_rounded,
+                    ? Icons.lock_outline_rounded
+                    : Icons.play_arrow_rounded,
                 size: 18,
                 color: isCompleted
                     ? const Color(0xFF065F46)
                     : isLocked
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF1A56DB),
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF1A56DB),
               ),
             ),
             const SizedBox(width: 14),
@@ -468,10 +493,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 children: [
                   Text(
                     lesson.title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamilyOpenSans,
                       fontSize: 13.5,
-                      fontWeight:
-                          isCompleted ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isCompleted
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isLocked
                           ? const Color(0xFF94A3B8)
                           : AppColors.headlineDark,
@@ -481,7 +508,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     const SizedBox(height: 2),
                     Text(
                       lesson.duration!,
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 11.5,
                         color: AppColors.textSecondary,
                       ),
@@ -503,4 +531,3 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 }
-

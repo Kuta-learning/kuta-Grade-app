@@ -17,11 +17,9 @@ class NationalExamService {
   /// Default TTL for the exam dashboard cache: 5 minutes.
   static const Duration defaultDashboardTtl = Duration(minutes: 5);
 
-  NationalExamService({
-    ApiClient? apiClient,
-    CacheManager? cacheManager,
-  })  : _apiClient = apiClient ?? ApiClient(),
-        _customCacheManager = cacheManager;
+  NationalExamService({ApiClient? apiClient, CacheManager? cacheManager})
+    : _apiClient = apiClient ?? ApiClient(),
+      _customCacheManager = cacheManager;
 
   CacheManager get _cache => _customCacheManager ?? CacheManager.instance;
 

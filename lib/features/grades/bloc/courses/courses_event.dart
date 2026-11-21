@@ -60,4 +60,3 @@ class LoadQuizReviewEvent extends CoursesEvent {
 
   const LoadQuizReviewEvent(this.attemptId);
 }
-

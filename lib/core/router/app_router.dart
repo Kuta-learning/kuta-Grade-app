@@ -205,14 +205,11 @@ class AppRouter {
         path: RouteNames.lessonDetail,
         name: 'lessonDetail',
         builder: (context, state) {
-          final subject = state.uri.queryParameters['subject'] ?? 'Fractions';
-          final gradeLevel =
-              state.uri.queryParameters['gradeLevel'] ?? 'Grade 8 Math';
-          final chapterTitle =
-              state.uri.queryParameters['chapterTitle'] ??
-              'Equivalence and Simplification';
+          final subject = state.uri.queryParameters['subject'] ?? '';
+          final gradeLevel = state.uri.queryParameters['gradeLevel'] ?? '';
+          final chapterTitle = state.uri.queryParameters['chapterTitle'] ?? '';
           final chapterNumber =
-              state.uri.queryParameters['chapterNumber'] ?? '4.2';
+              state.uri.queryParameters['chapterNumber'] ?? '';
           final chapterId = state.uri.queryParameters['chapterId'] ?? '';
           return LessonDetailScreen(
             subject: subject,

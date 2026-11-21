@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_typography.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/rive_loading_widget.dart';
@@ -58,7 +58,9 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
   /// Silently loads bookmarked exam IDs to mark bookmarked cards.
   Future<void> _loadBookmarkedExams() async {
     try {
-      final bookmarks = await _bookmarkService.getBookmarks(type: 'EXAM_QUESTION');
+      final bookmarks = await _bookmarkService.getBookmarks(
+        type: 'EXAM_QUESTION',
+      );
       if (mounted) {
         setState(() {
           _bookmarkedExamIds.clear();
@@ -303,7 +305,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
               const SizedBox(height: 16),
               Text(
                 'Failed to load exam papers',
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyPoppins,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -313,7 +316,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
               Text(
                 _errorMessage ?? 'Please check your connection and try again.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -355,7 +359,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             const SizedBox(height: 12),
             Text(
               'No exam papers found for this subject.',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
@@ -369,10 +374,7 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
     return RefreshIndicator(
       color: AppColors.brandPrimary,
       onRefresh: () async {
-        await Future.wait([
-          _fetchPapers(),
-          _loadBookmarkedExams(),
-        ]);
+        await Future.wait([_fetchPapers(), _loadBookmarkedExams()]);
       },
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(
@@ -420,7 +422,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
               children: [
                 Text(
                   paper.displayTitle,
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamilyPoppins,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -439,8 +442,12 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
           // Bookmark Toggle Button
           IconButton(
             icon: Icon(
-              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-              color: isBookmarked ? AppColors.orange500 : const Color(0xFF94A3B8),
+              isBookmarked
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
+              color: isBookmarked
+                  ? AppColors.orange500
+                  : const Color(0xFF94A3B8),
               size: 24,
             ),
             tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark exam',
@@ -481,7 +488,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             Flexible(
               child: Text(
                 details,
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: AppTypography.fontFamilyOpenSans,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
@@ -511,7 +519,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                   children: [
                     TextSpan(
                       text: details.isEmpty ? '' : '$details • ',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -520,7 +529,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                     ),
                     TextSpan(
                       text: 'In Progress',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.brandBlue,
@@ -553,7 +563,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                   children: [
                     TextSpan(
                       text: '${paper.score ?? ''} • ${paper.duration} ',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -562,7 +573,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
                     ),
                     TextSpan(
                       text: 'Completed',
-                      style: GoogleFonts.inter(
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamilyOpenSans,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.success,
@@ -593,7 +605,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             ),
             child: Text(
               'Start Exam',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -614,7 +627,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             ),
             child: Text(
               'Resume',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -635,7 +649,8 @@ class _SubjectExamsScreenState extends State<SubjectExamsScreen> {
             ),
             child: Text(
               'Review',
-              style: GoogleFonts.inter(
+              style: const TextStyle(
+                fontFamily: AppTypography.fontFamilyOpenSans,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.brandBlue,

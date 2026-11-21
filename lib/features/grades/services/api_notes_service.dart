@@ -17,7 +17,7 @@ class ApiNotesService implements NotesService {
   final ApiClient _apiClient;
 
   ApiNotesService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   @override
   Future<List<NoteSubjectItem>> getShortNotesSubjects() async {
@@ -43,11 +43,13 @@ class ApiNotesService implements NotesService {
           }
         }
         return list
-            .map((item) => NoteSubjectItem.fromJson(
-                  item as Map<String, dynamic>,
-                  parentStudentGrade: studentGrade,
-                  parentCurriculumType: curriculumType,
-                ))
+            .map(
+              (item) => NoteSubjectItem.fromJson(
+                item as Map<String, dynamic>,
+                parentStudentGrade: studentGrade,
+                parentCurriculumType: curriculumType,
+              ),
+            )
             .toList();
       }
       throw Exception('Failed to load notes subjects');
@@ -60,10 +62,20 @@ class ApiNotesService implements NotesService {
   }
 
   @override
-  Future<SubjectNotesDetail> getSubjectNotesDetails(String subjectId) async {
+  Future<SubjectNotesDetail> getSubjectNotesDetails(
+    String subjectId, {
+    int? gradeLevel,
+  }) async {
     try {
+      final queryParams = <String, dynamic>{};
+      if (gradeLevel != null) {
+        queryParams['grade'] = gradeLevel;
+        queryParams['gradeLevel'] = gradeLevel;
+        queryParams['selectedGrade'] = gradeLevel;
+      }
       final response = await _apiClient.client.get(
         ApiEndpoints.shortNotesSubjectDetail(subjectId),
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -145,12 +157,25 @@ class ApiNotesService implements NotesService {
       if (response.statusCode == 200 && response.data != null) {
         if (response.data is Map<String, dynamic>) {
           final map = response.data as Map<String, dynamic>;
-          if (map['downloadUrl'] is String) return map['downloadUrl'] as String;
-          if (map['url'] is String) return map['url'] as String;
-          if (map['data'] is Map<String, dynamic>) {
+          String? rawUrl;
+          if (map['downloadUrl'] is String) {
+            rawUrl = map['downloadUrl'] as String;
+          } else if (map['url'] is String) {
+            rawUrl = map['url'] as String;
+          } else if (map['pdfUrl'] is String) {
+            rawUrl = map['pdfUrl'] as String;
+          } else if (map['data'] is Map<String, dynamic>) {
             final dataMap = map['data'] as Map<String, dynamic>;
-            if (dataMap['downloadUrl'] is String) return dataMap['downloadUrl'] as String;
-            if (dataMap['url'] is String) return dataMap['url'] as String;
+            if (dataMap['downloadUrl'] is String) {
+              rawUrl = dataMap['downloadUrl'] as String;
+            } else if (dataMap['url'] is String) {
+              rawUrl = dataMap['url'] as String;
+            } else if (dataMap['pdfUrl'] is String) {
+              rawUrl = dataMap['pdfUrl'] as String;
+            }
+          }
+          if (rawUrl != null && rawUrl.isNotEmpty) {
+            return _resolveUrl(rawUrl);
           }
         }
       }
@@ -161,5 +186,16 @@ class ApiNotesService implements NotesService {
           : e.message;
       throw Exception(msg ?? 'Failed to download PDF');
     }
+  }
+
+  /// Resolves a URL that may be absolute or relative (e.g. /uploads/notes/x.pdf)
+  /// against the API base URL so both forms produce a usable link.
+  String _resolveUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    final base = ApiEndpoints.baseUrl.trimRight().replaceAll(RegExp(r'/api$'), '');
+    final path = url.startsWith('/') ? url : '/$url';
+    return '$base$path';
   }
 }

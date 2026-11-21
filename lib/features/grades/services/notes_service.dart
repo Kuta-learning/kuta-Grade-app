@@ -6,7 +6,11 @@ abstract class NotesService {
   Future<List<NoteSubjectItem>> getShortNotesSubjects();
 
   /// Fetches comprehensive details for a specific subject notes view.
-  Future<SubjectNotesDetail> getSubjectNotesDetails(String subjectId);
+  /// Pass [gradeLevel] (e.g. 10) so the backend filters chapters to that grade.
+  Future<SubjectNotesDetail> getSubjectNotesDetails(
+    String subjectId, {
+    int? gradeLevel,
+  });
 
   /// Fetches reader lesson details for an individual chapter.
   Future<LessonDetail> getChapterNoteDetail(String chapterId);
@@ -20,4 +24,3 @@ abstract class NotesService {
   /// Requests download link for chapter notes PDF.
   Future<String> downloadChapterPdf(String chapterId);
 }
-

@@ -6,18 +6,12 @@ class ChapterListTile extends StatelessWidget {
   final ChapterModel chapter;
   final VoidCallback? onTap;
 
-  const ChapterListTile({
-    super.key,
-    required this.chapter,
-    this.onTap,
-  });
+  const ChapterListTile({super.key, required this.chapter, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CircleAvatar(
-        child: Text('${chapter.chapterNumber}'),
-      ),
+      leading: CircleAvatar(child: Text('${chapter.chapterNumber}')),
       title: Text(chapter.title),
       trailing: Icon(
         chapter.isCompleted ? Icons.check_circle : Icons.chevron_right,

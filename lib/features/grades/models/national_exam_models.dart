@@ -123,7 +123,8 @@ class ExamAttempt {
       attemptId: json['attemptId'] as String? ?? json['id'] as String? ?? '',
       examId: json['examId'] as String? ?? '',
       timeRemainingSeconds: json['timeRemainingSeconds'] as int? ?? 0,
-      currentQuestionIndex: json['currentQuestionIndex'] as int? ??
+      currentQuestionIndex:
+          json['currentQuestionIndex'] as int? ??
           json['lastQuestionIndex'] as int?,
       questions: ((json['questions'] as List<dynamic>?) ?? [])
           .map((q) => ExamQuestion.fromJson(q as Map<String, dynamic>))
@@ -190,29 +191,33 @@ class ExamQuestionReviewItem {
     final qRaw = json['question'];
     final Map<String, dynamic>? qObj = qRaw is Map
         ? (qRaw is Map<String, dynamic>
-            ? qRaw
-            : qRaw.map((k, v) => MapEntry(k.toString(), v)))
+              ? qRaw
+              : qRaw.map((k, v) => MapEntry(k.toString(), v)))
         : null;
 
-    final questionId = json['questionId'] as String? ??
+    final questionId =
+        json['questionId'] as String? ??
         qObj?['id'] as String? ??
         json['id'] as String? ??
         '';
 
     final order = json['order'] as int? ?? qObj?['order'] as int?;
 
-    final questionText = json['questionText'] as String? ??
+    final questionText =
+        json['questionText'] as String? ??
         qObj?['text'] as String? ??
         qObj?['prompt'] as String? ??
         json['text'] as String? ??
         json['prompt'] as String? ??
         '';
 
-    String? selectedOptId = json['selectedOptionId'] as String? ??
-        json['userOptionId'] as String?;
-    String? selectedOptText = json['selectedOptionText'] as String? ??
+    String? selectedOptId =
+        json['selectedOptionId'] as String? ?? json['userOptionId'] as String?;
+    String? selectedOptText =
+        json['selectedOptionText'] as String? ??
         json['userOptionText'] as String?;
-    String? selectedOptLabel = json['selectedOptionLabel'] as String? ??
+    String? selectedOptLabel =
+        json['selectedOptionLabel'] as String? ??
         json['userOptionLabel'] as String?;
 
     if (json['selectedOption'] is Map) {
@@ -234,7 +239,8 @@ class ExamQuestionReviewItem {
     }
 
     String? correctOptId = json['correctOptionId'] as String?;
-    String? correctOptText = json['correctOptionText'] as String? ??
+    String? correctOptText =
+        json['correctOptionText'] as String? ??
         json['correctAnswer'] as String? ??
         json['answer'] as String? ??
         json['correct_answer'] as String?;
@@ -279,7 +285,8 @@ class ExamQuestionReviewItem {
     }
 
     // Robust evaluation of correctness across all possible API conventions
-    final dynamic rawCorrect = json['isCorrect'] ??
+    final dynamic rawCorrect =
+        json['isCorrect'] ??
         json['is_correct'] ??
         json['correct'] ??
         json['isAnswerCorrect'] ??
@@ -294,18 +301,29 @@ class ExamQuestionReviewItem {
       isCorrect = rawCorrect > 0;
     } else if (rawCorrect is String) {
       final s = rawCorrect.trim().toLowerCase();
-      isCorrect = (s == 'true' || s == '1' || s == 'correct' || s == 'right' || s == 'passed');
+      isCorrect =
+          (s == 'true' ||
+          s == '1' ||
+          s == 'correct' ||
+          s == 'right' ||
+          s == 'passed');
     }
 
     if (!isCorrect) {
-      final status = (json['status'] ?? qObj?['status'])?.toString().toUpperCase();
+      final status = (json['status'] ?? qObj?['status'])
+          ?.toString()
+          .toUpperCase();
       if (status == 'CORRECT' || status == 'RIGHT' || status == 'PASSED') {
         isCorrect = true;
       }
     }
 
     if (!isCorrect) {
-      final scoreVal = json['score'] ?? json['points'] ?? json['earnedPoints'] ?? qObj?['score'];
+      final scoreVal =
+          json['score'] ??
+          json['points'] ??
+          json['earnedPoints'] ??
+          qObj?['score'];
       if (scoreVal is num && scoreVal > 0) {
         isCorrect = true;
       }
@@ -326,7 +344,8 @@ class ExamQuestionReviewItem {
       } else if (selectedOptText != null &&
           correctOptText != null &&
           selectedOptText.trim().isNotEmpty &&
-          selectedOptText.trim().toLowerCase() == correctOptText.trim().toLowerCase()) {
+          selectedOptText.trim().toLowerCase() ==
+              correctOptText.trim().toLowerCase()) {
         isCorrect = true;
       }
     }
@@ -334,7 +353,8 @@ class ExamQuestionReviewItem {
     // When verified correct, ensure correct option fields carry over the selected option info
     if (isCorrect) {
       correctOptId ??= selectedOptId;
-      correctOptText = (correctOptText != null && correctOptText.trim().isNotEmpty)
+      correctOptText =
+          (correctOptText != null && correctOptText.trim().isNotEmpty)
           ? correctOptText
           : selectedOptText;
       correctOptLabel = (correctOptLabel != null && correctOptLabel.isNotEmpty)
@@ -353,8 +373,8 @@ class ExamQuestionReviewItem {
       correctOptionText: correctOptText,
       correctOptionLabel: correctOptLabel,
       isCorrect: isCorrect,
-      explanation: json['explanation'] as String? ??
-          qObj?['explanation'] as String?,
+      explanation:
+          json['explanation'] as String? ?? qObj?['explanation'] as String?,
     );
   }
 }
@@ -403,30 +423,35 @@ class ExamResultReview {
           : m.map((k, v) => MapEntry(k.toString(), v));
     }
 
-    final rawQuestions = (target['questions'] ??
-            target['questionBreakdown'] ??
-            target['breakdown'] ??
-            target['answers'] ??
-            target['results'] ??
-            target['review'] ??
-            target['items'] ??
-            target['gradedAnswers'] ??
-            json['questions'] ??
-            json['results'] ??
-            json['review']) as List<dynamic>? ??
+    final rawQuestions =
+        (target['questions'] ??
+                target['questionBreakdown'] ??
+                target['breakdown'] ??
+                target['answers'] ??
+                target['results'] ??
+                target['review'] ??
+                target['items'] ??
+                target['gradedAnswers'] ??
+                json['questions'] ??
+                json['results'] ??
+                json['review'])
+            as List<dynamic>? ??
         [];
 
     final parsedQuestions = rawQuestions
         .whereType<Map>()
-        .map((q) => ExamQuestionReviewItem.fromJson(
-              q is Map<String, dynamic>
-                  ? q
-                  : q.map((k, v) => MapEntry(k.toString(), v)),
-            ))
+        .map(
+          (q) => ExamQuestionReviewItem.fromJson(
+            q is Map<String, dynamic>
+                ? q
+                : q.map((k, v) => MapEntry(k.toString(), v)),
+          ),
+        )
         .toList();
 
     final score = target['score'] as int? ?? 0;
-    final totalQuestions = target['totalQuestions'] as int? ??
+    final totalQuestions =
+        target['totalQuestions'] as int? ??
         (parsedQuestions.isNotEmpty ? parsedQuestions.length : 0);
 
     double accuracy = (target['accuracy'] as num?)?.toDouble() ?? 0.0;
@@ -435,21 +460,25 @@ class ExamResultReview {
     }
 
     return ExamResultReview(
-      attemptId: target['attemptId'] as String? ??
+      attemptId:
+          target['attemptId'] as String? ??
           target['id'] as String? ??
           json['attemptId'] as String? ??
           '',
-      examTitle: target['examTitle'] as String? ??
+      examTitle:
+          target['examTitle'] as String? ??
           target['title'] as String? ??
           json['title'] as String?,
-      category: target['category'] as String? ??
+      category:
+          target['category'] as String? ??
           target['subject'] as String? ??
           json['category'] as String?,
       score: score,
       totalQuestions: totalQuestions,
       accuracy: accuracy,
       timeSpentSeconds: target['timeSpentSeconds'] as int? ?? 0,
-      totalDurationSeconds: target['totalDurationSeconds'] as int? ??
+      totalDurationSeconds:
+          target['totalDurationSeconds'] as int? ??
           target['durationSeconds'] as int?,
       submittedAt: target['submittedAt'] != null
           ? DateTime.tryParse(target['submittedAt'] as String)
