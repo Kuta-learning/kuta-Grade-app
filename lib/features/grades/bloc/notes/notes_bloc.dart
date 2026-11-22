@@ -56,10 +56,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   int? get cachedStudentGrade => _cachedStudentGrade;
 
   /// Retrieves cached SubjectNotesDetail directly from [CacheManager]'s L1 memory.
-  SubjectNotesDetail? getCachedDetail(String id) =>
-      _cacheManager.getMemoryCached<SubjectNotesDetail>(
-        StorageKeys.notesSubjectDetailCache(id),
-      );
+  SubjectNotesDetail? getCachedDetail(String id, {int? gradeLevel}) {
+    final gradeSuffix = gradeLevel != null ? '_grade_$gradeLevel' : '';
+    final key = '${StorageKeys.notesSubjectDetailCache(id)}$gradeSuffix';
+    return _cacheManager.getMemoryCached<SubjectNotesDetail>(key);
+  }
 
   /// Retrieves cached LessonDetail directly from [CacheManager]'s L1 memory.
   LessonDetail? getCachedLesson(String id) => _cacheManager
@@ -171,6 +172,16 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
           key: key,
           ttl: const Duration(minutes: 5),
           forceRefresh: event.forceRefresh,
+          guard: (detail) {
+            if (event.gradeLevel != null) {
+              final g = detail.selectedGrade ??
+                  RegExp(r'\d+').firstMatch(detail.gradeLevel)?.group(0);
+              if (g != null && int.tryParse(g.toString()) != event.gradeLevel) {
+                return false;
+              }
+            }
+            return true;
+          },
           networkFetch: () => _notesService.getSubjectNotesDetails(
             event.subjectId,
             gradeLevel: event.gradeLevel,
@@ -211,6 +222,13 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
           key: key,
           ttl: const Duration(minutes: 5),
           forceRefresh: event.forceRefresh,
+          guard: (lesson) {
+            if (lesson.chapterId.isNotEmpty &&
+                lesson.chapterId != event.chapterId) {
+              return false;
+            }
+            return true;
+          },
           networkFetch: () =>
               _notesService.getChapterNoteDetail(event.chapterId),
           fromJson: LessonDetail.fromJsonString,

@@ -189,9 +189,8 @@ class AppRouter {
         path: RouteNames.noteDetail,
         name: 'noteDetail',
         builder: (context, state) {
-          final subject = state.uri.queryParameters['subject'] ?? 'Mathematics';
-          final gradeLevel =
-              state.uri.queryParameters['gradeLevel'] ?? 'Grade 12';
+          final subject = state.uri.queryParameters['subject'] ?? '';
+          final gradeLevel = state.uri.queryParameters['gradeLevel'] ?? '';
           final subjectId = state.uri.queryParameters['subjectId'];
           return NoteDetailScreen(
             subjectTitle: subject,

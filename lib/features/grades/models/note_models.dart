@@ -496,7 +496,9 @@ class SubjectNotesDetail {
       subjectId: resolvedId,
       subjectTitle: resolvedTitle,
       gradeLevel: resolvedGrade,
-      totalChapters: json['totalChapters'] as int? ?? displayChapters.length,
+      totalChapters: selectedGradeInt != null
+          ? displayChapters.length
+          : (json['totalChapters'] as int? ?? displayChapters.length),
       totalFileSize: resolvedSize,
       downloadAllUrl: resolvedDownloadAll,
       chapters: displayChapters,
